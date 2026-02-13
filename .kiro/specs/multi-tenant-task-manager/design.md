@@ -2760,6 +2760,32 @@ const testOrganizationLevelIsolation = () => {
 8. Error handling (all error codes, user-friendly messages)
 9. Performance (load times, bundle size, network requests)
 
+### Verification Observation Model at Phase Boundaries
+
+Phase-boundary verification is observed at both repository and service levels to prove behavior against persisted state rather than in-memory assumptions.
+
+**Repository-Level Observation Checks**:
+
+1. Capture pre-state by querying repositories/models directly using deterministic selectors (for example immutable IDs, unique business keys, or generated verification tokens captured during setup).
+2. After executing a CRUD or restore operation through controller/service entry points, query the same repository records again and compare persisted post-state.
+3. Verify soft-delete/restore state transitions explicitly on `isDeleted`, `deletedAt`, and `deletedBy` fields.
+
+**Service-Level Observation Checks**:
+
+1. Execute operations through service/controller workflows that represent production behavior (validation, authorization, hooks, and side effects).
+2. Correlate service responses with repository post-state using the same deterministic identifiers to avoid ambiguous record matching.
+3. Record startup and runtime health observations at the end of each phase (`cd backend && npm run dev`, `cd client && npm run dev`, no runtime errors in logs/console for phase scope).
+
+**Deterministic Identifier Strategy**:
+
+- Use stable identifiers created during setup (ObjectId captured in fixtures, unique emails, unique employee IDs, task titles with scoped suffixes) so pre/post comparisons are repeatable.
+- Avoid nondeterministic selectors (for example, “latest record”) when verifying phase-boundary outcomes.
+
+**Transactional Boundary Expectations**:
+
+- For multi-step mutations (e.g., registration workflow, delete/restore cascades, inventory decrement + task activity creation), verification must confirm atomic outcomes within the intended transactional boundary.
+- If any step fails, persisted state must reflect rollback or compensating behavior as designed; phase gate fails if partial writes are observed.
+
 ### Test Data Requirements
 
 **Seeded Test Data**:
