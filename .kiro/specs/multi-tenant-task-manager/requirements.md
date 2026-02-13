@@ -1101,3 +1101,14 @@ The system serves two types of organizations:
 4. WHEN a user views Notifications tab, THE System SHALL display email and in-app event toggles, browser notification permission request
 5. WHEN a user views Appearance tab, THE System SHALL display theme (light/dark/system), language, date/time format, timezone
 6. WHEN a user updates settings, THE System SHALL persist via PUT /api/users/:userId/preferences and PUT /api/users/:userId/security
+
+### Requirement 64: PRD Test ID Normativity and Traceability
+
+**User Story:** As a delivery lead, I want PRD test IDs to be normative and linked to implementation tasks, so that release readiness is objectively verifiable.
+
+#### Acceptance Criteria
+
+1. THE System specification SHALL treat IDs defined in `docs/prd-test-cases.md` as normative acceptance references for backend route behavior.
+2. THE System implementation plan SHALL map backend controller/route tasks to relevant PRD test ID families.
+3. A task SHALL NOT be marked complete until all mapped PRD test IDs are executed and recorded with outcome evidence.
+4. Requirements, design, and tasks documents SHALL maintain bidirectional traceability between PRD test IDs and implementation work items.

@@ -83,6 +83,33 @@ MongoDB (data persistence)
 6. **Services**: Interact with external systems (Nodemailer, Socket.IO, Cloudinary)
 7. **Models**: Define Mongoose schemas, implement virtuals/hooks, handle database operations
 
+
+### Testability Hooks and Verification Boundaries
+
+To enforce PRD-driven verification, backend design includes explicit testability hooks for validator boundaries, authorization checks, and side-effect observability.
+
+**Validator Boundaries**:
+
+- Validation middleware is the sole owner of request shape validation and coercion and MUST expose sanitized payloads via `req.validated.body`, `req.validated.params`, and `req.validated.query`.
+- Validator modules MUST publish route-to-validator maps so each endpoint can be directly mapped to PRD Validation Matrix IDs.
+- Existence checks for create/restore paths MUST use `.withDeleted()` where defined in PRD IDs to make soft-delete behavior testable.
+
+**Authorization Check Boundaries**:
+
+- Authorization middleware MUST emit structured decision metadata for each request: `resource`, `action`, `role`, `scope`, `ownership`, and `decision` (allow/deny).
+- Decision metadata MUST be logged in non-production and optionally sampled in production for auditability against Authorization Matrix IDs.
+- Controller logic MUST not bypass authorization middleware for protected routes; any exception path must be explicitly documented and tested.
+
+**Side-Effect Observability Hooks**:
+
+- Controllers that emit side effects (socket events, email dispatch, notification creation, stock mutation, cascade soft-delete/restore) MUST produce deterministic operation summaries in responses or logs.
+- Service adapters (email/socket/cloudinary) MUST expose injectable interfaces so manual and scripted verification can capture invocation evidence without changing business logic.
+- Transactional write paths MUST log transaction lifecycle markers (`session.start`, `commit`, `abort`) to support verification of CROSS-CTRL requirements.
+
+**Traceability Hook**:
+
+- Each backend route definition SHOULD include PRD test ID annotations (comment or metadata constant) to support maintenance of `Test ID -> Task/Subtask` mapping in the implementation plan.
+
 ### Frontend Architecture
 
 The frontend follows a feature-based component structure with Redux Toolkit for state management:

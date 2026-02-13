@@ -236,6 +236,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 4. Authentication Controllers and Routes
 
+**Mapped PRD tests**
+
+- AUTH-VAL-*, AUTH-AUTH-*, AUTH-AUTHZ-*, AUTH-CTRL-*
+- ORG-VALX-CREATE-*, DEPT-VALX-CREATE-*, USER-VALX-CREATE-* (registration payload validators)
+- ORG-AUTHZX-CREATE-*, DEPT-AUTHZX-CREATE-*, USER-AUTHZX-CREATE-* (registration authz pathways)
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 4.1 or 4.2 complete.
+
+
 - [ ] 4.1 Create authentication controller
 
   - Create `backend/controllers/authController.js` with authentication logic
@@ -266,6 +278,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 5. Organization Controllers and Routes
 
+**Mapped PRD tests**
+
+- ORG-AUTH-*, ORG-VAL-*, ORG-AUTHZ-*, ORG-CTRL-*
+- ORG-VALX-GET-*, ORG-VALX-GETALL-*, ORG-VALX-UPDATE-*, ORG-VALX-DELETE-*, ORG-VALX-RESTORE-*
+- ORG-AUTHZX-GET-*, ORG-AUTHZX-GETALL-*, ORG-AUTHZX-UPDATE-*, ORG-AUTHZX-DELETE-*, ORG-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 5.1 or 5.2 complete.
+
+
 - [ ] 5.1 Create organization controller
 
   - Create `backend/controllers/organizationController.js` with organization logic
@@ -287,6 +311,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 1.3, 1.4, 1.5, Design: API Endpoints_
 
 ### 6. Department Controllers and Routes
+
+**Mapped PRD tests**
+
+- DEPT-AUTH-*, DEPT-VAL-*, DEPT-AUTHZ-*, DEPT-CTRL-*
+- DEPT-VALX-GET-*, DEPT-VALX-GETALL-*, DEPT-VALX-CREATE-*, DEPT-VALX-UPDATE-*, DEPT-VALX-DELETE-*, DEPT-VALX-RESTORE-*
+- DEPT-AUTHZX-GET-*, DEPT-AUTHZX-GETALL-*, DEPT-AUTHZX-CREATE-*, DEPT-AUTHZX-UPDATE-*, DEPT-AUTHZX-DELETE-*, DEPT-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 6.1 or 6.2 complete.
+
 
 - [ ] 6.1 Create department controller
 
@@ -315,6 +351,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 5.1-5.9, Design: API Endpoints_
 
 ### 7. User Controllers and Routes
+
+**Mapped PRD tests**
+
+- USER-AUTH-*, USER-VAL-*, USER-AUTHZ-*, USER-CTRL-*
+- USER-VALX-GET-*, USER-VALX-GETALL-*, USER-VALX-CREATE-*, USER-VALX-UPDATE-*, USER-VALX-DELETE-*, USER-VALX-RESTORE-*
+- USER-AUTHZX-GET-*, USER-AUTHZX-GETALL-*, USER-AUTHZX-CREATE-*, USER-AUTHZX-UPDATE-*, USER-AUTHZX-DELETE-*, USER-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 7.1 or 7.2 complete.
+
 
 - [ ] 7.1 Create user controller
 
@@ -348,6 +396,21 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 8. Task Controllers and Routes
 
+**Mapped PRD tests**
+
+- TASK-AUTH-*, TASK-VAL-*, TASK-AUTHZ-*, TASK-CTRL-*
+- ACT-AUTH-*, ACT-VAL-*, ACT-AUTHZ-*, ACT-CTRL-*
+- COMM-AUTH-*, COMM-VAL-*, COMM-AUTHZ-*, COMM-CTRL-*
+- TASK-VALX-GET-*, TASK-VALX-GETALL-*, TASK-VALX-CREATE-*, TASK-VALX-UPDATE-*, TASK-VALX-DELETE-*, TASK-VALX-RESTORE-*
+- TASK-AUTHZX-GET-*, TASK-AUTHZX-GETALL-*, TASK-AUTHZX-CREATE-*, TASK-AUTHZX-UPDATE-*, TASK-AUTHZX-DELETE-*, TASK-AUTHZX-RESTORE-*
+- ACT-VALX-*, ACT-AUTHZX-*, COMM-VALX-*, COMM-AUTHZX-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 8.1 or 8.2 complete.
+
+
 - [ ] 8.1 Create task controller
 
   - Create `backend/controllers/taskController.js` with task logic
@@ -380,6 +443,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 9. Material Controllers and Routes
 
+**Mapped PRD tests**
+
+- MAT-AUTH-*, MAT-VAL-*, MAT-AUTHZ-*, MAT-CTRL-*
+- MAT-VALX-GET-*, MAT-VALX-GETALL-*, MAT-VALX-CREATE-*, MAT-VALX-UPDATE-*, MAT-VALX-DELETE-*, MAT-VALX-RESTORE-*, MAT-VALX-RESTOCK-*
+- MAT-AUTHZX-GET-*, MAT-AUTHZX-GETALL-*, MAT-AUTHZX-CREATE-*, MAT-AUTHZX-UPDATE-*, MAT-AUTHZX-DELETE-*, MAT-AUTHZX-RESTORE-*, MAT-AUTHZX-RESTOCK-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 9.1 or 9.2 complete.
+
+
 - [ ] 9.1 Create material controller
 
   - Create `backend/controllers/materialController.js` with material logic
@@ -406,6 +481,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 10. Vendor Controllers and Routes
 
+**Mapped PRD tests**
+
+- VEND-AUTH-*, VEND-VAL-*, VEND-AUTHZ-*, VEND-CTRL-*
+- VEND-VALX-GET-*, VEND-VALX-GETALL-*, VEND-VALX-CREATE-*, VEND-VALX-UPDATE-*, VEND-VALX-DELETE-*, VEND-VALX-RESTORE-*
+- VEND-AUTHZX-GET-*, VEND-AUTHZX-GETALL-*, VEND-AUTHZX-CREATE-*, VEND-AUTHZX-UPDATE-*, VEND-AUTHZX-DELETE-*, VEND-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 10.1 or 10.2 complete.
+
+
 - [ ] 10.1 Create vendor controller
 
   - Create `backend/controllers/vendorController.js` with vendor logic
@@ -430,6 +517,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 11. Attachment Controllers and Routes
 
+**Mapped PRD tests**
+
+- ATT-AUTH-*, ATT-VAL-*, ATT-AUTHZ-*, ATT-CTRL-*
+- ATT-VALX-GET-*, ATT-VALX-CREATE-*, ATT-VALX-DELETE-*
+- ATT-AUTHZX-GET-*, ATT-AUTHZX-CREATE-*, ATT-AUTHZX-DELETE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 11.1 or 11.2 complete.
+
+
 - [ ] 11.1 Create attachment controller
 
   - Create `backend/controllers/attachmentController.js` with attachment logic
@@ -447,6 +546,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 11.1-11.10, Design: API Endpoints_
 
 ### 12. Notification Controllers and Routes
+
+**Mapped PRD tests**
+
+- NOTIF-AUTH-*, NOTIF-VAL-*, NOTIF-AUTHZ-*, NOTIF-CTRL-*
+- NOTIF-VALX-GETALL-*, NOTIF-VALX-READ-*, NOTIF-VALX-READALL-*, NOTIF-VALX-DELETE-*, NOTIF-VALX-RESTORE-*
+- NOTIF-AUTHZX-GETALL-*, NOTIF-AUTHZX-READ-*, NOTIF-AUTHZX-READALL-*, NOTIF-AUTHZX-DELETE-*, NOTIF-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 12.1 or 12.2 complete.
+
 
 - [ ] 12.1 Create notification controller
 
@@ -467,6 +578,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 15.1-15.11, Design: API Endpoints_
 
 ### 13. Dashboard Controllers and Routes
+
+**Mapped PRD tests**
+
+- DASH-AUTH-*, DASH-VAL-*, DASH-AUTHZ-*, DASH-CTRL-*
+- DASH-VALX-GET-*, DASH-VALX-GETALL-*
+- DASH-AUTHZX-GET-*, DASH-AUTHZX-GETALL-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 13.1 or 13.2 complete.
+
 
 - [ ] 13.1 Create dashboard controller
 
@@ -1767,3 +1890,28 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Configure rate limiting for production
 - Configure logging for production (file transport)
 - Configure error monitoring (optional: Sentry)
+
+---
+
+
+## Appendix: PRD Test Traceability (Global)
+
+| Test ID Family | Task/Subtask |
+| --- | --- |
+| AUTH-* | 4.1, 4.2 |
+| ORG-* | 4.1, 5.1, 5.2 |
+| DEPT-* | 4.1, 6.1, 6.2 |
+| USER-* | 4.1, 7.1, 7.2 |
+| TASK-* | 8.1, 8.2 |
+| ACT-* | 8.1, 8.2 |
+| COMM-* | 8.1, 8.2 |
+| MAT-* | 9.1, 9.2 |
+| VEND-* | 10.1, 10.2 |
+| ATT-* | 11.1, 11.2 |
+| NOTIF-* | 12.1, 12.2 |
+| DASH-* | 13.1, 13.2 |
+| CROSS-* | 3.2, 3.3, 4.1-13.2 |
+
+**Execution Gate**
+
+- A task/subtask is not complete until all mapped PRD IDs are executed and recorded with status, evidence link, and execution date.
