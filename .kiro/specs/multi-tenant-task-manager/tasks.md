@@ -41,7 +41,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 - [ ] 1.2 Create environment configuration
 
-  - Create `backend/.env.example` with all required variables
+  - Create (if doesn't exist) `backend/.env.example` with all required variables
   - Document: MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN
   - Document: EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
   - Document: NODE_ENV, PORT, CLIENT_URL, CORS_ORIGIN
@@ -1768,7 +1768,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Configure logging for production (file transport)
 - Configure error monitoring (optional: Sentry)
 
-
 ## Canonical Decisions Execution Plan (CAN-001 to CAN-027)
 
 > Each CAN item includes implementation tasks and explicit verification steps.
@@ -1863,6 +1862,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### Trace Table
 
-| CAN-ID | Source location | Task location |
-|---|---|---|
+| CAN-ID           | Source location                                   | Task location                                                                                    |
+| ---------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Execution Plan (CAN-001 to CAN-027)” + “Manual consistency pass” |
