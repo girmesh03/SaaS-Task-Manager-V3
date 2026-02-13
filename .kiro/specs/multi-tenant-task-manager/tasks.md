@@ -236,18 +236,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 4. Authentication Controllers and Routes
 
-**Mapped PRD tests**
-
-- AUTH-VAL-*, AUTH-AUTH-*, AUTH-AUTHZ-*, AUTH-CTRL-*
-- ORG-VALX-CREATE-*, DEPT-VALX-CREATE-*, USER-VALX-CREATE-* (registration payload validators)
-- ORG-AUTHZX-CREATE-*, DEPT-AUTHZX-CREATE-*, USER-AUTHZX-CREATE-* (registration authz pathways)
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 4.1 or 4.2 complete.
-
-
 - [ ] 4.1 Create authentication controller
 
   - Create `backend/controllers/authController.js` with authentication logic
@@ -278,18 +266,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 5. Organization Controllers and Routes
 
-**Mapped PRD tests**
-
-- ORG-AUTH-*, ORG-VAL-*, ORG-AUTHZ-*, ORG-CTRL-*
-- ORG-VALX-GET-*, ORG-VALX-GETALL-*, ORG-VALX-UPDATE-*, ORG-VALX-DELETE-*, ORG-VALX-RESTORE-*
-- ORG-AUTHZX-GET-*, ORG-AUTHZX-GETALL-*, ORG-AUTHZX-UPDATE-*, ORG-AUTHZX-DELETE-*, ORG-AUTHZX-RESTORE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 5.1 or 5.2 complete.
-
-
 - [ ] 5.1 Create organization controller
 
   - Create `backend/controllers/organizationController.js` with organization logic
@@ -311,18 +287,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 1.3, 1.4, 1.5, Design: API Endpoints_
 
 ### 6. Department Controllers and Routes
-
-**Mapped PRD tests**
-
-- DEPT-AUTH-*, DEPT-VAL-*, DEPT-AUTHZ-*, DEPT-CTRL-*
-- DEPT-VALX-GET-*, DEPT-VALX-GETALL-*, DEPT-VALX-CREATE-*, DEPT-VALX-UPDATE-*, DEPT-VALX-DELETE-*, DEPT-VALX-RESTORE-*
-- DEPT-AUTHZX-GET-*, DEPT-AUTHZX-GETALL-*, DEPT-AUTHZX-CREATE-*, DEPT-AUTHZX-UPDATE-*, DEPT-AUTHZX-DELETE-*, DEPT-AUTHZX-RESTORE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 6.1 or 6.2 complete.
-
 
 - [ ] 6.1 Create department controller
 
@@ -351,18 +315,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 5.1-5.9, Design: API Endpoints_
 
 ### 7. User Controllers and Routes
-
-**Mapped PRD tests**
-
-- USER-AUTH-*, USER-VAL-*, USER-AUTHZ-*, USER-CTRL-*
-- USER-VALX-GET-*, USER-VALX-GETALL-*, USER-VALX-CREATE-*, USER-VALX-UPDATE-*, USER-VALX-DELETE-*, USER-VALX-RESTORE-*
-- USER-AUTHZX-GET-*, USER-AUTHZX-GETALL-*, USER-AUTHZX-CREATE-*, USER-AUTHZX-UPDATE-*, USER-AUTHZX-DELETE-*, USER-AUTHZX-RESTORE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 7.1 or 7.2 complete.
-
 
 - [ ] 7.1 Create user controller
 
@@ -396,21 +348,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 8. Task Controllers and Routes
 
-**Mapped PRD tests**
-
-- TASK-AUTH-*, TASK-VAL-*, TASK-AUTHZ-*, TASK-CTRL-*
-- ACT-AUTH-*, ACT-VAL-*, ACT-AUTHZ-*, ACT-CTRL-*
-- COMM-AUTH-*, COMM-VAL-*, COMM-AUTHZ-*, COMM-CTRL-*
-- TASK-VALX-GET-*, TASK-VALX-GETALL-*, TASK-VALX-CREATE-*, TASK-VALX-UPDATE-*, TASK-VALX-DELETE-*, TASK-VALX-RESTORE-*
-- TASK-AUTHZX-GET-*, TASK-AUTHZX-GETALL-*, TASK-AUTHZX-CREATE-*, TASK-AUTHZX-UPDATE-*, TASK-AUTHZX-DELETE-*, TASK-AUTHZX-RESTORE-*
-- ACT-VALX-*, ACT-AUTHZX-*, COMM-VALX-*, COMM-AUTHZX-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 8.1 or 8.2 complete.
-
-
 - [ ] 8.1 Create task controller
 
   - Create `backend/controllers/taskController.js` with task logic
@@ -443,18 +380,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 9. Material Controllers and Routes
 
-**Mapped PRD tests**
-
-- MAT-AUTH-*, MAT-VAL-*, MAT-AUTHZ-*, MAT-CTRL-*
-- MAT-VALX-GET-*, MAT-VALX-GETALL-*, MAT-VALX-CREATE-*, MAT-VALX-UPDATE-*, MAT-VALX-DELETE-*, MAT-VALX-RESTORE-*, MAT-VALX-RESTOCK-*
-- MAT-AUTHZX-GET-*, MAT-AUTHZX-GETALL-*, MAT-AUTHZX-CREATE-*, MAT-AUTHZX-UPDATE-*, MAT-AUTHZX-DELETE-*, MAT-AUTHZX-RESTORE-*, MAT-AUTHZX-RESTOCK-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 9.1 or 9.2 complete.
-
-
 - [ ] 9.1 Create material controller
 
   - Create `backend/controllers/materialController.js` with material logic
@@ -481,18 +406,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 10. Vendor Controllers and Routes
 
-**Mapped PRD tests**
-
-- VEND-AUTH-*, VEND-VAL-*, VEND-AUTHZ-*, VEND-CTRL-*
-- VEND-VALX-GET-*, VEND-VALX-GETALL-*, VEND-VALX-CREATE-*, VEND-VALX-UPDATE-*, VEND-VALX-DELETE-*, VEND-VALX-RESTORE-*
-- VEND-AUTHZX-GET-*, VEND-AUTHZX-GETALL-*, VEND-AUTHZX-CREATE-*, VEND-AUTHZX-UPDATE-*, VEND-AUTHZX-DELETE-*, VEND-AUTHZX-RESTORE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 10.1 or 10.2 complete.
-
-
 - [ ] 10.1 Create vendor controller
 
   - Create `backend/controllers/vendorController.js` with vendor logic
@@ -517,18 +430,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 11. Attachment Controllers and Routes
 
-**Mapped PRD tests**
-
-- ATT-AUTH-*, ATT-VAL-*, ATT-AUTHZ-*, ATT-CTRL-*
-- ATT-VALX-GET-*, ATT-VALX-CREATE-*, ATT-VALX-DELETE-*
-- ATT-AUTHZX-GET-*, ATT-AUTHZX-CREATE-*, ATT-AUTHZX-DELETE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 11.1 or 11.2 complete.
-
-
 - [ ] 11.1 Create attachment controller
 
   - Create `backend/controllers/attachmentController.js` with attachment logic
@@ -546,18 +447,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 11.1-11.10, Design: API Endpoints_
 
 ### 12. Notification Controllers and Routes
-
-**Mapped PRD tests**
-
-- NOTIF-AUTH-*, NOTIF-VAL-*, NOTIF-AUTHZ-*, NOTIF-CTRL-*
-- NOTIF-VALX-GETALL-*, NOTIF-VALX-READ-*, NOTIF-VALX-READALL-*, NOTIF-VALX-DELETE-*, NOTIF-VALX-RESTORE-*
-- NOTIF-AUTHZX-GETALL-*, NOTIF-AUTHZX-READ-*, NOTIF-AUTHZX-READALL-*, NOTIF-AUTHZX-DELETE-*, NOTIF-AUTHZX-RESTORE-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 12.1 or 12.2 complete.
-
 
 - [ ] 12.1 Create notification controller
 
@@ -578,18 +467,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 15.1-15.11, Design: API Endpoints_
 
 ### 13. Dashboard Controllers and Routes
-
-**Mapped PRD tests**
-
-- DASH-AUTH-*, DASH-VAL-*, DASH-AUTHZ-*, DASH-CTRL-*
-- DASH-VALX-GET-*, DASH-VALX-GETALL-*
-- DASH-AUTHZX-GET-*, DASH-AUTHZX-GETALL-*
-- CROSS-VAL-001..005, CROSS-CTRL-001..005
-
-**Pass criteria**
-
-- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 13.1 or 13.2 complete.
-
 
 - [ ] 13.1 Create dashboard controller
 
@@ -1891,27 +1768,101 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Configure logging for production (file transport)
 - Configure error monitoring (optional: Sentry)
 
----
 
+## Canonical Decisions Execution Plan (CAN-001 to CAN-027)
 
-## Appendix: PRD Test Traceability (Global)
+> Each CAN item includes implementation tasks and explicit verification steps.
 
-| Test ID Family | Task/Subtask |
-| --- | --- |
-| AUTH-* | 4.1, 4.2 |
-| ORG-* | 4.1, 5.1, 5.2 |
-| DEPT-* | 4.1, 6.1, 6.2 |
-| USER-* | 4.1, 7.1, 7.2 |
-| TASK-* | 8.1, 8.2 |
-| ACT-* | 8.1, 8.2 |
-| COMM-* | 8.1, 8.2 |
-| MAT-* | 9.1, 9.2 |
-| VEND-* | 10.1, 10.2 |
-| ATT-* | 11.1, 11.2 |
-| NOTIF-* | 12.1, 12.2 |
-| DASH-* | 13.1, 13.2 |
-| CROSS-* | 3.2, 3.3, 4.1-13.2 |
+- [ ] **CAN-001** Implement canonical breakpoints across layouts/components.
+  - [ ] Update responsive wrappers and viewport tests matrix.
+  - [ ] Verification: manually validate xs/sm/md/lg/xl screenshots and nav behavior.
+- [ ] **CAN-002** Enforce bottom nav visibility/items and “More” profile grouping.
+  - [ ] Update bottom-nav config and auth-aware item rendering.
+  - [ ] Verification: xs shows nav; sm+ hides; profile actions reachable via More.
+- [ ] **CAN-003** Enforce comment depth max=5.
+  - [ ] Add backend depth validation and UI reply cut-off logic.
+  - [ ] Verification: depth 6 creation fails with validation error; depth 5 reply UI disabled.
+- [ ] **CAN-004** Implement union filters for list endpoints.
+  - [ ] Extend query parser/builders for composable filter predicates.
+  - [ ] Verification: combined filters return intersection-correct result sets.
+- [ ] **CAN-005** Centralize authorization matrix usage.
+  - [ ] Refactor API/FE checks to consume canonical matrix module only.
+  - [ ] Verification: spot-check role/resource matrix cases in UI and API.
+- [ ] **CAN-006** Standardize Ethiopian phone regex everywhere.
+  - [ ] Replace divergent regexes in model validators/forms/placeholders.
+  - [ ] Verification: +251xxxxxxxxx and 0xxxxxxxxx pass; invalid lengths fail.
+- [ ] **CAN-007** Remove terms checkbox from registration.
+  - [ ] Delete terms UI/control and remove backend dependency.
+  - [ ] Verification: registration completes with no terms field.
+- [ ] **CAN-008** Align verification + welcome email behavior.
+  - [ ] Enforce unverified login block and idempotent verify/welcome flow.
+  - [ ] Verification: initial user blocked pre-verify; org-created user auto-verified.
+- [ ] **CAN-009** Keep department selector in sidebar only (HOD).
+  - [ ] Remove selector from Department Details header and gate sidebar selector by HOD.
+  - [ ] Verification: HOD sees sidebar selector; non-HOD does not.
+- [ ] **CAN-010** Rename sidebar “My Tasks” to “Tasks”.
+  - [ ] Update nav labels/translations/constants.
+  - [ ] Verification: sidebar renders only “Tasks”.
+- [ ] **CAN-011** Enforce User Details tab set.
+  - [ ] Normalize tabs and routing to Overview/Tasks/Activity/Performance.
+  - [ ] Verification: all four tabs render and deep-link correctly.
+- [ ] **CAN-012** Handle 403 as toast-only.
+  - [ ] Adjust global error interceptor to suppress forbidden page/logout behavior.
+  - [ ] Verification: induced 403 shows toast, session remains active.
+- [ ] **CAN-013** Canonical status/priority enum + UI mapping.
+  - [ ] Consolidate enum constants and chip label mappings.
+  - [ ] Verification: invalid enum rejected; UI labels match spec.
+- [ ] **CAN-014** Use Intl for user-facing date formatting.
+  - [ ] Replace dayjs formatting calls in rendering layers.
+  - [ ] Verification: grep/lint shows no dayjs format usage in UI rendering.
+- [ ] **CAN-015** Block material/vendor delete on associations.
+  - [ ] Implement withDeleted association checks + 409 responses.
+  - [ ] Verification: associated entity delete returns 409; unassociated soft-delete succeeds.
+- [ ] **CAN-016** Enforce immutable fields for Admin/Manager/User targets.
+  - [ ] Add API guard + UI read-only fields for immutable set.
+  - [ ] Verification: attempted mutation returns 409 and UI disables edits.
+- [ ] **CAN-017** Implement mobile dialog full-height behavior.
+  - [ ] Apply canonical MUI dialog props/sx for <=600px.
+  - [ ] Verification: mobile viewport dialogs occupy 100vh and remain usable.
+- [ ] **CAN-018** Department Details tab architecture.
+  - [ ] Rework tabs to Overview/Members/Tasks with Tasks sub-tabs including All Activity.
+  - [ ] Verification: no top-level Activity tab; sub-tabs present under Tasks.
+- [ ] **CAN-019** Material SKU/inventory/restock consistency.
+  - [ ] Ensure transactional stock decrement/restock and low-stock cues.
+  - [ ] Verification: negative stock blocked; restock updates stock atomically.
+- [ ] **CAN-020** Vendor extended fields/metrics.
+  - [ ] Add schema/API/UI support for website/location/partner/status/rating/metrics.
+  - [ ] Verification: CRUD validates fields; details show metric cards.
+- [ ] **CAN-021** Disallow material attachments.
+  - [ ] Remove UI entry points and block API parentModel=Material.
+  - [ ] Verification: API rejects Material parent; material detail has no attachments section.
+- [ ] **CAN-022** Enforce department ACTIVE/INACTIVE status.
+  - [ ] Add status lifecycle checks and inactive-operation constraints.
+  - [ ] Verification: inactive department restricted per policy.
+- [ ] **CAN-023** Standardize Grid vs List implementation.
+  - [ ] Ensure grid uses MuiDataGrid and list uses MUI card Grid with `size` prop.
+  - [ ] Verification: mode toggles render canonical components and toolbar/columns.
+- [ ] **CAN-024** Move dashboard logo ownership to sidebar.
+  - [ ] Remove header logo and confirm sidebar-only logo presentation.
+  - [ ] Verification: dashboard header has no logo across breakpoints.
+- [ ] **CAN-025** Public header CTA label normalization.
+  - [ ] Set CTA labels to exactly “Log In” and “Sign Up”.
+  - [ ] Verification: header buttons match copy exactly.
+- [ ] **CAN-026** Department description max length 500.
+  - [ ] Add UI helper/limit + backend validation cap.
+  - [ ] Verification: 501 chars rejected in UI/API.
+- [ ] **CAN-027** Attachment URL regex + extension allowlist.
+  - [ ] Enforce extension pre-upload and Cloudinary URL pattern post-upload.
+  - [ ] Verification: disallowed ext rejected; valid URL pattern accepted only with version segment.
 
-**Execution Gate**
+## Manual consistency pass (cross-file relevance check)
 
-- A task/subtask is not complete until all mapped PRD IDs are executed and recorded with status, evidence link, and execution date.
+- [ ] Verified CAN-001..CAN-027 appear in requirements, design mapping, and task execution plan where they impact behavior.
+- [ ] Verified no CAN rule exists only in one `.kiro` file when it has cross-layer implications.
+- [ ] Verified CAN wording remains canonical with source section 23.1.
+
+### Trace Table
+
+| CAN-ID | Source location | Task location |
+|---|---|---|
+| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Execution Plan (CAN-001 to CAN-027)” + “Manual consistency pass” |

@@ -1102,13 +1102,73 @@ The system serves two types of organizations:
 5. WHEN a user views Appearance tab, THE System SHALL display theme (light/dark/system), language, date/time format, timezone
 6. WHEN a user updates settings, THE System SHALL persist via PUT /api/users/:userId/preferences and PUT /api/users/:userId/security
 
-### Requirement 64: PRD Test ID Normativity and Traceability
 
-**User Story:** As a delivery lead, I want PRD test IDs to be normative and linked to implementation tasks, so that release readiness is objectively verifiable.
+## Canonical Decisions (CAN) — Dedicated Section
 
-#### Acceptance Criteria
+### Verbatim canonical enumeration from `docs/product-requirements-document-new.md` §23.1
 
-1. THE System specification SHALL treat IDs defined in `docs/prd-test-cases.md` as normative acceptance references for backend route behavior.
-2. THE System implementation plan SHALL map backend controller/route tasks to relevant PRD test ID families.
-3. A task SHALL NOT be marked complete until all mapped PRD test IDs are executed and recorded with outcome evidence.
-4. Requirements, design, and tasks documents SHALL maintain bidirectional traceability between PRD test IDs and implementation work items.
+- [ ] CAN-001 Breakpoints are used everywhere (xs/sm/md/lg/xl).
+- [ ] CAN-002 Bottom navigation visibility and items are correct; Profile menu satisfies “More”.
+- [ ] CAN-003 Comment thread depth max is 5 and is enforced by validators + UI.
+- [ ] CAN-004 List filtering supports the union of all filters per resource.
+- [ ] CAN-005 Authorization matrix is enforced as the single source of truth (backend + frontend).
+- [ ] CAN-006 Phone regex `^(\+251\d{9}|0\d{9})$` enforced everywhere (backend + UI placeholders/examples).
+- [ ] CAN-007 No Terms acceptance checkbox exists in registration.
+- [ ] CAN-008 Email verification + welcome-email rules implemented exactly.
+- [ ] CAN-009 Department selector is in the sidebar (HOD only); no selector in Department Details header.
+- [ ] CAN-010 Sidebar uses label “Tasks” (not “My Tasks”).
+- [ ] CAN-011 User Details tabs are Overview / Tasks / Activity / Performance.
+- [ ] CAN-012 Frontend 403 is toast-only (no Forbidden page); 403 never logs out.
+- [ ] CAN-013 Canonical status/priority enums + UI label mapping implemented.
+- [ ] CAN-014 Frontend uses `Intl.DateTimeFormat` for formatting; `dayjs` not used for UI formatting.
+- [ ] CAN-015 Materials/Vendors delete is blocked when associated (409).
+- [ ] CAN-016 Immutable fields for Admin/Manager/User targets are enforced (UI + API).
+- [ ] CAN-017 Mobile dialogs (`width <= 600px`) are 100vh and use required MUI props + sx.
+- [ ] CAN-018 Department Details has 3 top-level tabs (Overview, Members, Tasks); Activity is Tasks sub-tab (“All Activity”).
+- [ ] CAN-019 Material inventory, SKU, and restock are implemented and consistent across UI/API/model.
+- [ ] CAN-020 Vendor extended fields (website/location/partner/status) and metrics are implemented.
+- [ ] CAN-021 Attachments do NOT support `parentModel="Material"`; Material Details has no attachments section.
+- [ ] CAN-022 Department status (ACTIVE/INACTIVE) is implemented and enforced.
+- [ ] CAN-023 Grid view uses `MuiDataGrid`; List view uses cards laid out with MUI `Grid` (v7 `size` prop) and the `MuiDataGridToolbar` + per-resource columns pattern is enforced.
+- [ ] CAN-024 Dashboard header does not show logo; logo is in sidebar header only.
+- [ ] CAN-025 Public header CTA labels are “Log In” and “Sign Up”.
+- [ ] CAN-026 Department description max length is 500 (helper text + validation).
+- [ ] CAN-027 Attachment fileUrl regex supports `image|video|raw` with version segment and allowlist includes .svg/.jpg/.jpeg/.png/.gif/.pdf/.doc/.docx/.xls/.xlsx/.txt/.mp4/.mp3.
+
+### CAN acceptance criteria and requirement cross-links
+
+| CAN ID | Explicit acceptance criteria statement(s) | Cross-links to affected requirement(s) |
+|---|---|---|
+| CAN-001 | UI SHALL implement canonical breakpoints xs/sm/md/lg/xl across layout, tables, and navigation behavior. | Req 56 (all criteria), Req 61.3-61.4 |
+| CAN-002 | Bottom navigation SHALL be visible on xs only with canonical items and Profile mapped under “More”. | Req 56.4, Req 61.5 |
+| CAN-003 | Comment nesting depth SHALL be capped at 5 and rejected by validator and blocked in UI composer. | Req 9 (Task Comment criteria) |
+| CAN-004 | List endpoints SHALL support union filtering where multiple filter dimensions may be combined in one request. | Req 46 (List/Search API), Req 8 (Task listing) |
+| CAN-005 | Authorization checks SHALL exclusively evaluate the canonical matrix in backend and frontend permission gating. | Req 4, Req 43, Req 60 |
+| CAN-006 | Phone validation SHALL enforce `^(\+251\d{9}|0\d{9})$` for User/Organization/Vendor and UI examples SHALL match. | Req 2.2, Req 6, Req 13 |
+| CAN-007 | Registration UX SHALL omit terms checkbox and registration SHALL complete without terms field submission. | Req 2 (registration flow) |
+| CAN-008 | Initial registration user SHALL remain unverified until email verification; org-created users SHALL be auto-verified; welcome email rules SHALL be deterministic/idempotent. | Req 2.6-2.8, Req 6 (org-created users), Req 19 auth flows |
+| CAN-009 | Department selector SHALL appear only in sidebar for HOD and SHALL NOT appear in Department Details header. | Req 61.2, Req 5 (department detail UX) |
+| CAN-010 | Sidebar navigation label SHALL be “Tasks” everywhere. | Req 61.2 |
+| CAN-011 | User Details page SHALL expose tabs exactly: Overview, Tasks, Activity, Performance. | Req 6 (user details page criteria) |
+| CAN-012 | Frontend SHALL surface 403 as toast-only and SHALL NOT redirect to forbidden page or force logout. | Req 24 (error handling), Req 60 |
+| CAN-013 | Task status/priority enums SHALL remain canonical in DB/API and map to canonical UI labels/chips. | Req 7 (task model/CRUD), Req 47 (enum alignment) |
+| CAN-014 | User-facing date/time rendering SHALL use `Intl.DateTimeFormat`; `dayjs` SHALL be limited to internal parsing/adapter usage. | Req 58.6, Req 56 |
+| CAN-015 | Material/Vendor delete SHALL perform association checks including soft-deleted relations and return 409 on conflict. | Req 12.8-12.9, Req 13.4-13.5 |
+| CAN-016 | Edits on Admin/Manager/User targets SHALL reject changes to immutable fields in API and disable/read-only in UI. | Req 6 (immutability), Req 60 |
+| CAN-017 | Dialogs at width<=600px SHALL use full-screen 100vh behavior with required MUI props and sx tokens. | Req 56, Req 61 |
+| CAN-018 | Department Details SHALL have top-level tabs Overview/Members/Tasks and Task area sub-tabs including “All Activity”. | Req 5 (department details criteria) |
+| CAN-019 | Material inventory, SKU uniqueness, consumption, and restock SHALL execute atomically and stay consistent in UI/API/model. | Req 12, Req 7 (task material usage) |
+| CAN-020 | Vendor extended fields and derived performance metrics SHALL be persisted, validated, and rendered in detail/list experiences. | Req 13.1, Req 13.6-13.7 |
+| CAN-021 | Attachments SHALL support only Task/TaskActivity/TaskComment parents; Material attachments SHALL be disallowed in API and hidden in UI. | Req 11.5-11.6 |
+| CAN-022 | Department status SHALL be enum ACTIVE/INACTIVE and enforcement SHALL prevent invalid operations on inactive departments. | Req 5 (department schema/operations) |
+| CAN-023 | Grid view SHALL use `MuiDataGrid`; list view SHALL use card layout with MUI Grid `size` prop and canonical toolbar/columns patterns. | Req 56.5, Req 61, Req 8/12/13 list pages |
+| CAN-024 | Dashboard header SHALL omit logo; sidebar header SHALL own logo rendering. | Req 61.2 |
+| CAN-025 | Public header auth CTAs SHALL be labeled exactly “Log In” and “Sign Up”. | Req 61.1 |
+| CAN-026 | Department description SHALL enforce max length 500 in validators and UI helper/error text. | Req 2.3, Req 5 |
+| CAN-027 | Attachment file URL SHALL match Cloudinary pattern (image/video/raw with version) and extension allowlist SHALL be enforced pre-upload. | Req 11.1-11.4 |
+
+### Trace Table
+
+| CAN-ID | Source location | Requirements location |
+|---|---|---|
+| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions (CAN) — Dedicated Section” (verbatim list + acceptance cross-link table) |
