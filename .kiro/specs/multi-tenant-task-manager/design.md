@@ -83,6 +83,33 @@ MongoDB (data persistence)
 6. **Services**: Interact with external systems (Nodemailer, Socket.IO, Cloudinary)
 7. **Models**: Define Mongoose schemas, implement virtuals/hooks, handle database operations
 
+
+### Testability Hooks and Verification Boundaries
+
+To enforce PRD-driven verification, backend design includes explicit testability hooks for validator boundaries, authorization checks, and side-effect observability.
+
+**Validator Boundaries**:
+
+- Validation middleware is the sole owner of request shape validation and coercion and MUST expose sanitized payloads via `req.validated.body`, `req.validated.params`, and `req.validated.query`.
+- Validator modules MUST publish route-to-validator maps so each endpoint can be directly mapped to PRD Validation Matrix IDs.
+- Existence checks for create/restore paths MUST use `.withDeleted()` where defined in PRD IDs to make soft-delete behavior testable.
+
+**Authorization Check Boundaries**:
+
+- Authorization middleware MUST emit structured decision metadata for each request: `resource`, `action`, `role`, `scope`, `ownership`, and `decision` (allow/deny).
+- Decision metadata MUST be logged in non-production and optionally sampled in production for auditability against Authorization Matrix IDs.
+- Controller logic MUST not bypass authorization middleware for protected routes; any exception path must be explicitly documented and tested.
+
+**Side-Effect Observability Hooks**:
+
+- Controllers that emit side effects (socket events, email dispatch, notification creation, stock mutation, cascade soft-delete/restore) MUST produce deterministic operation summaries in responses or logs.
+- Service adapters (email/socket/cloudinary) MUST expose injectable interfaces so manual and scripted verification can capture invocation evidence without changing business logic.
+- Transactional write paths MUST log transaction lifecycle markers (`session.start`, `commit`, `abort`) to support verification of CROSS-CTRL requirements.
+
+**Traceability Hook**:
+
+- Each backend route definition SHOULD include PRD test ID annotations (comment or metadata constant) to support maintenance of `Test ID -> Task/Subtask` mapping in the implementation plan.
+
 ### Frontend Architecture
 
 The frontend follows a feature-based component structure with Redux Toolkit for state management:
@@ -2633,54 +2660,6 @@ for (const item of materials) {
   }
 }
 ```
-
-
-## Phase Delivery Model and Dependency Gates (PRD Section 22)
-
-### Canonical Phase Taxonomy and Order
-
-This design adopts PRD Section 22 as the single phase source and enforces a 9-phase sequence with no renaming or reordering:
-
-1. Phase 0: Deep Project Understanding
-2. Phase 1: Core Foundations (Backend Only)
-3. Phase 2: Authentication and Basic Security (Backend -> Frontend)
-4. Phase 3: Cross-Cutting Services and Middleware (Backend Only)
-5. Phase 4: Organization-Level CRUD (Backend -> Frontend)
-6. Phase 5: Task Domain (Backend -> Frontend)
-7. Phase 6: Materials, Vendors, Notifications (Backend -> Frontend)
-8. Phase 7: Dashboard and Authorization Finalization (Backend -> Frontend)
-9. Phase 8: Integration, Polish, Handoff
-
-### Phase Entry and Exit Criteria
-
-- **Phase 0 entry**: PRD and repository are available.
-  - **Exit**: File map and implementation constraints are reviewed; phase gates are documented for execution.
-- **Phase 1 entry**: Phase 0 exit criteria complete.
-  - **Exit**: Core backend constants, env validation, base models, error skeleton, and bootstrap/health endpoint are ready.
-- **Phase 2 entry**: Phase 1 exit criteria complete.
-  - **Exit**: Auth flows and baseline security middleware are implemented; frontend auth can consume validated backend contracts.
-- **Phase 3 entry**: Phase 2 exit criteria complete.
-  - **Exit**: Cross-cutting middleware/services (authorization matrix, rate limiting, validation pipeline, notification/email primitives) are ready for resource domains.
-- **Phase 4 entry**: Phase 3 exit criteria complete.
-  - **Exit**: Organization/department/user CRUD backend is validated, then frontend modules are integrated against those contracts.
-- **Phase 5 entry**: Phase 4 exit criteria complete.
-  - **Exit**: Task domain backend and realtime hooks are validated, then frontend task workflows are integrated.
-- **Phase 6 entry**: Phase 5 exit criteria complete.
-  - **Exit**: Materials/vendors/notifications backend is validated, then frontend modules and socket wiring are integrated.
-- **Phase 7 entry**: Phase 6 exit criteria complete.
-  - **Exit**: Dashboard aggregations and final authorization matrix/UI gates are complete and consistent.
-- **Phase 8 entry**: Phase 7 exit criteria complete.
-  - **Exit**: Integration polish, handoff artifacts, and final sync of contracts/constants are complete.
-
-### Dependency Gates and Synchronous Execution Rules
-
-- Execute phases synchronously in strict order; do not start Phase N+1 before Phase N exit.
-- Starting from Phase 1, backend and frontend development run concurrently for early integration feedback, but backend deliverables still gate frontend feature implementation.
-- Enforce backend internal dependency order per feature: shared constants/utilities -> models -> authorization matrix -> middleware -> validators -> controllers -> routes.
-- Enforce frontend dependency order per feature: validated routes/contracts -> RTK endpoints -> hooks/state wiring -> pages/components.
-- Middleware-before-controller rule is mandatory for auth, authorization, validation, and rate limiting.
-- Socket/realtime primitives are gated by user context and notification readiness on both backend and frontend.
-- Before phase exit, update previously implemented modules affected by integration changes to avoid stale mismatches.
 
 ## Testing Strategy
 

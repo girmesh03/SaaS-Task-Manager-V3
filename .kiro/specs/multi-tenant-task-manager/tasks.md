@@ -2,31 +2,20 @@
 
 ## Overview
 
-This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized using the PRD Section 22 phase taxonomy and ordering (Phase 0 through Phase 8) as the single source of truth.
+This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized into sequential phases covering backend implementation, frontend implementation, integration, testing, and alignment corrections.
 
 **Total Requirements**: 63 requirements with 1,104 lines of acceptance criteria
 **Design Scope**: 2,807 lines covering architecture, data models, API endpoints, and authorization
 **Technology Stack**: MERN (MongoDB, Express, React, Node.js) with Socket.IO, Redux Toolkit, Material UI
 
-**Implementation Order (PRD Section 22)**:
+**Implementation Order**:
 
-1. Phase 0: Deep Project Understanding
-2. Phase 1: Core Foundations (Backend Only)
-3. Phase 2: Authentication and Basic Security (Backend -> Frontend)
-4. Phase 3: Cross-Cutting Services and Middleware (Backend Only)
-5. Phase 4: Organization-Level CRUD (Backend -> Frontend)
-6. Phase 5: Task Domain (Backend -> Frontend)
-7. Phase 6: Materials, Vendors, Notifications (Backend -> Frontend)
-8. Phase 7: Dashboard and Authorization Finalization (Backend -> Frontend)
-9. Phase 8: Integration, Polish, Handoff
-
-**Synchronous Phase Rules (Mandatory)**:
-
-- Execute phases strictly in order; do not start Phase N+1 before Phase N exit criteria are met.
-- Starting from Phase 1, keep backend and frontend development servers running concurrently to surface integration gaps early.
-- For all Backend -> Frontend phases, frontend tasks are blocked until backend API contracts are implemented and validated.
-- Enforce dependency gates inside every phase: models -> authorization matrix -> middleware -> validators -> controllers -> routes -> frontend RTK API -> frontend UI/pages.
-- Middleware must be implemented before any controller that depends on it; controllers must exist before their consuming frontend modules.
+1. Backend foundation (database, models, middleware)
+2. Backend API (controllers, routes, services)
+3. Frontend foundation (setup, authentication, layouts)
+4. Frontend features (components, pages, real-time)
+5. Integration and testing
+6. Alignment corrections
 
 **Key Constraints**:
 
@@ -38,17 +27,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 0: Deep Project Understanding
-
-### 0. Repository and PRD Alignment Baseline
-
-- [ ] 0.1 Review PRD Section 22 as canonical phase source
-- [ ] 0.2 Confirm backend/frontend file map and architecture boundaries
-- [ ] 0.3 Confirm phase gates and sequencing constraints are documented before implementation
-
----
-
-## Phase 1: Core Foundations (Backend Only)
+## Phase 1: Backend Foundation
 
 ### 1. Database Setup and Configuration
 
@@ -253,9 +232,21 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 2: Authentication and Basic Security (Backend -> Frontend)
+## Phase 2: Backend API Implementation
 
 ### 4. Authentication Controllers and Routes
+
+**Mapped PRD tests**
+
+- AUTH-VAL-*, AUTH-AUTH-*, AUTH-AUTHZ-*, AUTH-CTRL-*
+- ORG-VALX-CREATE-*, DEPT-VALX-CREATE-*, USER-VALX-CREATE-* (registration payload validators)
+- ORG-AUTHZX-CREATE-*, DEPT-AUTHZX-CREATE-*, USER-AUTHZX-CREATE-* (registration authz pathways)
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 4.1 or 4.2 complete.
+
 
 - [ ] 4.1 Create authentication controller
 
@@ -287,6 +278,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 5. Organization Controllers and Routes
 
+**Mapped PRD tests**
+
+- ORG-AUTH-*, ORG-VAL-*, ORG-AUTHZ-*, ORG-CTRL-*
+- ORG-VALX-GET-*, ORG-VALX-GETALL-*, ORG-VALX-UPDATE-*, ORG-VALX-DELETE-*, ORG-VALX-RESTORE-*
+- ORG-AUTHZX-GET-*, ORG-AUTHZX-GETALL-*, ORG-AUTHZX-UPDATE-*, ORG-AUTHZX-DELETE-*, ORG-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 5.1 or 5.2 complete.
+
+
 - [ ] 5.1 Create organization controller
 
   - Create `backend/controllers/organizationController.js` with organization logic
@@ -308,6 +311,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 1.3, 1.4, 1.5, Design: API Endpoints_
 
 ### 6. Department Controllers and Routes
+
+**Mapped PRD tests**
+
+- DEPT-AUTH-*, DEPT-VAL-*, DEPT-AUTHZ-*, DEPT-CTRL-*
+- DEPT-VALX-GET-*, DEPT-VALX-GETALL-*, DEPT-VALX-CREATE-*, DEPT-VALX-UPDATE-*, DEPT-VALX-DELETE-*, DEPT-VALX-RESTORE-*
+- DEPT-AUTHZX-GET-*, DEPT-AUTHZX-GETALL-*, DEPT-AUTHZX-CREATE-*, DEPT-AUTHZX-UPDATE-*, DEPT-AUTHZX-DELETE-*, DEPT-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 6.1 or 6.2 complete.
+
 
 - [ ] 6.1 Create department controller
 
@@ -336,6 +351,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 5.1-5.9, Design: API Endpoints_
 
 ### 7. User Controllers and Routes
+
+**Mapped PRD tests**
+
+- USER-AUTH-*, USER-VAL-*, USER-AUTHZ-*, USER-CTRL-*
+- USER-VALX-GET-*, USER-VALX-GETALL-*, USER-VALX-CREATE-*, USER-VALX-UPDATE-*, USER-VALX-DELETE-*, USER-VALX-RESTORE-*
+- USER-AUTHZX-GET-*, USER-AUTHZX-GETALL-*, USER-AUTHZX-CREATE-*, USER-AUTHZX-UPDATE-*, USER-AUTHZX-DELETE-*, USER-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 7.1 or 7.2 complete.
+
 
 - [ ] 7.1 Create user controller
 
@@ -369,6 +396,21 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 8. Task Controllers and Routes
 
+**Mapped PRD tests**
+
+- TASK-AUTH-*, TASK-VAL-*, TASK-AUTHZ-*, TASK-CTRL-*
+- ACT-AUTH-*, ACT-VAL-*, ACT-AUTHZ-*, ACT-CTRL-*
+- COMM-AUTH-*, COMM-VAL-*, COMM-AUTHZ-*, COMM-CTRL-*
+- TASK-VALX-GET-*, TASK-VALX-GETALL-*, TASK-VALX-CREATE-*, TASK-VALX-UPDATE-*, TASK-VALX-DELETE-*, TASK-VALX-RESTORE-*
+- TASK-AUTHZX-GET-*, TASK-AUTHZX-GETALL-*, TASK-AUTHZX-CREATE-*, TASK-AUTHZX-UPDATE-*, TASK-AUTHZX-DELETE-*, TASK-AUTHZX-RESTORE-*
+- ACT-VALX-*, ACT-AUTHZX-*, COMM-VALX-*, COMM-AUTHZX-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 8.1 or 8.2 complete.
+
+
 - [ ] 8.1 Create task controller
 
   - Create `backend/controllers/taskController.js` with task logic
@@ -401,6 +443,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 9. Material Controllers and Routes
 
+**Mapped PRD tests**
+
+- MAT-AUTH-*, MAT-VAL-*, MAT-AUTHZ-*, MAT-CTRL-*
+- MAT-VALX-GET-*, MAT-VALX-GETALL-*, MAT-VALX-CREATE-*, MAT-VALX-UPDATE-*, MAT-VALX-DELETE-*, MAT-VALX-RESTORE-*, MAT-VALX-RESTOCK-*
+- MAT-AUTHZX-GET-*, MAT-AUTHZX-GETALL-*, MAT-AUTHZX-CREATE-*, MAT-AUTHZX-UPDATE-*, MAT-AUTHZX-DELETE-*, MAT-AUTHZX-RESTORE-*, MAT-AUTHZX-RESTOCK-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 9.1 or 9.2 complete.
+
+
 - [ ] 9.1 Create material controller
 
   - Create `backend/controllers/materialController.js` with material logic
@@ -427,6 +481,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 10. Vendor Controllers and Routes
 
+**Mapped PRD tests**
+
+- VEND-AUTH-*, VEND-VAL-*, VEND-AUTHZ-*, VEND-CTRL-*
+- VEND-VALX-GET-*, VEND-VALX-GETALL-*, VEND-VALX-CREATE-*, VEND-VALX-UPDATE-*, VEND-VALX-DELETE-*, VEND-VALX-RESTORE-*
+- VEND-AUTHZX-GET-*, VEND-AUTHZX-GETALL-*, VEND-AUTHZX-CREATE-*, VEND-AUTHZX-UPDATE-*, VEND-AUTHZX-DELETE-*, VEND-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 10.1 or 10.2 complete.
+
+
 - [ ] 10.1 Create vendor controller
 
   - Create `backend/controllers/vendorController.js` with vendor logic
@@ -451,6 +517,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ### 11. Attachment Controllers and Routes
 
+**Mapped PRD tests**
+
+- ATT-AUTH-*, ATT-VAL-*, ATT-AUTHZ-*, ATT-CTRL-*
+- ATT-VALX-GET-*, ATT-VALX-CREATE-*, ATT-VALX-DELETE-*
+- ATT-AUTHZX-GET-*, ATT-AUTHZX-CREATE-*, ATT-AUTHZX-DELETE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 11.1 or 11.2 complete.
+
+
 - [ ] 11.1 Create attachment controller
 
   - Create `backend/controllers/attachmentController.js` with attachment logic
@@ -468,6 +546,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 11.1-11.10, Design: API Endpoints_
 
 ### 12. Notification Controllers and Routes
+
+**Mapped PRD tests**
+
+- NOTIF-AUTH-*, NOTIF-VAL-*, NOTIF-AUTHZ-*, NOTIF-CTRL-*
+- NOTIF-VALX-GETALL-*, NOTIF-VALX-READ-*, NOTIF-VALX-READALL-*, NOTIF-VALX-DELETE-*, NOTIF-VALX-RESTORE-*
+- NOTIF-AUTHZX-GETALL-*, NOTIF-AUTHZX-READ-*, NOTIF-AUTHZX-READALL-*, NOTIF-AUTHZX-DELETE-*, NOTIF-AUTHZX-RESTORE-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 12.1 or 12.2 complete.
+
 
 - [ ] 12.1 Create notification controller
 
@@ -488,6 +578,18 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - _Requirements: 15.1-15.11, Design: API Endpoints_
 
 ### 13. Dashboard Controllers and Routes
+
+**Mapped PRD tests**
+
+- DASH-AUTH-*, DASH-VAL-*, DASH-AUTHZ-*, DASH-CTRL-*
+- DASH-VALX-GET-*, DASH-VALX-GETALL-*
+- DASH-AUTHZX-GET-*, DASH-AUTHZX-GETALL-*
+- CROSS-VAL-001..005, CROSS-CTRL-001..005
+
+**Pass criteria**
+
+- Required IDs above MUST be executed and test evidence recorded in the execution log before marking tasks 13.1 or 13.2 complete.
+
 
 - [ ] 13.1 Create dashboard controller
 
@@ -545,7 +647,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 3: Cross-Cutting Services and Middleware (Backend Only)
+## Phase 3: Frontend Foundation
 
 ### 15. Project Setup and Configuration
 
@@ -660,7 +762,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 4: Organization-Level CRUD (Backend -> Frontend)
+## Phase 4: Frontend Features
 
 ### 19. Authentication Pages
 
@@ -1208,7 +1310,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 5: Task Domain (Backend -> Frontend)
+## Phase 5: Integration and Testing
 
 ### 32. Real-Time Integration
 
@@ -1523,7 +1625,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 6: Materials, Vendors, Notifications (Backend -> Frontend)
+## Phase 6: Alignment Corrections
 
 ### 35. Requirements Document Updates
 
@@ -1669,19 +1771,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 7: Dashboard and Authorization Finalization (Backend -> Frontend)
-
-### 37. Dashboard and Authorization Finalization Gate
-
-- [ ] 37.1 Finalize backend dashboard aggregation endpoints and pagination/filter/sort conventions
-- [ ] 37.2 Finalize canonical authorization matrix for all resources and ownership combinations
-- [ ] 37.3 Validate middleware and authorization checks are enforced before controller execution paths
-- [ ] 37.4 Start frontend dashboard implementation only after backend dashboard endpoints are validated
-- [ ] 37.5 Finalize frontend authorization UI gating against backend authorization outcomes
-
----
-
-## Phase 8: Integration, Polish, Handoff
+## Phase 7: Final Integration and Deployment Preparation
 
 ### 37. Backend Integration
 
@@ -1764,14 +1854,13 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ## Notes
 
-**Implementation Dependencies and Phase Gates**:
+**Implementation Dependencies**:
 
-- Phase order is synchronous: Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5 -> Phase 6 -> Phase 7 -> Phase 8.
-- Backend-before-frontend gate: In Backend -> Frontend phases, backend API contract and validation client check must pass before frontend work starts.
-- Middleware-before-controller gate: Required middleware (auth, authorization, validation, rate limiting) must be implemented and wired before dependent controllers.
-- Model-before-service/controller gate: Models and shared utilities/constants must exist before services, validators, or controllers consume them.
-- Controller-before-route-before-frontend gate: Controllers are implemented before routes; routes are validated before RTK endpoints and UI wiring.
-- Socket gate: Socket primitives are enabled only after user identity context and notification service are ready on backend and frontend.
+- Backend models must be completed before controllers
+- Backend middleware must be completed before routes
+- Frontend store must be configured before components
+- Frontend layouts must be completed before feature components
+- Real-time integration requires both backend Socket.IO service and frontend socketService
 
 **Testing Approach**:
 
@@ -1801,3 +1890,28 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Configure rate limiting for production
 - Configure logging for production (file transport)
 - Configure error monitoring (optional: Sentry)
+
+---
+
+
+## Appendix: PRD Test Traceability (Global)
+
+| Test ID Family | Task/Subtask |
+| --- | --- |
+| AUTH-* | 4.1, 4.2 |
+| ORG-* | 4.1, 5.1, 5.2 |
+| DEPT-* | 4.1, 6.1, 6.2 |
+| USER-* | 4.1, 7.1, 7.2 |
+| TASK-* | 8.1, 8.2 |
+| ACT-* | 8.1, 8.2 |
+| COMM-* | 8.1, 8.2 |
+| MAT-* | 9.1, 9.2 |
+| VEND-* | 10.1, 10.2 |
+| ATT-* | 11.1, 11.2 |
+| NOTIF-* | 12.1, 12.2 |
+| DASH-* | 13.1, 13.2 |
+| CROSS-* | 3.2, 3.3, 4.1-13.2 |
+
+**Execution Gate**
+
+- A task/subtask is not complete until all mapped PRD IDs are executed and recorded with status, evidence link, and execution date.
