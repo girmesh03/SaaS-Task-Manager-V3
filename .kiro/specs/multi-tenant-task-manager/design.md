@@ -2804,3 +2804,42 @@ Example:
 - Manual test execution
 - Manual integration testing
 - Manual accessibility testing
+
+
+## Canonical Decisions Implementation Mapping (CAN-001 to CAN-027)
+
+| CAN ID | Data model implications | API implications | UI implications | Middleware/validation implications |
+|---|---|---|---|---|
+| CAN-001 | Persist responsive prefs only; no schema change required. | Support payloads independent of viewport. | Enforce xs/sm/md/lg/xl behavior in layout and components. | N/A except server-driven page size defaults. |
+| CAN-002 | N/A | N/A | Bottom nav shown on xs only with canonical items; “More” hosts profile actions. | Route guards still apply for nav actions. |
+| CAN-003 | TaskComment model stores parent and depth guard (max 5). | Comment create/update endpoints reject depth > 5. | Disable reply UI at depth 5; show explanatory helper text. | Validator computes ancestor depth and blocks over-limit writes. |
+| CAN-004 | Add indexed filterable fields per resource. | List endpoints accept combined filters and compose query predicates. | Filter panels allow multi-select/multi-field combinations. | Query validator normalizes filter union safely. |
+| CAN-005 | Keep authorization matrix as canonical constants. | Every protected endpoint checks matrix-derived action/scope. | Permission hooks/render gates consume same matrix-derived contract. | `authorize` middleware is single decision engine. |
+| CAN-006 | Organization/User/Vendor phone fields all use same regex rule. | Create/update endpoints enforce canonical regex. | Input masks/placeholders and examples match Ethiopian format. | Shared phone validator module reused by all resources. |
+| CAN-007 | No `termsAccepted` field in registration schema. | Register API ignores/rejects terms payload fields. | Registration form excludes terms checkbox entirely. | Validation schema omits terms acceptance checks. |
+| CAN-008 | User/Organization verification fields + token metadata required. | Register/verify/resend/login flows enforce verification semantics and welcome email idempotency. | Verification pending UI + resend actions; org-created users marked verified. | Auth middleware blocks unverified users from protected flows. |
+| CAN-009 | HOD flag drives selector eligibility. | Department switch endpoint constrained to HOD context. | Sidebar-only department selector; remove from Dept Details header. | Guard selector actions by role/HOD claims. |
+| CAN-010 | N/A | N/A | Sidebar label text fixed to “Tasks”. | N/A |
+| CAN-011 | N/A | User detail endpoint provides data needed for 4 tabs. | Tabs fixed: Overview/Tasks/Activity/Performance. | Client route guards per tab permission. |
+| CAN-012 | N/A | 403 responses remain standard error payload. | Global error handler shows toast only; no forbidden page redirect/logout. | Auth refresh/logout middleware must not treat 403 as auth failure. |
+| CAN-013 | Canonical enums in Task schema for status/priority. | Endpoints validate enums and reject unknown values. | Chips/labels map enums to canonical display values/colors. | Shared enum validator and response serializer. |
+| CAN-014 | Store timestamps as UTC dates. | API returns ISO timestamps. | Render via `Intl.DateTimeFormat`; no dayjs formatting output. | Lint/static checks for forbidden dayjs formatting calls. |
+| CAN-015 | Soft-delete relationship queries must include withDeleted checks. | Material/vendor delete endpoints return 409 on association conflict. | Confirmation dialogs display conflict guidance (set INACTIVE). | Pre-delete validators run association checks deterministically. |
+| CAN-016 | Mark target fields immutable for Admin/Manager/User targets. | User update API rejects immutable field edits with 409. | Disable immutable fields in edit dialogs/forms. | Validation/mutation guards enforce target-role immutability. |
+| CAN-017 | N/A | N/A | Full-screen mobile dialog recipe (`fullScreen`, 100vh sx, safe area padding). | N/A |
+| CAN-018 | N/A | Department detail API exposes overview/members/tasks + task sub-tabs data. | 3 top-level tabs + “All Activity” under Tasks sub-tab group. | Route/data guards per tab. |
+| CAN-019 | Material schema includes SKU + inventory object; task/activity embeds material usage quantities. | Restock/consume endpoints use DB transactions and enforce no-negative stock. | Material forms include SKU/inventory fields + restock workflow + low-stock indicators. | Transaction/session middleware wraps material-affecting mutations. |
+| CAN-020 | Vendor schema includes website/location/isVerifiedPartner/status/rating + metric derivations. | Vendor CRUD validates extended fields; details endpoint returns computed metrics. | Vendor detail/list render badge, status, extended metadata, metric cards. | Field validators for URL/rating/status. |
+| CAN-021 | Attachment parentModel enum excludes `Material`. | Attachment create endpoint rejects `parentModel=Material`. | Material detail omits attachment panels/actions. | Parent model validator allowlist enforced. |
+| CAN-022 | Department schema requires status enum ACTIVE/INACTIVE. | Department create/update enforce status lifecycle constraints. | Status chips, filters, and disabled behaviors for INACTIVE dept contexts. | Authorization/validator checks for inactive department restrictions. |
+| CAN-023 | N/A | N/A | Grid mode = `MuiDataGrid`; List mode = cards using MUI Grid `size` prop and standard toolbar/columns. | UI composition checks in shared view components. |
+| CAN-024 | N/A | N/A | Remove logo from dashboard header; keep logo in sidebar header only. | N/A |
+| CAN-025 | N/A | N/A | Public header CTA labels fixed to “Log In” / “Sign Up”. | N/A |
+| CAN-026 | Department description field maxLength=500 in schema metadata. | Department create/update enforce 500-char limit. | Textarea helper counter + validation message at 500 max. | Shared string-length validator. |
+| CAN-027 | Attachment schema enforces Cloudinary URL regex and extension metadata. | Upload/create endpoints enforce extension allowlist + fileUrl pattern. | File picker hints allowed extensions; error messages for violations. | File validation middleware checks MIME/ext + URL regex. |
+
+### Trace Table
+
+| CAN-ID | Source location | Design location |
+|---|---|---|
+| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Implementation Mapping (CAN-001 to CAN-027)” |

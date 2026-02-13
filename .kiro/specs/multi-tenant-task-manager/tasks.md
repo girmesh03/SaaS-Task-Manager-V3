@@ -1767,3 +1767,102 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Configure rate limiting for production
 - Configure logging for production (file transport)
 - Configure error monitoring (optional: Sentry)
+
+
+## Canonical Decisions Execution Plan (CAN-001 to CAN-027)
+
+> Each CAN item includes implementation tasks and explicit verification steps.
+
+- [ ] **CAN-001** Implement canonical breakpoints across layouts/components.
+  - [ ] Update responsive wrappers and viewport tests matrix.
+  - [ ] Verification: manually validate xs/sm/md/lg/xl screenshots and nav behavior.
+- [ ] **CAN-002** Enforce bottom nav visibility/items and “More” profile grouping.
+  - [ ] Update bottom-nav config and auth-aware item rendering.
+  - [ ] Verification: xs shows nav; sm+ hides; profile actions reachable via More.
+- [ ] **CAN-003** Enforce comment depth max=5.
+  - [ ] Add backend depth validation and UI reply cut-off logic.
+  - [ ] Verification: depth 6 creation fails with validation error; depth 5 reply UI disabled.
+- [ ] **CAN-004** Implement union filters for list endpoints.
+  - [ ] Extend query parser/builders for composable filter predicates.
+  - [ ] Verification: combined filters return intersection-correct result sets.
+- [ ] **CAN-005** Centralize authorization matrix usage.
+  - [ ] Refactor API/FE checks to consume canonical matrix module only.
+  - [ ] Verification: spot-check role/resource matrix cases in UI and API.
+- [ ] **CAN-006** Standardize Ethiopian phone regex everywhere.
+  - [ ] Replace divergent regexes in model validators/forms/placeholders.
+  - [ ] Verification: +251xxxxxxxxx and 0xxxxxxxxx pass; invalid lengths fail.
+- [ ] **CAN-007** Remove terms checkbox from registration.
+  - [ ] Delete terms UI/control and remove backend dependency.
+  - [ ] Verification: registration completes with no terms field.
+- [ ] **CAN-008** Align verification + welcome email behavior.
+  - [ ] Enforce unverified login block and idempotent verify/welcome flow.
+  - [ ] Verification: initial user blocked pre-verify; org-created user auto-verified.
+- [ ] **CAN-009** Keep department selector in sidebar only (HOD).
+  - [ ] Remove selector from Department Details header and gate sidebar selector by HOD.
+  - [ ] Verification: HOD sees sidebar selector; non-HOD does not.
+- [ ] **CAN-010** Rename sidebar “My Tasks” to “Tasks”.
+  - [ ] Update nav labels/translations/constants.
+  - [ ] Verification: sidebar renders only “Tasks”.
+- [ ] **CAN-011** Enforce User Details tab set.
+  - [ ] Normalize tabs and routing to Overview/Tasks/Activity/Performance.
+  - [ ] Verification: all four tabs render and deep-link correctly.
+- [ ] **CAN-012** Handle 403 as toast-only.
+  - [ ] Adjust global error interceptor to suppress forbidden page/logout behavior.
+  - [ ] Verification: induced 403 shows toast, session remains active.
+- [ ] **CAN-013** Canonical status/priority enum + UI mapping.
+  - [ ] Consolidate enum constants and chip label mappings.
+  - [ ] Verification: invalid enum rejected; UI labels match spec.
+- [ ] **CAN-014** Use Intl for user-facing date formatting.
+  - [ ] Replace dayjs formatting calls in rendering layers.
+  - [ ] Verification: grep/lint shows no dayjs format usage in UI rendering.
+- [ ] **CAN-015** Block material/vendor delete on associations.
+  - [ ] Implement withDeleted association checks + 409 responses.
+  - [ ] Verification: associated entity delete returns 409; unassociated soft-delete succeeds.
+- [ ] **CAN-016** Enforce immutable fields for Admin/Manager/User targets.
+  - [ ] Add API guard + UI read-only fields for immutable set.
+  - [ ] Verification: attempted mutation returns 409 and UI disables edits.
+- [ ] **CAN-017** Implement mobile dialog full-height behavior.
+  - [ ] Apply canonical MUI dialog props/sx for <=600px.
+  - [ ] Verification: mobile viewport dialogs occupy 100vh and remain usable.
+- [ ] **CAN-018** Department Details tab architecture.
+  - [ ] Rework tabs to Overview/Members/Tasks with Tasks sub-tabs including All Activity.
+  - [ ] Verification: no top-level Activity tab; sub-tabs present under Tasks.
+- [ ] **CAN-019** Material SKU/inventory/restock consistency.
+  - [ ] Ensure transactional stock decrement/restock and low-stock cues.
+  - [ ] Verification: negative stock blocked; restock updates stock atomically.
+- [ ] **CAN-020** Vendor extended fields/metrics.
+  - [ ] Add schema/API/UI support for website/location/partner/status/rating/metrics.
+  - [ ] Verification: CRUD validates fields; details show metric cards.
+- [ ] **CAN-021** Disallow material attachments.
+  - [ ] Remove UI entry points and block API parentModel=Material.
+  - [ ] Verification: API rejects Material parent; material detail has no attachments section.
+- [ ] **CAN-022** Enforce department ACTIVE/INACTIVE status.
+  - [ ] Add status lifecycle checks and inactive-operation constraints.
+  - [ ] Verification: inactive department restricted per policy.
+- [ ] **CAN-023** Standardize Grid vs List implementation.
+  - [ ] Ensure grid uses MuiDataGrid and list uses MUI card Grid with `size` prop.
+  - [ ] Verification: mode toggles render canonical components and toolbar/columns.
+- [ ] **CAN-024** Move dashboard logo ownership to sidebar.
+  - [ ] Remove header logo and confirm sidebar-only logo presentation.
+  - [ ] Verification: dashboard header has no logo across breakpoints.
+- [ ] **CAN-025** Public header CTA label normalization.
+  - [ ] Set CTA labels to exactly “Log In” and “Sign Up”.
+  - [ ] Verification: header buttons match copy exactly.
+- [ ] **CAN-026** Department description max length 500.
+  - [ ] Add UI helper/limit + backend validation cap.
+  - [ ] Verification: 501 chars rejected in UI/API.
+- [ ] **CAN-027** Attachment URL regex + extension allowlist.
+  - [ ] Enforce extension pre-upload and Cloudinary URL pattern post-upload.
+  - [ ] Verification: disallowed ext rejected; valid URL pattern accepted only with version segment.
+
+## Manual consistency pass (cross-file relevance check)
+
+- [ ] Verified CAN-001..CAN-027 appear in requirements, design mapping, and task execution plan where they impact behavior.
+- [ ] Verified no CAN rule exists only in one `.kiro` file when it has cross-layer implications.
+- [ ] Verified CAN wording remains canonical with source section 23.1.
+
+### Trace Table
+
+| CAN-ID | Source location | Task location |
+|---|---|---|
+| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Execution Plan (CAN-001 to CAN-027)” + “Manual consistency pass” |
