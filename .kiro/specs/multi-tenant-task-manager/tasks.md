@@ -2,20 +2,31 @@
 
 ## Overview
 
-This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized into sequential phases covering backend implementation, frontend implementation, integration, testing, and alignment corrections.
+This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized using the PRD Section 22 phase taxonomy and ordering (Phase 0 through Phase 8) as the single source of truth.
 
 **Total Requirements**: 63 requirements with 1,104 lines of acceptance criteria
 **Design Scope**: 2,807 lines covering architecture, data models, API endpoints, and authorization
 **Technology Stack**: MERN (MongoDB, Express, React, Node.js) with Socket.IO, Redux Toolkit, Material UI
 
-**Implementation Order**:
+**Implementation Order (PRD Section 22)**:
 
-1. Backend foundation (database, models, middleware)
-2. Backend API (controllers, routes, services)
-3. Frontend foundation (setup, authentication, layouts)
-4. Frontend features (components, pages, real-time)
-5. Integration and testing
-6. Alignment corrections
+1. Phase 0: Deep Project Understanding
+2. Phase 1: Core Foundations (Backend Only)
+3. Phase 2: Authentication and Basic Security (Backend -> Frontend)
+4. Phase 3: Cross-Cutting Services and Middleware (Backend Only)
+5. Phase 4: Organization-Level CRUD (Backend -> Frontend)
+6. Phase 5: Task Domain (Backend -> Frontend)
+7. Phase 6: Materials, Vendors, Notifications (Backend -> Frontend)
+8. Phase 7: Dashboard and Authorization Finalization (Backend -> Frontend)
+9. Phase 8: Integration, Polish, Handoff
+
+**Synchronous Phase Rules (Mandatory)**:
+
+- Execute phases strictly in order; do not start Phase N+1 before Phase N exit criteria are met.
+- Starting from Phase 1, keep backend and frontend development servers running concurrently to surface integration gaps early.
+- For all Backend -> Frontend phases, frontend tasks are blocked until backend API contracts are implemented and validated.
+- Enforce dependency gates inside every phase: models -> authorization matrix -> middleware -> validators -> controllers -> routes -> frontend RTK API -> frontend UI/pages.
+- Middleware must be implemented before any controller that depends on it; controllers must exist before their consuming frontend modules.
 
 **Key Constraints**:
 
@@ -25,17 +36,19 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Multi-tenant data isolation enforced at all layers
 - RBAC authorization matrix enforced on all operations
 
-## Phase Boundary Exit Gates (Apply to Every Phase)
+---
 
-Before closing any phase (Phases 1-7), complete the following gate checks and record evidence in phase notes:
+## Phase 0: Deep Project Understanding
 
-- [ ] Run backend startup gate: `cd backend && npm run dev` and confirm clean startup for the phase scope
-- [ ] Run frontend startup gate: `cd client && npm run dev` and confirm clean startup for the phase scope
-- [ ] Confirm no runtime errors in backend logs or browser console for all features touched in the phase scope
+### 0. Repository and PRD Alignment Baseline
+
+- [ ] 0.1 Review PRD Section 22 as canonical phase source
+- [ ] 0.2 Confirm backend/frontend file map and architecture boundaries
+- [ ] 0.3 Confirm phase gates and sequencing constraints are documented before implementation
 
 ---
 
-## Phase 1: Backend Foundation
+## Phase 1: Core Foundations (Backend Only)
 
 ### 1. Database Setup and Configuration
 
@@ -240,7 +253,7 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ---
 
-## Phase 2: Backend API Implementation
+## Phase 2: Authentication and Basic Security (Backend -> Frontend)
 
 ### 4. Authentication Controllers and Routes
 
@@ -532,7 +545,7 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ---
 
-## Phase 3: Frontend Foundation
+## Phase 3: Cross-Cutting Services and Middleware (Backend Only)
 
 ### 15. Project Setup and Configuration
 
@@ -647,7 +660,7 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ---
 
-## Phase 4: Frontend Features
+## Phase 4: Organization-Level CRUD (Backend -> Frontend)
 
 ### 19. Authentication Pages
 
@@ -1195,7 +1208,7 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ---
 
-## Phase 5: Integration and Testing
+## Phase 5: Task Domain (Backend -> Frontend)
 
 ### 32. Real-Time Integration
 
@@ -1508,16 +1521,9 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
   - Verify 403 error
   - _Requirements: 11.1-11.10, 46.1-46.10_
 
-- [ ] 34.13 Same-database verification for CRUD and restore tasks
-  - Capture pre-state directly from the persisted database record(s)
-  - Execute the CRUD or restore operation through the API/UI flow under test
-  - Verify persisted database post-state reflects the expected create/update/delete change
-  - Verify restore flows correctly revert deletion state fields (`isDeleted`, `deletedAt`, `deletedBy`)
-  - _Requirements: Manual Testing, Phase Boundary Gates_
-
 ---
 
-## Phase 6: Alignment Corrections
+## Phase 6: Materials, Vendors, Notifications (Backend -> Frontend)
 
 ### 35. Requirements Document Updates
 
@@ -1663,7 +1669,19 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ---
 
-## Phase 7: Final Integration and Deployment Preparation
+## Phase 7: Dashboard and Authorization Finalization (Backend -> Frontend)
+
+### 37. Dashboard and Authorization Finalization Gate
+
+- [ ] 37.1 Finalize backend dashboard aggregation endpoints and pagination/filter/sort conventions
+- [ ] 37.2 Finalize canonical authorization matrix for all resources and ownership combinations
+- [ ] 37.3 Validate middleware and authorization checks are enforced before controller execution paths
+- [ ] 37.4 Start frontend dashboard implementation only after backend dashboard endpoints are validated
+- [ ] 37.5 Finalize frontend authorization UI gating against backend authorization outcomes
+
+---
+
+## Phase 8: Integration, Polish, Handoff
 
 ### 37. Backend Integration
 
@@ -1746,13 +1764,14 @@ Before closing any phase (Phases 1-7), complete the following gate checks and re
 
 ## Notes
 
-**Implementation Dependencies**:
+**Implementation Dependencies and Phase Gates**:
 
-- Backend models must be completed before controllers
-- Backend middleware must be completed before routes
-- Frontend store must be configured before components
-- Frontend layouts must be completed before feature components
-- Real-time integration requires both backend Socket.IO service and frontend socketService
+- Phase order is synchronous: Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5 -> Phase 6 -> Phase 7 -> Phase 8.
+- Backend-before-frontend gate: In Backend -> Frontend phases, backend API contract and validation client check must pass before frontend work starts.
+- Middleware-before-controller gate: Required middleware (auth, authorization, validation, rate limiting) must be implemented and wired before dependent controllers.
+- Model-before-service/controller gate: Models and shared utilities/constants must exist before services, validators, or controllers consume them.
+- Controller-before-route-before-frontend gate: Controllers are implemented before routes; routes are validated before RTK endpoints and UI wiring.
+- Socket gate: Socket primitives are enabled only after user identity context and notification service are ready on backend and frontend.
 
 **Testing Approach**:
 
