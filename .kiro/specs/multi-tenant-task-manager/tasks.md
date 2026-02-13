@@ -25,6 +25,14 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Multi-tenant data isolation enforced at all layers
 - RBAC authorization matrix enforced on all operations
 
+## Phase Boundary Exit Gates (Apply to Every Phase)
+
+Before closing any phase (Phases 1-7), complete the following gate checks and record evidence in phase notes:
+
+- [ ] Run backend startup gate: `cd backend && npm run dev` and confirm clean startup for the phase scope
+- [ ] Run frontend startup gate: `cd client && npm run dev` and confirm clean startup for the phase scope
+- [ ] Confirm no runtime errors in backend logs or browser console for all features touched in the phase scope
+
 ---
 
 ## Phase 1: Backend Foundation
@@ -1499,6 +1507,13 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Attempt to delete other user's attachment
   - Verify 403 error
   - _Requirements: 11.1-11.10, 46.1-46.10_
+
+- [ ] 34.13 Same-database verification for CRUD and restore tasks
+  - Capture pre-state directly from the persisted database record(s)
+  - Execute the CRUD or restore operation through the API/UI flow under test
+  - Verify persisted database post-state reflects the expected create/update/delete change
+  - Verify restore flows correctly revert deletion state fields (`isDeleted`, `deletedAt`, `deletedBy`)
+  - _Requirements: Manual Testing, Phase Boundary Gates_
 
 ---
 
