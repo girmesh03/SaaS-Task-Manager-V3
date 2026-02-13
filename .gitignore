@@ -1,9 +1,9 @@
 # .kiro
-.kiro/
+# .kiro/
 
 # docs and mock
-docs/
-mock/
+# docs/
+# mock/
 
 # Environment files
 .env
