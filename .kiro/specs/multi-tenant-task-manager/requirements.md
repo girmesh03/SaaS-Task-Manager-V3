@@ -899,10 +899,11 @@ The system serves two types of organizations:
 
 #### Acceptance Criteria
 
-1. THE System SHALL follow the 8-phase plan defined in PRD Section 22: Phase 0 (Deep project understanding), Phase 1 (Core foundations - backend only), Phase 2 (Authentication and basic security - backend → frontend), Phase 3 (Cross-cutting services and middleware - backend only), Phase 4 (Organization-level CRUD - backend → frontend), Phase 5 (Task domain - backend → frontend), Phase 6 (Materials, vendors, notifications - backend → frontend), Phase 7 (Dashboard and authorization finalization - backend → frontend), Phase 8 (Integration, polish, handoff)
+1. THE System SHALL use PRD Section 22 as the single source of truth for a 9-phase model (Phase 0 through Phase 8) with exact names and ordering: Phase 0 (Deep Project Understanding), Phase 1 (Core Foundations - Backend Only), Phase 2 (Authentication and Basic Security - Backend -> Frontend), Phase 3 (Cross-Cutting Services and Middleware - Backend Only), Phase 4 (Organization-Level CRUD - Backend -> Frontend), Phase 5 (Task Domain - Backend -> Frontend), Phase 6 (Materials, Vendors, Notifications - Backend -> Frontend), Phase 7 (Dashboard and Authorization Finalization - Backend -> Frontend), Phase 8 (Integration, Polish, Handoff)
 2. WHEN starting from Phase 1, THE System SHALL run backend and frontend development servers concurrently to detect integration issues early
-3. WHEN implementing a feature, THE System SHALL start frontend work only after corresponding backend API is validated
-4. WHEN completing each phase/sub-task, THE System SHALL update previously built components for integration correctness
+3. WHEN implementing any Backend -> Frontend phase, THE System SHALL complete and validate backend API contracts before frontend implementation for that feature
+4. THE System SHALL enforce dependency gates in each phase in this order: shared constants/utilities -> models -> authorization matrix -> middleware -> validators -> controllers -> routes -> frontend RTK endpoints -> frontend pages/components
+5. WHEN completing each phase/sub-task, THE System SHALL update previously built components for integration correctness before phase exit
 
 ### Requirement 50: Acceptance Criteria and Traceability Checklist
 
