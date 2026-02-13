@@ -1,425 +1,393 @@
-# Controller Test Execution Tasks
-
-This document standardizes test planning and execution tracking per controller. A controller section is **incomplete** unless all three layers below are both **documented** and **executed**:
-1. Route layer (authentication, authorization, rate limiting).
-2. Validator layer (schema validation, existence checks, uniqueness checks).
-3. Controller layer (business logic, side-effects, cascade behavior, event emission).
-
-## Global completion gate (applies to every section)
-- [ ] Route layer documented.
-- [ ] Validator layer documented.
-- [ ] Controller layer documented.
-- [ ] Route layer executed.
-- [ ] Validator layer executed.
-- [ ] Controller layer executed.
-- [ ] Success/failure scenarios with status codes documented per endpoint.
-- [ ] Side-effects asserted: DB mutation, soft-delete/restore, socket events, email sends, stock adjustments, audit/activity entries (as applicable).
-
----
-
-## Auth Controller
-PRD linkage: `AUTH-VAL-*`, `AUTH-AUTHZ-*`, `AUTH-CTRL-*`, `SOCK-AUTH-*` (see `docs/prd-test-cases.md`).
-
-### Route layer
-- AuthN/AuthZ: cover login-free routes vs token/cookie protected routes (`/change-password`, `/logout`, `/refresh`).
-- Rate limiting: verify auth abuse controls on login, register, forgot/reset, resend verification.
-
-### Validator layer
-- Schema: register payload (`organization`, `department`, `user`), login/reset/change payloads, token fields.
-- Existence checks: refresh token cookie, verify/reset token validity.
-- Uniqueness checks: organization email, user email during register.
-
-### Controller layer
-- Business logic: onboarding, email verification, login/refresh/logout, password flows.
-- Side-effects: user/org/department creation, password hash updates, token issuance/invalidation, email sends.
-- Event emission: socket auth handshake acceptance/rejection where applicable.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/auth/register`: `201`; `400` invalid schema; `409` duplicate org/user email.
-- `POST /api/auth/verify-email`: `200`; `400` missing token; `400/404` invalid/expired token.
-- `POST /api/auth/resend-verification`: `200`; `400` invalid email; `404` user missing.
-- `POST /api/auth/login`: `200`; `400` invalid payload; `401` bad credentials; `403` inactive/unverified user; `429` rate limit.
-- `POST /api/auth/refresh`: `200`; `401` missing/invalid/expired cookie.
-- `POST /api/auth/forgot-password`: `200`; `400` invalid payload; `429` rate limit.
-- `POST /api/auth/reset-password`: `200`; `400` invalid payload/token.
-- `POST /api/auth/change-password`: `200`; `401` unauthenticated; `403` inactive; `400` validation failure.
-- `POST /api/auth/logout`: `200`; `401` invalid/missing refresh cookie.
-
-### Explicit side-effect checks
-- DB: organization/department/user inserts on register, password and verification fields updates.
-- Soft delete/restore: N/A.
-- Socket: auth middleware acceptance/rejection for protected channels.
-- Email: verification, welcome/onboarding, password reset emails.
-- Stock adjustments: N/A.
-- Audit/activity: auth audit entries if implemented.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Organization Controller
-PRD linkage: `ORG-AUTH-*`, `ORG-VAL-*`, `ORG-AUTHZ-*`, `ORG-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for org read/update/delete/restore routes.
-- Rate limiting for update/verification-sensitive operations.
-
-### Validator layer
-- Schema for list filters and updatable fields.
-- Existence checks for `organizationId` (including restore with soft-deleted lookup).
-- Uniqueness checks for organization email/phone/domain fields where applicable.
-
-### Controller layer
-- Tenant scoping enforcement and platform vs customer behavior.
-- Side-effects: org profile updates, verification flags, soft-delete/restore transitions.
-- Event emission: organization lifecycle notifications/events if implemented.
-
-### Endpoints: success/failure scenarios and status codes
-- `GET /api/organizations/:organizationId`: `200`; `401`; `403`; `404`.
-- `GET /api/organizations`: `200`; `400` invalid query; `401`; `403`.
-- `PUT /api/organizations/:organizationId`: `200`; `400`; `401`; `403`; `404`; `409` duplicate constraints.
-- `DELETE /api/organizations/:organizationId`: `200/204`; `401`; `403`; `404`; `409` blocked by dependencies.
-- `PATCH /api/organizations/:organizationId/restore`: `200`; `400`; `401`; `403`; `404`; `409` conflict.
-
-### Explicit side-effect checks
-- DB: organization document mutations for profile/verification/status.
-- Soft delete/restore: deletedAt flags and restoration correctness.
-- Socket: org-scoped events if emitted.
-- Email: verification/organization-contact notifications if applicable.
-- Stock adjustments: N/A.
-- Audit/activity: organization activity entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Department Controller
-PRD linkage: `DEPT-AUTH-*`, `DEPT-VAL-*`, `DEPT-AUTHZ-*`, `DEPT-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ on create/list/get/update/delete/restore/activity routes.
-- Rate limiting on write and activity-intensive routes.
-
-### Validator layer
-- Schema for department create/update and list/activity filters.
-- Existence checks for `departmentId`, organization ownership, restore with `.withDeleted()`.
-- Uniqueness checks for department name within organization.
-
-### Controller layer
-- Business logic for department lifecycle and activity retrieval.
-- Side-effects: writes to department + denormalized references.
-- Cascade behavior: restrictions when users/tasks still linked.
-- Event emission for department changes.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/departments`: `201`; `400`; `401`; `403`; `409` duplicate.
-- `GET /api/departments`: `200`; `400`; `401`; `403`.
-- `GET /api/departments/:departmentId`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/departments/:departmentId`: `200`; `400`; `401`; `403`; `404`; `409`.
-- `DELETE /api/departments/:departmentId`: `200/204`; `400`; `401`; `403`; `404`; `409` dependency.
-- `PATCH /api/departments/:departmentId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-- `GET /api/departments/:departmentId/activity`: `200`; `400`; `401`; `403`; `404`.
-
-### Explicit side-effect checks
-- DB: department create/update/delete/restore mutations.
-- Soft delete/restore: recoverability and visibility toggles.
-- Socket: department update/delete notifications.
-- Email: optional notifications for leadership changes.
-- Stock adjustments: N/A.
-- Audit/activity: activity feed entries for department changes.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## User Controller
-PRD linkage: `USER-AUTH-*`, `USER-VAL-*`, `USER-AUTHZ-*`, `USER-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for CRUD + preferences/security/activity/performance.
-- Rate limiting on profile/security updates and list endpoints.
-
-### Validator layer
-- Schema validation for create/update/preferences/security/list/activity/performance.
-- Existence checks for user/department relations (including soft-deleted restore paths).
-- Uniqueness checks for email/employeeId per organization.
-
-### Controller layer
-- Business logic: user creation, self/profile update constraints, restore flow.
-- Side-effects: welcome email, profile and security state transitions.
-- Cascade behavior: user deletion impact on tasks/mentions/ownership.
-- Event emission: user status/profile change events.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/users`: `201`; `400`; `401`; `403`; `409` duplicate/conflict.
-- `GET /api/users`: `200`; `400`; `401`; `403`.
-- `GET /api/users/:userId`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/users/:userId`: `200`; `400`; `401`; `403`; `404`; `409` immutable/duplicate fields.
-- `PUT /api/users/:userId/preferences`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/users/:userId/security`: `200`; `400`; `401`; `403`; `404`.
-- `GET /api/users/:userId/activity`: `200`; `400`; `401`; `403`; `404`.
-- `GET /api/users/:userId/performance`: `200`; `400`; `401`; `403`; `404`.
-- `DELETE /api/users/:userId`: `200/204`; `400`; `401`; `403`; `404`; `409` dependency.
-- `PATCH /api/users/:userId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-
-### Explicit side-effect checks
-- DB: user docs, preferences, security flags, status transitions.
-- Soft delete/restore: deletedAt, restoration integrity.
-- Socket: `user:status:changed` and related updates.
-- Email: welcome/setup/security emails.
-- Stock adjustments: N/A.
-- Audit/activity: user activity entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Task Controller
-PRD linkage: `TASK-AUTH-*`, `TASK-VAL-*`, `TASK-AUTHZ-*`, `TASK-CTRL-*`, `SOCK-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for task create/list/get/update/delete/restore.
-- Rate limiting on task write/comment/activity heavy workflows.
-
-### Validator layer
-- Schema validation for task payloads and list filters.
-- Existence checks for task, assignees, watchers, department/project references.
-- Uniqueness checks for task number/code if applicable.
-
-### Controller layer
-- Business logic: lifecycle transitions, assignee/watcher management.
-- Side-effects: task activity/comment linkage and notification creation.
-- Cascade behavior: delete/restore across activities, comments, attachments.
-- Event emission: task and activity/comment socket events.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/tasks`: `201`; `400`; `401`; `403`; `409` business conflict.
-- `GET /api/tasks`: `200`; `400`; `401`; `403`.
-- `GET /api/tasks/:taskId`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/tasks/:taskId`: `200`; `400`; `401`; `403`; `404`; `409` invalid transition/conflict.
-- `DELETE /api/tasks/:taskId`: `200/204`; `400`; `401`; `403`; `404`; `409` dependency.
-- `PATCH /api/tasks/:taskId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-
-### Explicit side-effect checks
-- DB: task + dependent activity/comment/notification updates.
-- Soft delete/restore: parent-child consistency.
-- Socket: `task:created`, `task:updated`, `task:deleted`, `task:activity:added`, `task:comment:added`.
-- Email: task assignment/mention notifications if enabled.
-- Stock adjustments: N/A.
-- Audit/activity: task timeline entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Material Controller
-PRD linkage: `MAT-AUTH-*`, `MAT-VAL-*`, `MAT-AUTHZ-*`, `MAT-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for create/list/get/update/restock/delete/restore/usage.
-- Rate limiting for restock and usage analytics routes.
-
-### Validator layer
-- Schema validation for material payloads, restock payload, usage queries.
-- Existence checks for material/vendor/task references and restore lookup.
-- Uniqueness checks for SKU/material name per org (if required).
-
-### Controller layer
-- Business logic: inventory changes, usage calculation, status transitions.
-- Side-effects: stock increments/decrements and related task/material links.
-- Cascade behavior: prevent delete when referenced by active tasks.
-- Event emission: material inventory change notifications.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/materials`: `201`; `400`; `401`; `403`; `409`.
-- `GET /api/materials`: `200`; `400`; `401`; `403`.
-- `GET /api/materials/:materialId`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/materials/:materialId`: `200`; `400`; `401`; `403`; `404`; `409`.
-- `POST /api/materials/:materialId/restock`: `200`; `400`; `401`; `403`; `404`; `409`.
-- `GET /api/materials/:materialId/usage`: `200`; `400`; `401`; `403`; `404`.
-- `DELETE /api/materials/:materialId`: `200/204`; `400`; `401`; `403`; `404`; `409` reference constraint.
-- `PATCH /api/materials/:materialId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-
-### Explicit side-effect checks
-- DB: material records + usage/restock history mutations.
-- Soft delete/restore: availability across lookups.
-- Socket: inventory updates if emitted.
-- Email: low-stock/restock alerts if configured.
-- Stock adjustments: verify exact quantity arithmetic and floor/ceiling rules.
-- Audit/activity: inventory and procurement activity entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Vendor Controller
-PRD linkage: `VEND-AUTH-*`, `VEND-VAL-*`, `VEND-AUTHZ-*`, `VEND-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for create/list/get/update/contact/delete/restore.
-- Rate limiting on contact/email endpoint.
-
-### Validator layer
-- Schema validation for vendor fields, contact payload, list filters.
-- Existence checks for `vendorId` and restore with `.withDeleted()`.
-- Uniqueness checks for vendor name/email/phone per org.
-
-### Controller layer
-- Business logic: creator-scoped update/delete rules, contact workflow.
-- Side-effects: outbound email for contact action.
-- Cascade behavior: delete blocked when linked to project tasks.
-- Event emission: vendor status/verification change events if implemented.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/vendors`: `201`; `400`; `401`; `403`; `409`.
-- `GET /api/vendors`: `200`; `400`; `401`; `403`.
-- `GET /api/vendors/:vendorId`: `200`; `400`; `401`; `403`; `404`.
-- `PUT /api/vendors/:vendorId`: `200`; `400`; `401`; `403`; `404`; `409`.
-- `POST /api/vendors/:vendorId/contact`: `200/202`; `400`; `401`; `403`; `404`; `429`.
-- `DELETE /api/vendors/:vendorId`: `200/204`; `400`; `401`; `403`; `404`; `409` associated task constraint.
-- `PATCH /api/vendors/:vendorId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-
-### Explicit side-effect checks
-- DB: vendor create/update/delete/restore mutations.
-- Soft delete/restore: recoverability and filtered visibility.
-- Socket: vendor events if emitted.
-- Email: Nodemailer send assertion for `/contact`.
-- Stock adjustments: N/A (indirect only).
-- Audit/activity: vendor change entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Attachment Controller
-PRD linkage: `ATT-AUTH-*`, `ATT-VAL-*`, `ATT-AUTHZ-*`, `ATT-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for upload/delete/restore.
-- Rate limiting for upload endpoints.
-
-### Validator layer
-- Schema validation for file metadata and relation targets.
-- Existence checks for attachment/task/comment refs including restore path.
-- Uniqueness checks for duplicate file linkage constraints if applicable.
-
-### Controller layer
-- Business logic: upload metadata persistence and ownership rules.
-- Side-effects: storage provider interactions and cleanup on delete.
-- Cascade behavior: attachment visibility with parent task/comment delete/restore.
-- Event emission: attachment added/removed notifications.
-
-### Endpoints: success/failure scenarios and status codes
-- `POST /api/attachments`: `201`; `400`; `401`; `403`; `404` parent missing; `409` duplicate/conflict.
-- `DELETE /api/attachments/:attachmentId`: `200/204`; `400`; `401`; `403`; `404`.
-- `PATCH /api/attachments/:attachmentId/restore`: `200`; `400`; `401`; `403`; `404`; `409`.
-
-### Explicit side-effect checks
-- DB: attachment rows/docs created/soft-deleted/restored.
-- Soft delete/restore: deleted attachments excluded unless requested.
-- Socket: attachment-related task events.
-- Email: N/A unless attachment triggers notifications.
-- Stock adjustments: N/A.
-- Audit/activity: attachment activity entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Notification Controller
-PRD linkage: `NOTIF-AUTH-*`, `NOTIF-VAL-*`, `NOTIF-AUTHZ-*`, `NOTIF-CTRL-*`, `SOCK-CTRL-006`.
-
-### Route layer
-- AuthN/AuthZ for list/read/read-all/delete.
-- Rate limiting on list polling/read-all operations.
-
-### Validator layer
-- Schema validation for notification IDs and list query.
-- Existence checks for notification ownership and restore references.
-- Uniqueness checks: N/A (typically generated events), assert no duplicate fan-out where constrained.
-
-### Controller layer
-- Business logic: unread/read state transitions and delete semantics.
-- Side-effects: bulk read updates and TTL cleanup behavior.
-- Cascade behavior: behavior when source entities are deleted/restored.
-- Event emission: per-user realtime notification push.
-
-### Endpoints: success/failure scenarios and status codes
-- `GET /api/notifications`: `200`; `400`; `401`; `403`.
-- `PATCH /api/notifications/:notificationId/read`: `200`; `400`; `401`; `403`; `404`.
-- `PATCH /api/notifications/read-all`: `200`; `401`; `403`.
-- `DELETE /api/notifications/:notificationId`: `200/204`; `400`; `401`; `403`; `404`.
-
-### Explicit side-effect checks
-- DB: read flags, readAt timestamps, delete markers.
-- Soft delete/restore: if implemented, verify recoverability rules.
-- Socket: `notification` event to `user:{userId}` room.
-- Email: optional mirrored notifications.
-- Stock adjustments: N/A.
-- Audit/activity: notification lifecycle entries.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
-
----
-
-## Dashboard Controller
-PRD linkage: `DASH-AUTH-*`, `DASH-VAL-*`, `DASH-AUTHZ-*`, `DASH-CTRL-*`.
-
-### Route layer
-- AuthN/AuthZ for overview and department analytics routes.
-- Rate limiting/caching checks for expensive aggregate endpoints.
-
-### Validator layer
-- Schema validation for date range, department filters, grouping options.
-- Existence checks for department/org scoping inputs.
-- Uniqueness checks: N/A.
-
-### Controller layer
-- Business logic: aggregate KPIs, trend calculations, empty-state handling.
-- Side-effects: read-only behavior enforcement (no accidental mutations).
-- Cascade behavior: dashboard consistency after upstream soft-delete/restore.
-- Event emission: N/A unless dashboard triggers push refresh.
-
-### Endpoints: success/failure scenarios and status codes
-- `GET /api/dashboard/overview`: `200`; `400`; `401`; `403`.
-- `GET /api/dashboard/departments`: `200`; `400`; `401`; `403`.
-
-### Explicit side-effect checks
-- DB: verify read-only queries (no mutation side-effects).
-- Soft delete/restore: aggregates include/exclude deleted entities per query flags.
-- Socket: N/A by default.
-- Email: N/A.
-- Stock adjustments: N/A.
-- Audit/activity: optional dashboard access audit logs.
-
-### Completion criteria
-- [ ] Route layer documented + executed.
-- [ ] Validator layer documented + executed.
-- [ ] Controller layer documented + executed.
+# Frontend Tasks
+
+## Screen-Referenced Frontend Subtasks
+
+### FE-ST-001 `public_layout_screen`
+- Scope: Build public shell layout with header/footer and auth CTA placement.
+- Required implementation checkpoints:
+  - Route coverage: `/` wired and accessible.
+  - Component ownership finalized in `PublicLayout, PublicHeader, PublicFooter`.
+  - Data hooks integrated for `GET /api/health` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-001, FR-UI-010.
+- UI reference images:
+  - `docs/ui/public_layout_screen.png`
+
+### FE-ST-002 `landing-page`
+- Scope: Implement marketing landing composition and CTA wiring.
+- Required implementation checkpoints:
+  - Route coverage: `/` wired and accessible.
+  - Component ownership finalized in `LandingPage, HeroSection, FeatureSections`.
+  - Data hooks integrated for `None` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-001, FR-UI-010.
+- UI reference images:
+  - `docs/ui/landing-page.png`
+
+### FE-ST-003 `desktop-dashboard-layout`
+- Scope: Implement desktop dashboard shell with sidebar/header conventions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/*` wired and accessible.
+  - Component ownership finalized in `DesktopDashboardLayout, Sidebar, DashboardHeader`.
+  - Data hooks integrated for `GET /api/auth/me; GET /api/notifications` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-002, FR-UI-010.
+- UI reference images:
+  - `docs/ui/desktop-dashboard-layout.png`
+
+### FE-ST-004 `mobile-dashboard-layout`
+- Scope: Implement mobile dashboard shell with bottom navigation/drawer.
+- Required implementation checkpoints:
+  - Route coverage: `/app/*` wired and accessible.
+  - Component ownership finalized in `MobileDashboardLayout, BottomNav, MobileDrawer`.
+  - Data hooks integrated for `GET /api/auth/me; GET /api/notifications` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-002, FR-UI-010.
+- UI reference images:
+  - `docs/ui/mobile-dashboard-layout.png`
+
+### FE-ST-005 `desktop_dashboard_overview_screen`
+- Scope: Implement dashboard overview widgets and analytics cards.
+- Required implementation checkpoints:
+  - Route coverage: `/app/dashboard` wired and accessible.
+  - Component ownership finalized in `DashboardOverviewPage, KPIWidgets, ActivityPanel`.
+  - Data hooks integrated for `GET /api/dashboard/overview` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-003, FR-UI-012.
+- UI reference images:
+  - `docs/ui/desktop_dashboard_overview_screen.png`
+
+### FE-ST-006 `departments_filter_dialog_screen`
+- Scope: Implement departments filter dialog with full filter set.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments` wired and accessible.
+  - Component ownership finalized in `DepartmentFiltersDialog`.
+  - Data hooks integrated for `GET /api/departments; GET /api/users?role=Manager` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/departments_filter_dialog_screen.png`
+
+### FE-ST-007 `departments_grid_view_screen`
+- Scope: Implement departments grid view via MuiDataGrid.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments` wired and accessible.
+  - Component ownership finalized in `DepartmentsPage, DepartmentsGrid`.
+  - Data hooks integrated for `GET /api/departments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/departments_grid_view_screen.png`
+
+### FE-ST-008 `departments_list_view_screen`
+- Scope: Implement departments list cards view and toggle behavior.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments` wired and accessible.
+  - Component ownership finalized in `DepartmentsList`.
+  - Data hooks integrated for `GET /api/departments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/departments_list_view_screen.png`
+
+### FE-ST-009 `create_update_department_dialog_screen`
+- Scope: Implement create/update department dialog validations and submit flow.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments` wired and accessible.
+  - Component ownership finalized in `DepartmentDialog`.
+  - Data hooks integrated for `POST /api/departments; PATCH /api/departments/:departmentId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-010, FR-UI-012.
+- UI reference images:
+  - `docs/ui/create_update_department_dialog_screen.png`
+
+### FE-ST-010 `dept_details_overview_tab_screen`
+- Scope: Implement department details overview tab composition.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments/:departmentId` wired and accessible.
+  - Component ownership finalized in `DepartmentDetailsPage, DepartmentOverviewTab`.
+  - Data hooks integrated for `GET /api/departments/:departmentId; GET /api/departments/:departmentId/dashboard` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-012.
+- UI reference images:
+  - `docs/ui/dept_details_overview_tab_screen.png`
+
+### FE-ST-011 `dept_details_users_tab_screen`
+- Scope: Implement department members tab with role/status states.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments/:departmentId?tab=members` wired and accessible.
+  - Component ownership finalized in `DepartmentMembersTab`.
+  - Data hooks integrated for `GET /api/departments/:departmentId/users` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-005, FR-UI-012.
+- UI reference images:
+  - `docs/ui/dept_details_users_tab_screen.png`
+
+### FE-ST-012 `dept_details_tasks_tab_screen`
+- Scope: Implement department tasks tab with list/grid and filters.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments/:departmentId?tab=tasks` wired and accessible.
+  - Component ownership finalized in `DepartmentTasksTab`.
+  - Data hooks integrated for `GET /api/tasks?department=:departmentId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/dept_details_tasks_tab_screen.png`
+
+### FE-ST-013 `dept_details_activity_tab_screen`
+- Scope: Implement department activity sub-tab timeline/feed.
+- Required implementation checkpoints:
+  - Route coverage: `/app/departments/:departmentId?tab=tasks&subtab=activity` wired and accessible.
+  - Component ownership finalized in `DepartmentActivityTab`.
+  - Data hooks integrated for `GET /api/departments/:departmentId/activity` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-004, FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/dept_details_activity_tab_screen.png`
+
+### FE-ST-014 `users_filter_dialog_screen`
+- Scope: Implement users filter dialog and chip summaries.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users` wired and accessible.
+  - Component ownership finalized in `UserFiltersDialog`.
+  - Data hooks integrated for `GET /api/users; GET /api/departments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/users_filter_dialog_screen.png`
+
+### FE-ST-015 `users_grid_view_screen`
+- Scope: Implement users grid view with row actions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users` wired and accessible.
+  - Component ownership finalized in `UsersPage, UsersGrid`.
+  - Data hooks integrated for `GET /api/users` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/users_grid_view_screen.png`
+
+### FE-ST-016 `users_list_view_screen`
+- Scope: Implement users list/card view with responsive layout.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users` wired and accessible.
+  - Component ownership finalized in `UsersList`.
+  - Data hooks integrated for `GET /api/users` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/users_list_view_screen.png`
+
+### FE-ST-017 `create_update_user_dialog_screen`
+- Scope: Implement create/update user dialog with immutable field handling.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users` wired and accessible.
+  - Component ownership finalized in `UserDialog`.
+  - Data hooks integrated for `POST /api/users; PATCH /api/users/:userId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-010, FR-UI-012.
+- UI reference images:
+  - `docs/ui/create_update_user_dialog_screen.png`
+
+### FE-ST-018 `user_details_overview_screen`
+- Scope: Implement user details overview tab.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users/:userId` wired and accessible.
+  - Component ownership finalized in `UserDetailsPage, UserOverviewTab`.
+  - Data hooks integrated for `GET /api/users/:userId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-012.
+- UI reference images:
+  - `docs/ui/user_details_overview_screen.png`
+
+### FE-ST-019 `user_details_tasks_screen`
+- Scope: Implement user details tasks tab.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users/:userId?tab=tasks` wired and accessible.
+  - Component ownership finalized in `UserTasksTab`.
+  - Data hooks integrated for `GET /api/tasks?assignee=:userId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/user_details_tasks_screen.png`
+
+### FE-ST-020 `user_details_activity_screen`
+- Scope: Implement user details activity tab timeline.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users/:userId?tab=activity` wired and accessible.
+  - Component ownership finalized in `UserActivityTab`.
+  - Data hooks integrated for `GET /api/users/:userId/activity` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-012.
+- UI reference images:
+  - `docs/ui/user_details_activity_screen.png`
+
+### FE-ST-021 `user_details_performance_screen`
+- Scope: Implement user performance tab and metrics widgets.
+- Required implementation checkpoints:
+  - Route coverage: `/app/users/:userId?tab=performance` wired and accessible.
+  - Component ownership finalized in `UserPerformanceTab`.
+  - Data hooks integrated for `GET /api/users/:userId/performance` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-005, FR-UI-012.
+- UI reference images:
+  - `docs/ui/user_details_performance_screen.png`
+
+### FE-ST-022 `tasks_filter_dialog_screen`
+- Scope: Implement tasks filter dialog with canonical union filters.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks` wired and accessible.
+  - Component ownership finalized in `TaskFiltersDialog`.
+  - Data hooks integrated for `GET /api/tasks; GET /api/users; GET /api/departments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/tasks_filter_dialog_screen.png`
+
+### FE-ST-023 `tasks_grid_view_screen`
+- Scope: Implement tasks grid view with toolbar and actions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks` wired and accessible.
+  - Component ownership finalized in `TasksPage, TasksGrid`.
+  - Data hooks integrated for `GET /api/tasks` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/tasks_grid_view_screen.png`
+
+### FE-ST-024 `tasks_list_view_screen`
+- Scope: Implement tasks list card view and grouping.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks` wired and accessible.
+  - Component ownership finalized in `TasksList`.
+  - Data hooks integrated for `GET /api/tasks` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/tasks_list_view_screen.png`
+
+### FE-ST-025 `create_update_task_dialog_screen`
+- Scope: Implement create/update task dialog including assignment/material selectors.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks` wired and accessible.
+  - Component ownership finalized in `TaskDialog`.
+  - Data hooks integrated for `POST /api/tasks; PATCH /api/tasks/:taskId; GET /api/materials; GET /api/users` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-010, FR-UI-012.
+- UI reference images:
+  - `docs/ui/create_update_task_dialog_screen.png`
+
+### FE-ST-026 `task_details_overview_screen`
+- Scope: Implement task details overview tab with metadata/actions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks/:taskId` wired and accessible.
+  - Component ownership finalized in `TaskDetailsPage, TaskOverviewTab`.
+  - Data hooks integrated for `GET /api/tasks/:taskId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/task_details_overview_screen.png`
+
+### FE-ST-027 `task_details_activities_screen`
+- Scope: Implement task activities tab timeline and filters.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks/:taskId?tab=activities` wired and accessible.
+  - Component ownership finalized in `TaskActivitiesTab`.
+  - Data hooks integrated for `GET /api/tasks/:taskId/activities` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/task_details_activities_screen.png`
+
+### FE-ST-028 `task_details_comments_screen`
+- Scope: Implement task comments tab with threaded comments (max depth 5).
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks/:taskId?tab=comments` wired and accessible.
+  - Component ownership finalized in `TaskCommentsTab`.
+  - Data hooks integrated for `GET /api/tasks/:taskId/comments; POST /api/tasks/:taskId/comments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/task_details_comments_screen.png`
+
+### FE-ST-029 `task_details_attachments_screen`
+- Scope: Implement task attachments tab for upload/list/preview actions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/tasks/:taskId?tab=attachments` wired and accessible.
+  - Component ownership finalized in `TaskAttachmentsTab`.
+  - Data hooks integrated for `GET /api/tasks/:taskId/attachments; POST /api/attachments` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-006, FR-UI-012.
+- UI reference images:
+  - `docs/ui/task_details_attachments_screen.png`
+
+### FE-ST-030 `materials_list_view_screen`
+- Scope: Implement materials list view with inventory/SKU indicators.
+- Required implementation checkpoints:
+  - Route coverage: `/app/materials` wired and accessible.
+  - Component ownership finalized in `MaterialsPage, MaterialsList`.
+  - Data hooks integrated for `GET /api/materials` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-007, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/materials_list_view_screen.png`
+
+### FE-ST-031 `material_details_screen`
+- Scope: Implement material details view including usage and restock actions.
+- Required implementation checkpoints:
+  - Route coverage: `/app/materials/:materialId` wired and accessible.
+  - Component ownership finalized in `MaterialDetailsPage`.
+  - Data hooks integrated for `GET /api/materials/:materialId; GET /api/materials/:materialId/usage; POST /api/materials/:materialId/restock` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-007, FR-UI-012.
+- UI reference images:
+  - `docs/ui/material_details_screen.png`
+
+### FE-ST-032 `vendors_list_view_screen`
+- Scope: Implement vendors list view with status + partner fields.
+- Required implementation checkpoints:
+  - Route coverage: `/app/vendors` wired and accessible.
+  - Component ownership finalized in `VendorsPage, VendorsList`.
+  - Data hooks integrated for `GET /api/vendors` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-008, FR-UI-011, FR-UI-012.
+- UI reference images:
+  - `docs/ui/vendors_list_view_screen.png`
+
+### FE-ST-033 `vendor_details_screen`
+- Scope: Implement vendor details view with metrics and extended fields.
+- Required implementation checkpoints:
+  - Route coverage: `/app/vendors/:vendorId` wired and accessible.
+  - Component ownership finalized in `VendorDetailsPage`.
+  - Data hooks integrated for `GET /api/vendors/:vendorId` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-008, FR-UI-012.
+- UI reference images:
+  - `docs/ui/vendor_details_screen.png`
+
+### FE-ST-034 `settings_profile_tab_screen`
+- Scope: Implement settings profile tab forms and validation states.
+- Required implementation checkpoints:
+  - Route coverage: `/app/settings?tab=profile` wired and accessible.
+  - Component ownership finalized in `SettingsPage, SettingsProfileTab`.
+  - Data hooks integrated for `GET /api/auth/me; PATCH /api/users/me` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-009, FR-UI-012.
+- UI reference images:
+  - `docs/ui/settings_profile_tab_screen.png`
+
+### FE-ST-035 `settings_account_tab_screen`
+- Scope: Implement settings account tab for security/session controls.
+- Required implementation checkpoints:
+  - Route coverage: `/app/settings?tab=account` wired and accessible.
+  - Component ownership finalized in `SettingsAccountTab`.
+  - Data hooks integrated for `PATCH /api/users/me/password; POST /api/auth/logout-all; GET /api/auth/sessions` with loading/error/success states.
+  - Requirement ID traceability: FR-UI-009, FR-UI-012.
+- UI reference images:
+  - `docs/ui/settings_account_tab_screen.png`
+
+## Final Traceability Matrix
+
+| Screen | Components | Routes | APIs | Requirement IDs |
+|---|---|---|---|---|
+| `public_layout_screen` | PublicLayout, PublicHeader, PublicFooter | `/` | GET /api/health | FR-UI-001, FR-UI-010 |
+| `landing-page` | LandingPage, HeroSection, FeatureSections | `/` | None | FR-UI-001, FR-UI-010 |
+| `desktop-dashboard-layout` | DesktopDashboardLayout, Sidebar, DashboardHeader | `/app/*` | GET /api/auth/me; GET /api/notifications | FR-UI-002, FR-UI-010 |
+| `mobile-dashboard-layout` | MobileDashboardLayout, BottomNav, MobileDrawer | `/app/*` | GET /api/auth/me; GET /api/notifications | FR-UI-002, FR-UI-010 |
+| `desktop_dashboard_overview_screen` | DashboardOverviewPage, KPIWidgets, ActivityPanel | `/app/dashboard` | GET /api/dashboard/overview | FR-UI-003, FR-UI-012 |
+| `departments_filter_dialog_screen` | DepartmentFiltersDialog | `/app/departments` | GET /api/departments; GET /api/users?role=Manager | FR-UI-004, FR-UI-011, FR-UI-012 |
+| `departments_grid_view_screen` | DepartmentsPage, DepartmentsGrid | `/app/departments` | GET /api/departments | FR-UI-004, FR-UI-011, FR-UI-012 |
+| `departments_list_view_screen` | DepartmentsList | `/app/departments` | GET /api/departments | FR-UI-004, FR-UI-011, FR-UI-012 |
+| `create_update_department_dialog_screen` | DepartmentDialog | `/app/departments` | POST /api/departments; PATCH /api/departments/:departmentId | FR-UI-004, FR-UI-010, FR-UI-012 |
+| `dept_details_overview_tab_screen` | DepartmentDetailsPage, DepartmentOverviewTab | `/app/departments/:departmentId` | GET /api/departments/:departmentId; GET /api/departments/:departmentId/dashboard | FR-UI-004, FR-UI-012 |
+| `dept_details_users_tab_screen` | DepartmentMembersTab | `/app/departments/:departmentId?tab=members` | GET /api/departments/:departmentId/users | FR-UI-004, FR-UI-005, FR-UI-012 |
+| `dept_details_tasks_tab_screen` | DepartmentTasksTab | `/app/departments/:departmentId?tab=tasks` | GET /api/tasks?department=:departmentId | FR-UI-004, FR-UI-006, FR-UI-012 |
+| `dept_details_activity_tab_screen` | DepartmentActivityTab | `/app/departments/:departmentId?tab=tasks&subtab=activity` | GET /api/departments/:departmentId/activity | FR-UI-004, FR-UI-006, FR-UI-012 |
+| `users_filter_dialog_screen` | UserFiltersDialog | `/app/users` | GET /api/users; GET /api/departments | FR-UI-005, FR-UI-011, FR-UI-012 |
+| `users_grid_view_screen` | UsersPage, UsersGrid | `/app/users` | GET /api/users | FR-UI-005, FR-UI-011, FR-UI-012 |
+| `users_list_view_screen` | UsersList | `/app/users` | GET /api/users | FR-UI-005, FR-UI-011, FR-UI-012 |
+| `create_update_user_dialog_screen` | UserDialog | `/app/users` | POST /api/users; PATCH /api/users/:userId | FR-UI-005, FR-UI-010, FR-UI-012 |
+| `user_details_overview_screen` | UserDetailsPage, UserOverviewTab | `/app/users/:userId` | GET /api/users/:userId | FR-UI-005, FR-UI-012 |
+| `user_details_tasks_screen` | UserTasksTab | `/app/users/:userId?tab=tasks` | GET /api/tasks?assignee=:userId | FR-UI-005, FR-UI-006, FR-UI-012 |
+| `user_details_activity_screen` | UserActivityTab | `/app/users/:userId?tab=activity` | GET /api/users/:userId/activity | FR-UI-005, FR-UI-012 |
+| `user_details_performance_screen` | UserPerformanceTab | `/app/users/:userId?tab=performance` | GET /api/users/:userId/performance | FR-UI-005, FR-UI-012 |
+| `tasks_filter_dialog_screen` | TaskFiltersDialog | `/app/tasks` | GET /api/tasks; GET /api/users; GET /api/departments | FR-UI-006, FR-UI-011, FR-UI-012 |
+| `tasks_grid_view_screen` | TasksPage, TasksGrid | `/app/tasks` | GET /api/tasks | FR-UI-006, FR-UI-011, FR-UI-012 |
+| `tasks_list_view_screen` | TasksList | `/app/tasks` | GET /api/tasks | FR-UI-006, FR-UI-011, FR-UI-012 |
+| `create_update_task_dialog_screen` | TaskDialog | `/app/tasks` | POST /api/tasks; PATCH /api/tasks/:taskId; GET /api/materials; GET /api/users | FR-UI-006, FR-UI-010, FR-UI-012 |
+| `task_details_overview_screen` | TaskDetailsPage, TaskOverviewTab | `/app/tasks/:taskId` | GET /api/tasks/:taskId | FR-UI-006, FR-UI-012 |
+| `task_details_activities_screen` | TaskActivitiesTab | `/app/tasks/:taskId?tab=activities` | GET /api/tasks/:taskId/activities | FR-UI-006, FR-UI-012 |
+| `task_details_comments_screen` | TaskCommentsTab | `/app/tasks/:taskId?tab=comments` | GET /api/tasks/:taskId/comments; POST /api/tasks/:taskId/comments | FR-UI-006, FR-UI-012 |
+| `task_details_attachments_screen` | TaskAttachmentsTab | `/app/tasks/:taskId?tab=attachments` | GET /api/tasks/:taskId/attachments; POST /api/attachments | FR-UI-006, FR-UI-012 |
+| `materials_list_view_screen` | MaterialsPage, MaterialsList | `/app/materials` | GET /api/materials | FR-UI-007, FR-UI-011, FR-UI-012 |
+| `material_details_screen` | MaterialDetailsPage | `/app/materials/:materialId` | GET /api/materials/:materialId; GET /api/materials/:materialId/usage; POST /api/materials/:materialId/restock | FR-UI-007, FR-UI-012 |
+| `vendors_list_view_screen` | VendorsPage, VendorsList | `/app/vendors` | GET /api/vendors | FR-UI-008, FR-UI-011, FR-UI-012 |
+| `vendor_details_screen` | VendorDetailsPage | `/app/vendors/:vendorId` | GET /api/vendors/:vendorId | FR-UI-008, FR-UI-012 |
+| `settings_profile_tab_screen` | SettingsPage, SettingsProfileTab | `/app/settings?tab=profile` | GET /api/auth/me; PATCH /api/users/me | FR-UI-009, FR-UI-012 |
+| `settings_account_tab_screen` | SettingsAccountTab | `/app/settings?tab=account` | PATCH /api/users/me/password; POST /api/auth/logout-all; GET /api/auth/sessions | FR-UI-009, FR-UI-012 |
