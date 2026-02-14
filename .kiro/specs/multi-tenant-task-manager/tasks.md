@@ -1542,15 +1542,15 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - [ ] 35.4 Add TTL expiry policy requirements
 
   - Add new requirement "TTL Expiry Policies"
-  - Add SHALL statement: Organization TTL = never (immutable if isPlatformOrg=true)
+  - Add SHALL statement: Organization TTL = never/manual only (immutable if isPlatformOrg=true)
   - Add SHALL statement: Department TTL = 365 days
   - Add SHALL statement: User TTL = 365 days
-  - Add SHALL statement: Task TTL = 365 days
-  - Add SHALL statement: TaskActivity TTL = 365 days
-  - Add SHALL statement: TaskComment TTL = 365 days
-  - Add SHALL statement: Material TTL = 365 days
-  - Add SHALL statement: Vendor TTL = 365 days
-  - Add SHALL statement: Attachment TTL = 365 days
+  - Add SHALL statement: Task TTL = 180 days
+  - Add SHALL statement: TaskActivity TTL = 90 days
+  - Add SHALL statement: TaskComment TTL = 180 days
+  - Add SHALL statement: Material TTL = 90 days
+  - Add SHALL statement: Vendor TTL = 90 days
+  - Add SHALL statement: Attachment TTL = 30 days
   - Add SHALL statement: Notification TTL = 30 days (auto-delete via TTL index)
   - _Alignment Gap: 2.4_
 
@@ -1578,7 +1578,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
   - Update all model schemas with TTL index configuration
   - Add TTL index to Notification schema: { expiresAt: 1 } with expireAfterSeconds: 0
-  - Document TTL periods for each model (Organization: never, Department: 365d, User: 365d, Task: 365d, TaskActivity: 365d, TaskComment: 365d, Material: 365d, Vendor: 365d, Attachment: 365d, Notification: 30d)
+  - Document TTL periods for each model (Organization: never/manual only, Department: 365d, User: 365d, Task: 180d, TaskActivity: 90d, TaskComment: 180d, Material: 90d, Vendor: 90d, Attachment: 30d, Notification: 30d)
   - Document automatic deletion behavior via MongoDB TTL indexes
   - _Alignment Gap: 3.2_
 
