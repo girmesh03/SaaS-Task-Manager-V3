@@ -201,27 +201,7 @@ Database schema design:
 - Theme_Token: design tokens from the MUI theme.
 - Responsive_Breakpoint: screen size breakpoint (xs, sm, md, lg, xl).
 
-## 2. Goals and Non-Goals
-
-Goals:
-
-- Enforce strict multi-tenant data isolation at organization and department levels.
-- Provide complete CRUD + soft-delete + restore for all resources.
-- Support real-time collaboration and notifications.
-- Deliver highly usable, accessible, and responsive UI for mobile/tablet/desktop.
-- Ensure backend and frontend validation alignment with a single source of truth.
-- Ensure security best practices: JWT rotation, bcrypt hashing, rate limiting, CSP.
-
-Explicit exclusions and constraints:
-
-- No hard deletes (soft delete only).
-- No direct organization creation endpoint; organization creation happens only via onboarding/registration flow or backend seeding (platform org).
-- No frontend usage of dayjs for user-facing formatting; use native Intl formatting (dayjs may exist only for internal computations and date-picker adapters).
-- No test frameworks (Jest, Mocha, Chai, Supertest, Vitest, Cypress are forbidden).
-- No React Hook Form watch() usage.
-- No deprecated MUI syntax (item prop, renderTags).
-
-## Platform vs Customer Organizations
+## 1.3 Platform vs Customer Organizations
 
 ### Platform Organization
 
@@ -324,6 +304,26 @@ Customer organizations are created via **frontend onboarding/registration workfl
 **Access Scope**: ownOrg and based on the authorization matrix
 **Purpose**: Business operations
 **First User**: Organization SuperAdmin + HOD
+
+## 2. Goals and Non-Goals
+
+Goals:
+
+- Enforce strict multi-tenant data isolation at organization and department levels.
+- Provide complete CRUD + soft-delete + restore for all resources.
+- Support real-time collaboration and notifications.
+- Deliver highly usable, accessible, and responsive UI for mobile/tablet/desktop.
+- Ensure backend and frontend validation alignment with a single source of truth.
+- Ensure security best practices: JWT rotation, bcrypt hashing, rate limiting, CSP.
+
+Explicit exclusions and constraints:
+
+- No hard deletes (soft delete only).
+- No direct organization creation endpoint; organization creation happens only via onboarding/registration flow or backend seeding (platform org).
+- No frontend usage of dayjs for user-facing formatting; use native Intl formatting (dayjs may exist only for internal computations and date-picker adapters).
+- No test frameworks (Jest, Mocha, Chai, Supertest, Vitest, Cypress are forbidden).
+- No React Hook Form watch() usage.
+- No deprecated MUI syntax (item prop, renderTags).
 
 ## 3. Personas
 
