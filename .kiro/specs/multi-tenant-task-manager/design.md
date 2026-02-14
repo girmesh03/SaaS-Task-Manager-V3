@@ -718,143 +718,540 @@ The authorization matrix defines RBAC permissions for all resources across four 
    - Ownership-based access (self, assignees, watchers)
    - Can create RoutineTasks and comments
 
-### Authorization Matrix Table
+### Authorization Matrix Canonical JSON (PRD §8.4)
 
-| Resource         | Operation          | Platform SuperAdmin             | Org SuperAdmin                              | Admin                                       | Manager                                     | User                            |
-| ---------------- | ------------------ | ------------------------------- | ------------------------------------------- | ------------------------------------------- | ------------------------------------------- | ------------------------------- |
-| **Organization** | Create             | ❌ (via seeding only)           | ❌ (via registration only)                  | ❌                                          | ❌                                          | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg)                     |
-|                  | Update             | ✅ (crossOrg)                   | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-|                  | Delete             | ✅ (crossOrg, NOT platform org) | ❌                                          | ❌                                          | ❌                                          | ❌                              |
-|                  | Restore            | ✅ (crossOrg)                   | ❌                                          | ❌                                          | ❌                                          | ❌                              |
-| **Department**   | Create             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ✅ (ownOrg.ownDept)                         | ❌                                          | ❌                              |
-|                  | Delete             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-|                  | Restore            | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-| **User**         | Create             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (any, self)                  | ✅ (ownOrg, self)                           | ✅ (ownOrg, self)                           | ✅ (self)                                   | ✅ (self)                       |
-|                  | Delete             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-|                  | Restore            | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ❌                                          | ❌                                          | ❌                              |
-| **ProjectTask**  | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ❌                                          | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, watchers)   |
-|                  | Update             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                                          | ❌                              |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ❌                                          | ❌                              |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ❌                                          | ❌                              |
-| **AssignedTask** | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, assignees)  |
-|                  | Update             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept, createdBy OR assignees) | ✅ (ownOrg.ownDept, createdBy OR assignees) | ✅ (ownOrg.ownDept, createdBy OR assignees) | ✅ (ownOrg.ownDept, assignees)  |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, assignees)              | ✅ (ownOrg.ownDept, assignees)  |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, assignees)              | ✅ (ownOrg.ownDept, assignees)  |
-| **RoutineTask**  | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-| **TaskActivity** | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-| **TaskComment**  | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (ownOrg.ownDept, createdBy)  | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)  |
-| **Material**     | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update             | ✅ (ownOrg.ownDept, createdBy)  | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, createdBy)              | ✅ (ownOrg.ownDept, createdBy)              | ❌                              |
-| **Vendor**       | Create             | ❌                              | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ❌                                          | ❌                              |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg)                                 | ✅ (ownOrg)                     |
-|                  | Update             | ✅ (ownOrg, createdBy)          | ✅ (ownOrg, createdBy)                      | ✅ (ownOrg, createdBy)                      | ✅ (ownOrg, createdBy)                      | ❌                              |
-|                  | Delete             | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ✅ (ownOrg, createdBy)                      | ❌                                          | ❌                              |
-|                  | Restore            | ✅ (ownOrg)                     | ✅ (ownOrg)                                 | ✅ (ownOrg, createdBy)                      | ❌                                          | ❌                              |
-| **Attachment**   | Create             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Read               | ✅ (any)                        | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, uploadedBy)             | ✅ (ownOrg.ownDept, uploadedBy)             | ✅ (ownOrg.ownDept, uploadedBy) |
-|                  | Restore            | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept, uploadedBy)             | ✅ (ownOrg.ownDept, uploadedBy)             | ✅ (ownOrg.ownDept, uploadedBy) |
-| **Notification** | Read               | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Update (mark read) | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)                         | ✅ (ownOrg.ownDept)             |
-|                  | Delete             | ✅ (ownOrg.ownDept)             | ✅ (ownOrg.ownDept)                         | ❌                                          | ❌                                          | ❌                              |
+```json
+{
+  "__comment": "Single source of truth for authorization. Allow if ANY rule passes.",
+  "Organization": {
+    "read": [
+      {
+        "description": "SuperAdmins from platform organization can read any organization",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read their own organization",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg"
+      }
+    ],
+    "update": [
+      {
+        "description": "Platform SuperAdmins can update organizations in other organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "crossOrg"
+      },
+      {
+        "description": "Platform SuperAdmins can update their own platform organization",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Non-platform SuperAdmins can update their own organization",
+        "roles": ["SuperAdmin"],
+        "requires": ["!isPlatformOrgUser"],
+        "scope": "ownOrg"
+      }
+    ],
+    "delete": [
+      {
+        "description": "Platform SuperAdmins can delete organizations in other organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "crossOrg"
+      }
+    ]
+  },
+  "Department": {
+    "create": [
+      {
+        "description": "SuperAdmins can create departments in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins and Admins can read departments across organizations",
+        "roles": ["SuperAdmin", "Admin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "crossOrg"
+      },
+      {
+        "description": "SuperAdmins and Admins can read departments in their own organization",
+        "roles": ["SuperAdmin", "Admin"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Managers and Users can only read departments in their own department",
+        "roles": ["Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "SuperAdmins can update departments in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Admins can update departments in their own department",
+        "roles": ["Admin"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete departments in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      }
+    ]
+  },
+  "User": {
+    "create": [
+      {
+        "description": "SuperAdmins can create users in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any user across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "SuperAdmins and Admins can read users in their own organization",
+        "roles": ["SuperAdmin", "Admin"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Managers and Users can only read users in their own department",
+        "roles": ["Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "All users can update their own user profile",
+        "roles": ["User", "Manager", "Admin", "SuperAdmin"],
+        "ownership": ["self"]
+      },
+      {
+        "description": "SuperAdmins and Admins can update any user in their own organization",
+        "roles": ["SuperAdmin", "Admin"],
+        "scope": "ownOrg"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete users in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      }
+    ]
+  },
+  "Task": {
+    "create": [
+      {
+        "description": "SuperAdmins and Admins can create ProjectTasks in their own department",
+        "roles": ["SuperAdmin", "Admin"],
+        "resourceType": "ProjectTask",
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "SuperAdmins, Admins, and Managers can create AssignedTasks in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager"],
+        "resourceType": "AssignedTask",
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "All roles can create RoutineTasks in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "resourceType": "RoutineTask",
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any task across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read tasks in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Users can read tasks where they are assignees or watchers",
+        "roles": ["User"],
+        "ownership": ["assignees", "watchers"]
+      }
+    ],
+    "update": [
+      {
+        "description": "SuperAdmins and Admins can update ProjectTasks they created in their own department",
+        "roles": ["SuperAdmin", "Admin"],
+        "resourceType": "ProjectTask",
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "All roles can update AssignedTasks they created or are assigned to in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "resourceType": "AssignedTask",
+        "ownership": ["createdBy", "assignees"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "All roles can update RoutineTasks they created in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "resourceType": "RoutineTask",
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Users can update tasks they are assigned to in their own department",
+        "roles": ["User"],
+        "ownership": ["assignees"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete tasks in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins can delete ProjectTasks they created in their own department",
+        "roles": ["Admin"],
+        "resourceType": "ProjectTask",
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins can delete AssignedTasks they created in their own department",
+        "roles": ["Admin"],
+        "resourceType": "AssignedTask",
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Managers and Users can delete AssignedTasks they are assigned to in their own department",
+        "roles": ["Manager", "User"],
+        "resourceType": "AssignedTask",
+        "ownership": ["assignees"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins, Managers, and Users can delete RoutineTasks they created in their own department",
+        "roles": ["Admin", "Manager", "User"],
+        "resourceType": "RoutineTask",
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  },
+  "TaskActivity": {
+    "create": [
+      {
+        "description": "All roles can create TaskActivity in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any TaskActivity across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read TaskActivity in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "SuperAdmins, Admins, and Managers can update TaskActivity they created in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete TaskActivity in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins and Managers can delete TaskActivity they created in their own department",
+        "roles": ["Admin", "Manager"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  },
+  "TaskComment": {
+    "create": [
+      {
+        "description": "All roles can create TaskComment in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any TaskComment across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read TaskComment in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "All roles can update TaskComment they created in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete TaskComment in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins, Managers, and Users can delete TaskComment they created in their own department",
+        "roles": ["Admin", "Manager", "User"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  },
+  "Material": {
+    "create": [
+      {
+        "description": "SuperAdmins, Admins, and Managers can create Materials in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any Material across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read Materials in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "SuperAdmins, Admins, and Managers can update Materials they created in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete Materials in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins and Managers can delete Materials they created in their own department",
+        "roles": ["Admin", "Manager"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  },
+  "Vendor": {
+    "create": [
+      {
+        "description": "Non-platform SuperAdmins and Admins can create Vendors in their own organization",
+        "roles": ["SuperAdmin", "Admin"],
+        "requires": ["!isPlatformOrgUser"],
+        "scope": "ownOrg"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any vendor across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read vendors in their own organization",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg"
+      }
+    ],
+    "update": [
+      {
+        "description": "SuperAdmins and Admins can update Vendors they created in their own organization",
+        "roles": ["SuperAdmin", "Admin"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Managers can update Vendors they created in their own organization",
+        "roles": ["Manager"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete Vendors in their own organization",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg"
+      },
+      {
+        "description": "Admins can delete Vendors they created in their own organization",
+        "roles": ["Admin"],
+        "ownership": ["createdBy"],
+        "scope": "ownOrg"
+      }
+    ]
+  },
+  "Attachment": {
+    "create": [
+      {
+        "description": "All roles can create Attachments in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "read": [
+      {
+        "description": "Platform SuperAdmins can read any Attachment across all organizations",
+        "roles": ["SuperAdmin"],
+        "requires": ["isPlatformOrgUser"],
+        "scope": "any"
+      },
+      {
+        "description": "All roles can read Attachments in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete Attachments in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      },
+      {
+        "description": "Admins, Managers, and Users can delete Attachments they uploaded in their own department",
+        "roles": ["Admin", "Manager", "User"],
+        "ownership": ["uploadedBy"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  },
+  "Notification": {
+    "read": [
+      {
+        "description": "All roles can read notifications in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "update": [
+      {
+        "description": "All roles can update notifications (e.g., mark as read) in their own department",
+        "roles": ["SuperAdmin", "Admin", "Manager", "User"],
+        "scope": "ownOrg.ownDept"
+      }
+    ],
+    "delete": [
+      {
+        "description": "SuperAdmins can delete notifications in their own department",
+        "roles": ["SuperAdmin"],
+        "scope": "ownOrg.ownDept"
+      }
+    ]
+  }
+}
+```
 
 ### Authorization Implementation
 
 **Middleware Pattern**:
 
 ```javascript
-// Authorization middleware
-const authorize = (resource, operation) => {
+// Authorization middleware (rule-driven, allow if ANY candidate rule passes)
+const authorize = (resource, operation, options = {}) => {
   return async (req, res, next) => {
     const { user } = req;
-    const { role, organization, department, isPlatformOrgUser } = user;
+    const targetResource = await loadTargetResource(req, options);
+    const requestedResourceType =
+      req.body?.type || req.body?.resourceType || targetResource?.type;
 
-    // Get authorization rule from matrix
-    const rule = authorizationMatrix[resource][operation][role];
+    // 1) Candidate-rule collection (resource + operation + role)
+    const rules = authorizationMatrix[resource]?.[operation] || [];
+    const candidateRules = rules.filter((rule) => rule.roles.includes(user.role));
 
-    // Check scope
-    if (rule.scope === "any" && isPlatformOrgUser && role === "SuperAdmin") {
-      return next(); // Platform SuperAdmin cross-org access
+    const predicateMap = {
+      isPlatformOrgUser: (ctx) => ctx.user.isPlatformOrgUser === true,
+      "!isPlatformOrgUser": (ctx) => ctx.user.isPlatformOrgUser === false,
+    };
+
+    // 2/3) Evaluate requires predicates + resourceType + scope + ownership for each candidate
+    const passingRule = candidateRules.find((rule) => {
+      const ctx = { user, targetResource, requestedResourceType };
+
+      const requiresOk = (rule.requires || []).every((predicate) => {
+        const evaluator = predicateMap[predicate];
+        return evaluator ? evaluator(ctx) : false;
+      });
+      if (!requiresOk) return false;
+
+      const resourceTypeOk =
+        !rule.resourceType || rule.resourceType === requestedResourceType;
+      if (!resourceTypeOk) return false;
+
+      const scopeOk = evaluateScope(rule.scope, ctx);
+      if (!scopeOk) return false;
+
+      const ownershipOk = evaluateOwnership(rule.ownership || [], ctx);
+      return ownershipOk;
+    });
+
+    // 4) Final decision logic: allow when any rule passes
+    if (passingRule) {
+      req.authorizationRule = passingRule;
+      return next();
     }
 
-    if (rule.scope === "ownOrg") {
-      // Check organization match
-      if (targetResource.organization.toString() !== organization.toString()) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-    }
-
-    if (rule.scope === "ownOrg.ownDept") {
-      // Check organization AND department match
-      if (
-        targetResource.organization.toString() !== organization.toString() ||
-        targetResource.department.toString() !== department.toString()
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-    }
-
-    // Check ownership
-    if (rule.ownership) {
-      if (
-        rule.ownership === "self" &&
-        targetResource._id.toString() !== user._id.toString()
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-
-      if (
-        rule.ownership === "createdBy" &&
-        targetResource.createdBy.toString() !== user._id.toString()
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-
-      if (
-        rule.ownership === "assignees" &&
-        !targetResource.assignees.includes(user._id)
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-
-      if (
-        rule.ownership === "watchers" &&
-        !targetResource.watchers.includes(user._id)
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-
-      if (
-        rule.ownership === "uploadedBy" &&
-        targetResource.uploadedBy.toString() !== user._id.toString()
-      ) {
-        return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
-      }
-    }
-
-    next();
+    return res.status(403).json({ error: "UNAUTHORIZED_ERROR" });
   };
 };
 ```
@@ -2814,7 +3211,7 @@ Example:
 | CAN-002 | N/A | N/A | Bottom nav shown on xs only with canonical items; “More” hosts profile actions. | Route guards still apply for nav actions. |
 | CAN-003 | TaskComment model stores parent and depth guard (max 5). | Comment create/update endpoints reject depth > 5. | Disable reply UI at depth 5; show explanatory helper text. | Validator computes ancestor depth and blocks over-limit writes. |
 | CAN-004 | Add indexed filterable fields per resource. | List endpoints accept combined filters and compose query predicates. | Filter panels allow multi-select/multi-field combinations. | Query validator normalizes filter union safely. |
-| CAN-005 | Keep authorization matrix as canonical constants. | Every protected endpoint checks matrix-derived action/scope. | Permission hooks/render gates consume same matrix-derived contract. | `authorize` middleware is single decision engine. |
+| CAN-005 | Canonical authorization rules are defined only in the PRD §8.4 JSON (`Authorization Matrix Canonical JSON` section). | Every protected endpoint resolves candidate rules from the canonical JSON and allows when any rule passes. | Permission hooks/render gates consume the same canonical JSON contract (roles/requires/scope/ownership/resourceType). | `authorize` middleware evaluates `requires`, `resourceType`, scope, and ownership against JSON candidates. |
 | CAN-006 | Organization/User/Vendor phone fields all use same regex rule. | Create/update endpoints enforce canonical regex. | Input masks/placeholders and examples match Ethiopian format. | Shared phone validator module reused by all resources. |
 | CAN-007 | No `termsAccepted` field in registration schema. | Register API ignores/rejects terms payload fields. | Registration form excludes terms checkbox entirely. | Validation schema omits terms acceptance checks. |
 | CAN-008 | User/Organization verification fields + token metadata required. | Register/verify/resend/login flows enforce verification semantics and welcome email idempotency. | Verification pending UI + resend actions; org-created users marked verified. | Auth middleware blocks unverified users from protected flows. |
@@ -2842,4 +3239,5 @@ Example:
 
 | CAN-ID | Source location | Design location |
 |---|---|---|
-| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Implementation Mapping (CAN-001 to CAN-027)” |
+| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Implementation Mapping (CAN-001 to CAN-027)” (CAN-005 additionally maps to “Authorization Matrix Canonical JSON (PRD §8.4)”). |
+| CAN-005 (detailed) | `docs/product-requirements-document-new.md` §8.4 canonical authorization JSON | This file, “Authorization Matrix Canonical JSON (PRD §8.4)” and “Authorization Implementation”. |
