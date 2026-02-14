@@ -2,7 +2,7 @@
 
 ## Overview
 
-This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized into sequential phases covering backend implementation, frontend implementation, integration, testing, and alignment corrections.
+This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized into sequential phases covering backend implementation, frontend implementation, integration, testing, and integration hardening.
 
 **Total Requirements**: 63 requirements with 1,104 lines of acceptance criteria
 **Design Scope**: 2,807 lines covering architecture, data models, API endpoints, and authorization
@@ -15,7 +15,8 @@ This implementation plan provides a comprehensive, actionable task list for buil
 3. Frontend foundation (setup, authentication, layouts)
 4. Frontend features (components, pages, real-time)
 5. Integration and testing
-6. Alignment corrections
+6. Hardening and contract verification
+7. Final integration and deployment preparation
 
 **Key Constraints**:
 
@@ -188,7 +189,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Scope validators by req.user.organization for org-level resources (Vendor)
   - Scope validators by req.user.organization AND req.user.department for dept-level resources (User, Task, Material)
   - Return 400 VALIDATION_ERROR with detailed error messages
-  - _Requirements: 23.1-23.12, Design: Validation Middleware, Alignment Gap 2.3_
+  - _Requirements: 23.1-23.12, Design: Validation Middleware_
 
 - [ ] 3.3 Create authorization middleware
 
@@ -202,7 +203,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Return 403 UNAUTHORIZED_ERROR with clear message
   - Block INACTIVE users from login/refresh (403 FORBIDDEN)
   - Block unverified users from protected routes (403 FORBIDDEN)
-  - _Requirements: 4.1-4.10, 43.1-43.10, Design: Authorization Matrix, Alignment Gap 3.6_
+  - _Requirements: 4.1-4.10, 43.1-43.10, Design: Authorization Matrix_
 
 - [ ] 3.4 Create error handling middleware
 
@@ -709,7 +710,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Bottom Navigation (mobile only, xs breakpoint): 4 items (Dashboard, Tasks, Users, Profile) + centered FAB (Add icon, primary color)
   - Content area: render children
   - Responsive: permanent sidebar on md+, temporary drawer on xs/sm, bottom nav on xs only
-  - _Requirements: 18.1-18.12, Design: Layout Structure, Alignment Gap 2.2_
+  - _Requirements: 18.1-18.12, Design: Layout Structure_
 
 - [ ] 20.3 Create Header component
 
@@ -717,7 +718,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Display: page title, organization switcher (Platform SuperAdmin only), theme toggle, search bar, notifications bell with badge, user menu
   - Menu icon (mobile): toggle sidebar drawer
   - User menu: profile, settings, logout
-  - _Requirements: 18.1, Design: Header Component, Alignment Gap 2.2_
+  - _Requirements: 18.1, Design: Header Component_
 
 - [ ] 20.4 Create Sidebar component
 
@@ -734,7 +735,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - FAB: Add icon, primary color, opens dialog/menu for creating new items
   - Active item: highlighted with primary color
   - Visible: xs breakpoint only (width < 600)
-  - _Requirements: 18.2, Design: Bottom Navigation, Alignment Gap 2.2_
+  - _Requirements: 18.2, Design: Bottom Navigation_
 
 ### 21. Common Components
 
@@ -752,7 +753,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Props: columns, rows, loading, pagination, onPageChange, onSortChange, onRowClick, checkboxSelection, actions
   - Features: column visibility controls, density controls, export to CSV, search bar, filter button
   - Responsive: hide less important columns on xs/sm breakpoints
-  - _Requirements: 17.12, Design: MuiDataGrid Wrapper, Alignment Gap 2.2_
+  - _Requirements: 17.12, Design: MuiDataGrid Wrapper_
 
 - [ ] 21.3 Create MuiDataGridToolbar
 
@@ -773,7 +774,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Create `client/src/components/columns/departmentColumns.js` with department grid columns (name, description, HOD, member count, actions)
   - Create `client/src/components/columns/materialColumns.js` with material grid columns (name + SKU, category, unit, unit price, inventory stock, low-stock indicators, actions)
   - Create `client/src/components/columns/vendorColumns.js` with vendor grid columns (name, contact info - email + phone, rating, projects - active/total, partner badge, actions)
-  - _Requirements: Design: Column Definitions, Alignment Gap 2.2_
+  - _Requirements: Design: Column Definitions_
 
 ### 23. Task Feature Components
 
@@ -783,14 +784,14 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Display: tabs (All Tasks, Assigned to Me, Completed), cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
   - Card content: title, status badge, priority indicator, assignees avatars, due date, description preview
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: 17.1, Design: Task List View, Alignment Gap 2.2_
+  - _Requirements: 17.1, Design: Task List View_
 
 - [ ] 23.2 Create TaskGrid component (Grid View)
 
   - Create `client/src/components/task/TaskGrid.jsx` with grid view (MuiDataGrid wrapper)
   - Display: tabular grid with columns from taskColumns.js, row selection checkboxes, action buttons
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: 17.1, Design: Task Grid View, Alignment Gap 2.2_
+  - _Requirements: 17.1, Design: Task Grid View_
 
 - [ ] 23.3 Create TaskCard component
 
@@ -805,7 +806,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Filters: status (multi-select, union), priority (multi-select, union), type (multi-select, union), created date range (presets + custom), due date range (presets + custom), department (multi-select, Managers/Admins only), assignment (Assigned to me, Created by me, Watching, All department tasks, Unassigned), tags (multi-select, AND/OR toggle), deleted toggle (SuperAdmin only)
   - Actions: apply, clear all, close
   - Persist filters in URL query params
-  - _Requirements: 17.2-17.11, Design: Task Filters, Alignment Gap 2.2_
+  - _Requirements: 17.2-17.11, Design: Task Filters_
 
 - [ ] 23.5 Create TaskForm component
 
@@ -814,7 +815,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Validation: aligned with backend validation rules, type-specific field visibility
   - Submit: call createTask or updateTask endpoint, close dialog, show success toast
   - Error handling: display error toast, keep dialog open
-  - _Requirements: 7.1, 8.1, 9.1, Design: Task Form, Alignment Gap 2.2_
+  - _Requirements: 7.1, 8.1, 9.1, Design: Task Form_
 
 - [ ] 23.6 Create TaskDetails component
 
@@ -853,14 +854,14 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Display: cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
   - Card content: avatar, name, position, department, skills chart, role badge, status indicator
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: User List View, Alignment Gap 2.2_
+  - _Requirements: Design: User List View_
 
 - [ ] 24.2 Create UserGrid component (Grid View)
 
   - Create `client/src/components/user/UserGrid.jsx` with grid view (MuiDataGrid wrapper)
   - Display: tabular grid with columns from userColumns.js, action buttons
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: User Grid View, Alignment Gap 2.2_
+  - _Requirements: Design: User Grid View_
 
 - [ ] 24.3 Create UserCard component
 
@@ -875,7 +876,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Filters: role (multi-select), department (multi-select, Admins only), status (multi-select), joined date range, employee ID, include inactive toggle
   - Actions: apply, clear all, close
   - Persist filters in URL query params
-  - _Requirements: Design: User Filters, Alignment Gap 2.2_
+  - _Requirements: Design: User Filters_
 
 - [ ] 24.5 Create UserForm component
 
@@ -884,7 +885,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Validation: aligned with backend validation rules, enforce immutability rules (department, role, employeeId, joinedAt, isHod for Admin/Manager/User targets)
   - Submit: call createUser or updateUser endpoint, close dialog, show success toast
   - Error handling: display error toast (409 for immutability violations), keep dialog open
-  - _Requirements: 6.1, 6.8, Design: User Form, Alignment Gap 2.2_
+  - _Requirements: 6.1, 6.8, Design: User Form_
 
 - [ ] 24.6 Create UserDetails component
 
@@ -919,14 +920,14 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Display: cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
   - Card content: name, description, manager info, member count, task count, status badge
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: Department List View, Alignment Gap 2.2_
+  - _Requirements: Design: Department List View_
 
 - [ ] 25.2 Create DepartmentGrid component (Grid View)
 
   - Create `client/src/components/department/DepartmentGrid.jsx` with grid view (MuiDataGrid wrapper)
   - Display: tabular grid with columns from departmentColumns.js, action buttons
   - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: Department Grid View, Alignment Gap 2.2_
+  - _Requirements: Design: Department Grid View_
 
 - [ ] 25.3 Create DepartmentCard component
 
@@ -941,7 +942,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Filters: status (multi-select), manager (select), member count range, created date range, include deleted toggle (SuperAdmin only)
   - Actions: apply, clear all, close
   - Persist filters in URL query params
-  - _Requirements: Design: Department Filters, Alignment Gap 2.2_
+  - _Requirements: Design: Department Filters_
 
 - [ ] 25.5 Create DepartmentForm component
 
@@ -950,7 +951,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Validation: aligned with backend validation rules
   - Submit: call createDepartment or updateDepartment endpoint, close dialog, show success toast
   - Error handling: display error toast, keep dialog open
-  - _Requirements: 5.1, Design: Department Form, Alignment Gap 2.2_
+  - _Requirements: 5.1, Design: Department Form_
 
 - [ ] 25.6 Create DepartmentDetails component
 
@@ -958,7 +959,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Tabs: Overview, Users, Tasks, Activity
   - Overview: department header (name, description, manager, creation date, stats - total users, total tasks, active tasks)
   - Actions: edit, delete, restore (if soft-deleted)
-  - _Requirements: Design: Department Details, Alignment Gap 2.2_
+  - _Requirements: Design: Department Details_
 
 - [ ] 25.7 Create DepartmentOverview component
 
@@ -990,7 +991,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Create `client/src/components/material/MaterialGrid.jsx` with grid view (MuiDataGrid wrapper, NO list view)
   - Display: tabular grid with columns from materialColumns.js (name + SKU, category, unit, unit price, inventory stock, low-stock indicators, actions)
   - Actions: search bar, filter button, create button, pagination (NO view toggle)
-  - _Requirements: Design: Material Grid View, Alignment Gap 2.2_
+  - _Requirements: Design: Material Grid View_
 
 - [ ] 26.2 Create MaterialFilters component
 
@@ -998,7 +999,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Filters: category (multi-select), status (multi-select), low-stock toggle, date range, include deleted toggle (SuperAdmin only)
   - Actions: apply, clear all, close
   - Persist filters in URL query params
-  - _Requirements: Design: Material Filters, Alignment Gap 2.2_
+  - _Requirements: Design: Material Filters_
 
 - [ ] 26.3 Create MaterialForm component
 
@@ -1007,14 +1008,14 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Validation: aligned with backend validation rules
   - Submit: call createMaterial or updateMaterial endpoint, close dialog, show success toast
   - Error handling: display error toast, keep dialog open
-  - _Requirements: 12.1, Design: Material Form, Alignment Gap 2.2_
+  - _Requirements: 12.1, Design: Material Form_
 
 - [ ] 26.4 Create MaterialDetails component
 
   - Create `client/src/components/material/MaterialDetails.jsx` with material detail page
   - Display: material header (name, SKU, category, unit, unit price, inventory stock, low-stock state), description, restock button, usage history
   - Actions: edit, delete (with confirmation dialog, 409 handling), restore (if soft-deleted)
-  - _Requirements: Design: Material Details, Alignment Gap 2.2_
+  - _Requirements: Design: Material Details_
 
 - [ ] 26.5 Create RestockDialog component
   - Create `client/src/components/material/RestockDialog.jsx` with restock dialog
@@ -1029,7 +1030,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Create `client/src/components/vendor/VendorGrid.jsx` with grid view (MuiDataGrid wrapper, NO list view)
   - Display: tabular grid with columns from vendorColumns.js (name, contact info - email + phone, rating, projects - active/total, partner badge, actions)
   - Actions: search bar, filter button, create button, pagination (NO view toggle)
-  - _Requirements: Design: Vendor Grid View, Alignment Gap 2.2_
+  - _Requirements: Design: Vendor Grid View_
 
 - [ ] 27.2 Create VendorFilters component
 
@@ -1037,7 +1038,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Filters: status (multi-select), rating (range), include deleted toggle (SuperAdmin only)
   - Actions: apply, clear all, close
   - Persist filters in URL query params
-  - _Requirements: Design: Vendor Filters, Alignment Gap 2.2_
+  - _Requirements: Design: Vendor Filters_
 
 - [ ] 27.3 Create VendorForm component
 
@@ -1046,13 +1047,13 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Validation: aligned with backend validation rules
   - Submit: call createVendor or updateVendor endpoint, close dialog, show success toast
   - Error handling: display error toast, keep dialog open
-  - _Requirements: 13.1, Design: Vendor Form, Alignment Gap 2.2_
+  - _Requirements: 13.1, Design: Vendor Form_
 
 - [ ] 27.4 Create VendorDetails component
   - Create `client/src/components/vendor/VendorDetails.jsx` with vendor detail page
   - Display: vendor header (name, contact info, address, rating, verified partner badge), description, performance metrics (total projects, active projects, completed projects, on-time delivery rate, average project duration, total spend), linked projects
   - Actions: edit, delete (with confirmation dialog, 409 handling), restore (if soft-deleted), contact vendor (opens email dialog, role-gated)
-  - _Requirements: 13.7, 13.8, Design: Vendor Details, Alignment Gap 2.2_
+  - _Requirements: 13.7, 13.8, Design: Vendor Details_
 
 ### 28. Attachment Feature Components
 
@@ -1111,7 +1112,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
   - Display: KPI cards, charts, activity feed, upcoming deadlines, team performance (Managers/Admins only)
   - Filters: date range, departmentId (Managers/Admins only), status, priority, taskType
   - Actions: refresh button (manual data reload), export button (PDF export with jspdf + jspdf-autotable)
-  - _Requirements: 16.1-16.12, Design: Dashboard Overview, Alignment Gap 2.2_
+  - _Requirements: 16.1-16.12, Design: Dashboard Overview_
 
 - [ ] 30.2 Create StatCard component
 
@@ -1147,7 +1148,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
   - Create `client/src/components/dashboard/ActivityFeed.jsx` with activity feed
   - Display: real-time chronological feed (newest first) with avatars, timestamps, actions
-  - _Requirements: 16.3, 16.12, Design: Activity Feed, Alignment Gap 2.2_
+  - _Requirements: 16.3, 16.12, Design: Activity Feed_
 
 - [ ] 30.7 Create UpcomingDeadlines component
 
@@ -1172,7 +1173,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
   - Display: personal info (firstName, lastName, position, phone, dateOfBirth), profile picture (Cloudinary upload), skills (array of skill + percentage), preferences (theme, date format, time format, timezone, notifications)
   - Actions: update profile, update preferences
-  - _Requirements: 6.8, Design: Settings Profile Tab, Alignment Gap 3.4_
+  - _Requirements: 6.8, Design: Settings Profile Tab_
 
 - [ ] 31.3 Create Account tab
 
@@ -1207,7 +1208,7 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
   - Display connection status (connected, disconnected, reconnecting) in header or footer
   - Show warning when disconnected
-  - _Requirements: 14.11, Design: Connection Status, Alignment Gap 2.2_
+  - _Requirements: 14.11, Design: Connection Status_
 
 - [ ] 32.3 Implement optimistic updates
   - Create task: add to cache immediately, rollback on error
@@ -1502,151 +1503,81 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 ---
 
-## Phase 6: Alignment Corrections
+## Phase 6: Hardening and Contract Verification
 
-### 35. Requirements Document Updates
+### 35. Backend Contract Hardening
 
-- [ ] 35.1 Add technology stack section to requirements.md
+- [ ] 35.1 Enforce registration and seeding creation paths
 
-  - Add new section "Technology Stack" after Introduction
-  - List backend dependencies with exact versions (Node.js, Express, MongoDB, Mongoose, JWT, bcrypt, Socket.IO, Nodemailer, etc.)
-  - List frontend dependencies with exact versions (React, Vite, Redux Toolkit, Material UI, axios, socket.io-client, etc.)
-  - List development scripts (npm run dev, npm run seed, npm run wipe, npm run build, etc.)
-  - _Alignment Gap: 2.1_
+  - Ensure platform organization can be created only via `backend/mock/seed.js`
+  - Ensure customer organizations can be created only through the 4-step registration API flow
+  - Validate circular dependency resolution (org → dept → user → update manager/createdBy) is transaction-safe and idempotent
+  - Add guards to block alternate creation paths that bypass verification logic
+  - _Requirements: 1.1-1.5, 2.1-2.9, Design: Overview, Organization Schema, Authentication Endpoints_
 
-- [ ] 35.2 Add missing SHALL statements for UI/UX requirements
+- [ ] 35.2 Implement data retention/TTL behaviors in product code
 
-  - Add SHALL statements for DashboardLayout structure (header, sidebar, content area)
-  - Add SHALL statements for Header components (page title, organization switcher, theme toggle, search, user menu, logo in sidebar only)
-  - Add SHALL statements for mobile menu icon toggle
-  - Add SHALL statements for FAB (Add icon, primary color, opens dialog/menu)
-  - Add SHALL statements for active navigation item highlighting (primary color)
-  - Add SHALL statements for edit task dialog
-  - Add SHALL statements for create/edit vendor dialog
-  - Add SHALL statements for delete material/vendor confirmation dialog with 409 handling
-  - Add SHALL statements for material detail header (inventory stock, low-stock state)
-  - Add SHALL statements for department header (creation date, summary stats)
-  - Add SHALL statements for dashboard real-time updates
-  - Add SHALL statements for Socket.IO connection status indicator
-  - _Alignment Gap: 2.2_
+  - Implement Notification TTL behavior with `expiresAt` and MongoDB TTL index
+  - Ensure non-notification models remain soft-delete recoverable and are not hard-expired by TTL
+  - Add migration/check script to verify TTL index exists and is configured as intended
+  - Verify expired notifications are excluded from API responses
+  - _Requirements: 15.1-15.11, 20.1-20.10, Design: Notification Schema, Soft Delete and Cascade Properties_
 
-- [ ] 35.3 Add validation middleware scoping requirements
+- [ ] 35.3 Harden validation scoping and restore checks
 
-  - Add new requirement "Validation Middleware Scoping"
-  - Add SHALL statement: validators MUST use .run(req) and validationResult(req)
-  - Add SHALL statement: existence checks for create/restore MUST use .withDeleted()
-  - Add SHALL statement: department/vendor validators MUST scope by req.user.organization
-  - Add SHALL statement: user/task/material validators MUST scope by req.user.organization AND req.user.department
-  - _Alignment Gap: 2.3_
+  - Ensure validators execute via `.run(req)` and aggregate errors via `validationResult(req)`
+  - Enforce `.withDeleted()` association checks for delete/restore-sensitive resources
+  - Enforce validator scoping by organization for org-level resources and by organization+department for dept-level resources
+  - Add negative-path checks for cross-tenant and cross-department validation bypass attempts
+  - _Requirements: 3.1-3.5, 12.8-12.9, 13.4-13.5, 23.1-23.12, Design: Validation Middleware, Multi-Tenant Data Isolation_
 
-- [ ] 35.4 Add TTL expiry policy requirements
+- [ ] 35.4 Verify user notification preference model behavior
 
-  - Add new requirement "TTL Expiry Policies"
-  - Add SHALL statement: Organization TTL = never (immutable if isPlatformOrg=true)
-  - Add SHALL statement: Department TTL = 365 days
-  - Add SHALL statement: User TTL = 365 days
-  - Add SHALL statement: Task TTL = 365 days
-  - Add SHALL statement: TaskActivity TTL = 365 days
-  - Add SHALL statement: TaskComment TTL = 365 days
-  - Add SHALL statement: Material TTL = 365 days
-  - Add SHALL statement: Vendor TTL = 365 days
-  - Add SHALL statement: Attachment TTL = 365 days
-  - Add SHALL statement: Notification TTL = 30 days (auto-delete via TTL index)
-  - _Alignment Gap: 2.4_
+  - Implement and validate `preferences.notifications` defaults for email and in-app channels
+  - Ensure event-level toggles are honored when dispatching notification and email jobs
+  - Verify profile/settings APIs persist and return notification preference object consistently
+  - _Requirements: 15.1-15.11, 33.1-33.9, Design: User Schema, Notification Schema, Frontend Architecture_
 
-- [ ] 35.5 Add user preferences notifications object
-  - Update Requirement 33 (User Preferences)
-  - Add SHALL statement: User.preferences MUST include notifications object
-  - Add SHALL statement: notifications.emailEnabled (boolean, default: true)
-  - Add SHALL statement: notifications.inAppEnabled (boolean, default: true)
-  - Add SHALL statement: notifications.emailEvents (object with event-level toggles: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - Add SHALL statement: notifications.inAppEvents (object with event-level toggles: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - _Alignment Gap: 2.5_
+### 36. Frontend and API Behavior Verification
 
-### 36. Design Document Updates
+- [ ] 36.1 Validate canonical layout and navigation behaviors
 
-- [ ] 36.1 Add platform/customer organization setup details
+  - Verify DashboardLayout structure (header, sidebar, content) across breakpoints
+  - Verify header behavior (title, org switcher where applicable, theme toggle, user menu)
+  - Verify bottom navigation/FAB behavior on xs and sidebar behavior on sm+
+  - Verify active navigation highlighting and mobile menu interactions
+  - _Requirements: 18.1-18.12, 46.1-46.10, Design: Frontend Architecture, Component Structure_
 
-  - Add new section "Organization Creation Process" after Overview
-  - Document platform organization creation via backend seeding only
-  - Document customer organization creation via 4-step registration wizard only
-  - Document circular dependency resolution (org → dept → user → update manager/createdBy)
-  - Document backend handling of 4-step wizard (single transaction, rollback on error)
-  - _Alignment Gap: 3.1_
+- [ ] 36.2 Validate API list query conventions and response envelope
 
-- [ ] 36.2 Add TTL expiry implementation
+  - Enforce canonical query params: `page`, `limit`, `sortBy`, `sortOrder`, `search`, `includeDeleted`
+  - Enforce multi-select filter convention (`status=TODO,IN_PROGRESS`)
+  - Restrict `organizationId` query override to Platform SuperAdmin flows only
+  - Verify response envelope consistency for success and error payloads
+  - _Requirements: 3.1-3.5, 4.1-4.10, 24.1-24.10, 45.1-45.10, Design: API Endpoints, Error Handling_
 
-  - Update all model schemas with TTL index configuration
-  - Add TTL index to Notification schema: { expiresAt: 1 } with expireAfterSeconds: 0
-  - Document TTL periods for each model (Organization: never, Department: 365d, User: 365d, Task: 365d, TaskActivity: 365d, TaskComment: 365d, Material: 365d, Vendor: 365d, Attachment: 365d, Notification: 30d)
-  - Document automatic deletion behavior via MongoDB TTL indexes
-  - _Alignment Gap: 3.2_
+- [ ] 36.3 Verify task-type and activity constraints end-to-end
 
-- [ ] 36.3 Add validation middleware scoping rules
+  - Ensure TaskActivity creation is rejected for RoutineTask with 409 CONFLICT_ERROR
+  - Verify ProjectTask/AssignedTask activity creation works and emits real-time updates
+  - Verify frontend action availability matches backend constraints by task type
+  - _Requirements: 7.1-7.10, 8.1-8.10, 9.1-9.10, 10.1-10.10, 24.1-24.10, Design: Task Schema, TaskActivity Schema, Real-Time Events (Socket.IO)_
 
-  - Add new section "Validation Middleware Implementation" after Authorization Matrix
-  - Document validator execution using .run(req) and validationResult(req)
-  - Document existence checks using .withDeleted() for create/restore operations
-  - Document scoping by req.user.organization for org-level resources (Vendor)
-  - Document scoping by req.user.organization AND req.user.department for dept-level resources (User, Task, Material)
-  - Provide code examples for each scoping pattern
-  - _Alignment Gap: 3.3_
+- [ ] 36.4 Verify authorization matrix implementation fidelity
 
-- [ ] 36.4 Update User schema with notification preferences
+  - Validate requires predicates (`isPlatformOrgUser`, `!isPlatformOrgUser`) in middleware enforcement
+  - Validate scope semantics (ownOrg, ownOrg.ownDept, ownOrg.crossDept) against API behavior
+  - Validate ownership rules (`self`, `createdBy`, `assignees`, `watchers`, `uploadedBy`) on protected operations
+  - Verify task subtype resourceType checks are enforced for create/update/delete routes
+  - _Requirements: 4.1-4.10, 43.1-43.10, Design: Authorization Matrix, Authorization Implementation_
 
-  - Update User.preferences schema to include notifications object
-  - Add notifications.emailEnabled (boolean, default: true)
-  - Add notifications.inAppEnabled (boolean, default: true)
-  - Add notifications.emailEvents (object: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - Add notifications.inAppEvents (object: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - _Alignment Gap: 3.4_
+- [ ] 36.5 Execute consolidated manual verification sweep
 
-- [ ] 36.5 Document TaskActivity creation restriction
+  - Run full manual regression for auth, RBAC, validation, isolation, real-time, notifications, dashboard, responsive behavior, and file upload
+  - Validate dataset coverage: platform org, multiple customer orgs/departments, each role, all task types, soft-deleted resources
+  - Record pass/fail evidence and defects linked to endpoint/component names
+  - _Requirements: 46.1-46.10, Design: Testing Strategy, Test Data Requirements_
 
-  - Update TaskActivity schema section with business rule
-  - Add SHALL statement: TaskActivity can ONLY be created for ProjectTask and AssignedTask
-  - Add SHALL statement: TaskActivity creation for RoutineTask MUST return 409 CONFLICT_ERROR
-  - Add SHALL statement: parentModel=Task requires parent to be ProjectTask or AssignedTask (NOT RoutineTask)
-  - Add code example for validation logic
-  - _Alignment Gap: 3.5_
-
-- [ ] 36.6 Complete authorization matrix with JSON rule-set
-
-  - Replace simplified table with complete JSON-based rule-set
-  - Add requires predicates (isPlatformOrgUser, !isPlatformOrgUser)
-  - Add resourceType for task subtypes (ProjectTask, AssignedTask, RoutineTask)
-  - Add complex ownership combinations (createdBy, assignees, watchers, uploadedBy)
-  - Document evaluation logic: ANY rule passes → ALLOW
-  - Provide code examples for rule evaluation
-  - _Alignment Gap: 3.6_
-
-- [ ] 36.7 Add API query convention details
-
-  - Update API Endpoints section with canonical list query conventions
-  - Document query parameters: page, limit, sortBy, sortOrder, search, includeDeleted
-  - Document multi-select filters as comma-separated values (e.g., status=TODO,IN_PROGRESS)
-  - Document Platform SuperAdmin organizationId parameter
-  - Document 400 VALIDATION_ERROR for non-platform users providing organizationId
-  - Document exact pagination response shape: { data: [], pagination: { page, limit, total, totalPages } }
-  - _Alignment Gap: 3.7_
-
-- [ ] 36.8 Add detailed API error response format
-
-  - Update Error Handling section with canonical error response format
-  - Document success response: { success: true, data: {...}, message: "..." }
-  - Document error response: { success: false, message: "...", error: { code: "ERROR_CODE", details: {...} } }
-  - Document all error codes: VALIDATION_ERROR, UNAUTHENTICATED_ERROR, UNAUTHORIZED_ERROR, NOT_FOUND_ERROR, CONFLICT_ERROR, RATE_LIMITED_ERROR, INTERNAL_ERROR
-  - Provide examples for each error code
-  - _Alignment Gap: 3.8_
-
-- [ ] 36.9 Update testing strategy
-  - Replace "No test frameworks" note with comprehensive manual testing strategy
-  - Document manual testing checklist (authentication, authorization, validation, multi-tenant isolation, task types, soft delete, material/vendor deletion, real-time, notifications, dashboard, responsive, file upload)
-  - Document test data requirements (platform org, multiple customer orgs, multiple depts, multiple users per role, all task types, materials with low stock, vendors with ratings, soft-deleted resources)
-  - Document test scenarios from prd-test-cases.md (15,280 lines)
-  - _Alignment Gap: 3.9_
-
----
 
 ## Phase 7: Final Integration and Deployment Preparation
 
@@ -1733,11 +1664,13 @@ This implementation plan provides a comprehensive, actionable task list for buil
 
 **Implementation Dependencies**:
 
-- Backend models must be completed before controllers
-- Backend middleware must be completed before routes
-- Frontend store must be configured before components
-- Frontend layouts must be completed before feature components
-- Real-time integration requires both backend Socket.IO service and frontend socketService
+- Phase 1 depends on no prior phase deliverables.
+- Phase 2 depends on completed Phase 1 deliverables.
+- Phase 3 depends on completed Phase 2 deliverables.
+- Phase 4 depends on completed Phase 3 deliverables.
+- Phase 5 depends on completed Phase 4 deliverables.
+- Phase 6 depends on completed Phase 5 deliverables.
+- Phase 7 depends on completed Phase 6 deliverables.
 
 **Testing Approach**:
 
@@ -1750,12 +1683,6 @@ This implementation plan provides a comprehensive, actionable task list for buil
 - Test soft delete and cascade
 - Test real-time updates
 - Test responsive layout
-
-**Alignment Corrections**:
-
-- Can be done in parallel with implementation
-- Should be completed before final review
-- Ensure requirements.md and design.md are single source of truth
 
 **Deployment Preparation**:
 
