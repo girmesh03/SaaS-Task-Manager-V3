@@ -3134,6 +3134,32 @@ Data dependencies:
 - Projects list may be derived via `GET /api/tasks?type=ProjectTask&vendorId=<vendorId>` (paginated)
 - `POST /api/vendors/:vendorId/contact` sends an email via Nodemailer (used by the in-app "Contact Vendor" dialog).
 
+
+### 10.4 UI Coverage Traceability Requirements (Normative)
+
+The UI coverage specification is incorporated as normative implementation detail for the screens in Section 23.2.
+
+Frontend requirement IDs are mandatory traceability anchors:
+
+- FR-UI-001: Public shell + landing composition and auth CTAs (CAN-025).
+- FR-UI-002: Dashboard layout behavior desktop/mobile including sidebar/header/nav constraints (CAN-001, CAN-002, CAN-024).
+- FR-UI-003: Dashboard overview widgets and analytics integration.
+- FR-UI-004: Department listing/filter/dialog/detail tabs, status, and description constraints (CAN-018, CAN-022, CAN-026).
+- FR-UI-005: User listing/filter/dialog/detail tabs and immutable-field behavior (CAN-011, CAN-016).
+- FR-UI-006: Task listing/filter/dialog/detail tabs and status/priority mapping (CAN-003, CAN-004, CAN-013).
+- FR-UI-007: Materials list/detail including inventory and restock semantics (CAN-019, CAN-021).
+- FR-UI-008: Vendors list/detail with extended fields and delete constraints (CAN-015, CAN-020).
+- FR-UI-009: Settings profile/account tab UX and account-management flows.
+- FR-UI-010: Responsive tablet/mobile behavior for all covered screens (CAN-001, CAN-017).
+- FR-UI-011: Grid/List conventions (`MuiDataGrid` vs cards + toolbar) (CAN-023).
+- FR-UI-012: Data dependency compliance between screens and Section 18 contracts.
+
+Per-screen implementation checkpoints are required:
+
+- Each screen MUST have route coverage, clear component ownership, and data hooks with loading/error/success states.
+- Each screen MUST map to at least one FR-UI requirement ID and preserve that mapping in implementation/docs.
+- For protected routes, data dependencies must be satisfied using Section 18 endpoints only; no undocumented endpoint contracts are allowed.
+
 ## 11. Responsive Behavior and Breakpoints
 
 Canonical breakpoints:
@@ -4522,6 +4548,20 @@ Testing scope:
 - Tests must be written for validators, controllers, authorization logic, multi-tenant isolation, soft delete, restore, and cascade behavior.
 - Tests must not be written for UI, styling, framework internals, or third-party libraries.
 
+
+### 19.1 Canonical Test Case Corpus (Normative, Exhaustive)
+
+In addition to the testing constraints above, the complete canonical test catalog is incorporated here as a **normative and mandatory** requirement set.
+
+- Every test case ID and assertion in the canonical test catalog is REQUIRED and must be preserved (including validation, authorization, scoping, soft delete/restore, transaction/session, API response shape, and rate-limit/security behaviors).
+- Canonical ID format is mandatory: `<RESOURCE>-<CATEGORY>-<ROUTE/OP>-###` (example: `TASK-VAL-POST-014`).
+- Canonical error classes/codes are mandatory across API and UI handling: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED_ERROR`, `403 UNAUTHORIZED_ERROR`, `404 NOT_FOUND_ERROR`, `409 CONFLICT_ERROR`, `429 RATE_LIMITED_ERROR`, `500 INTERNAL_ERROR` (legacy alias `500 SERVER_ERROR` may be accepted only for backward compatibility).
+- Shared test assumptions are mandatory: seeded Platform organization (`isPlatformOrg=true`), seeded Customer organization (`isPlatformOrg=false`), ACTIVE/INACTIVE departments, and users spanning all roles.
+- Scope vocabulary is mandatory and must map consistently in validators/controllers/UI gating: `self`, `ownOrg`, `crossOrg`, `ownOrg.ownDept`, `ownOrg.crossDept`, `any`.
+- Ownership vocabulary is mandatory and must map consistently in authorization logic: `self`, `createdBy`, `uploadedBy`, `assignees`, `watchers`, `mentioned`, `manager`, `isHod`.
+- Registration, auth lifecycle, CRUD, restore, and list-query test cases in the canonical test catalog supersede any weaker or less specific wording elsewhere in this PRD.
+- Any new endpoint/feature added after this PRD revision MUST introduce matching test-case entries using the same format and rigor before the feature is considered done.
+
 ## 20. Engineering Constraints and Implementation Rules
 
 Critical rules:
@@ -4726,6 +4766,428 @@ Cascade delete details:
   - Remove from TaskActivity materials array.
 - Vendor cascade:
   - ProjectTasks where vendor = Vendor set vendor to null or cascade depending on business logic.
+
+
+
+### 20.1 Development Rules Consolidation (Normative)
+
+This PRD fully incorporates the development rules as mandatory engineering policy.
+
+- Security policy is mandatory: JWT secret parity between HTTP and Socket.IO, bcrypt >=12 rounds, `select:false` on sensitive fields, UTC storage, rate limiting on all API routes, credentialed CORS, and Helmet CSP with Cloudinary allowances.
+- Testing policy is mandatory: plain JavaScript scripts only, no test frameworks, real database/model execution, no business-logic mocking, explicit validator/controller assertions, and strict multi-tenant + authorization coverage.
+- Test execution policy is mandatory: scripts are organized by resource/action naming (for example `test/<resource>/<action>.test.js`), executable independently, and must preserve platform-organization integrity.
+- Frontend behavior policy is mandatory: 401 refresh-then-logout on refresh failure, 403 toast-only without logout, tree-shakable MUI imports, no deprecated syntax, and controlled form patterns (`Controller`, `value`, `onChange`).
+- Data lifecycle policy is mandatory: soft delete only, withDeleted-aware existence checks for create/restore, cascade delete/restore methods, and TTL expiry behavior exactly as defined in Section 7.15.
+- Execution mindset policy is mandatory: no shortcuts, production-readiness thinking, and explicit reuse of shared docs/utilities/middlewares/constants/models/controllers/routes/services.
+
+### 20.2 Development Rules (Verbatim Canonical Copy)
+
+# Development Rules
+
+## Critical Rules (STRICTLY ENFORCED)
+
+1. **NEVER** skip reading existing files before making changes
+2. **NEVER** hard delete any resource - use soft delete plugin methods only
+3. **NEVER** hardcode values - always import from `utils/constants.js`
+4. **NEVER** use `watch()` method in React Hook Form
+5. **NEVER** use deprecated MUI v5/v6 syntax (item prop, renderTags)
+6. **NEVER** use non-tree-shakable MUI imports - always use tree-shakable imports (e.g., `import Button from '@mui/material/Button'`)
+7. **NEVER** allow 401 errors to NOT logout user on frontend if refresh token failed
+8. **NEVER** allow 403 errors to logout user on frontend (403 = forbidden, not unauthenticated)
+9. **NEVER** skip organization/department scoping on operations
+10. **NEVER** allow non-platform users to access other organizations
+11. **NEVER** delete platform organization
+12. **NEVER** create organization via API route (doesn't exist)
+13. **NEVER** use native Mongoose delete methods (remove, deleteOne, deleteMany)
+14. **NEVER** use CMD/PowerShell commands - use Git Bash/WSL compatible commands
+
+## Security Rules
+
+1. JWT secrets MUST be same for HTTP and Socket.IO
+2. Passwords MUST use bcrypt with ≥12 salt rounds
+3. Sensitive fields MUST have `select: false`
+4. All dates MUST be stored in UTC timezone
+5. Rate limiting MUST be applied to all API routes
+6. CORS MUST enable credentials for cookie-based auth
+7. Helmet CSP MUST include Cloudinary CDN
+8. All 403 errors = unauthorized, all 401 errors = unauthenticated
+9. Frontend 401 → refresh token on frontend → 401 → logout user
+10. Frontend 403 errors MUST NOT logout user instead toast message
+
+## Testing Rules
+
+**CRITICAL: TESTING IS REQUIRED AND STRICTLY CONTROLLED**
+
+Testing MUST be performed **only** using **plain JavaScript test scripts** that directly execute real application code.
+NO testing frameworks or testing libraries are allowed (e.g., Jest, Mocha, Chai, Supertest, Vitest, Cypress).
+
+Testing MUST simulate real backend behavior exactly as exercised via Postman, but driven programmatically.
+
+### General Principles
+
+1. Tests MUST directly execute validators, controllers, and database logic.
+2. Tests MUST use real Mongoose models and the existing application database.
+3. Tests MUST NOT mock business logic, models, services, or authorization rules.
+4. Tests MUST fail loudly using `throw`, `process.exit(1)`, or explicit assertion checks.
+5. Tests MUST be executable using `node <script>.js`.
+6. Tests MUST strictly respect multi-tenant isolation, authorization, and soft-delete rules.
+
+### Validator Testing Rules
+
+1. All validators MUST be executed independently of Express using `.run(req)`.
+2. Validation results MUST be asserted using `validationResult(req)`.
+3. Validators MUST test and enforce:
+   - Required fields
+   - Field formats and data types
+   - **Existence checks** for referenced resources
+   - **Uniqueness checks** where applicable
+4. For **create operations**, existence checks MUST be performed using `.withDeleted()` to prevent restore conflicts.
+5. For **restore operations**, existence checks MUST explicitly use `.withDeleted()`.
+6. For **all params-based validators**, existence checks MUST be performed and asserted.
+7. Department and vendor validators MUST ALWAYS be scoped with:
+   - `req.user.organization._id`
+8. User, task (all three task types), material, task activity, task comment, attachment, and notification validators MUST ALWAYS be scoped with:
+   - `req.user.organization._id`
+   - `req.user.department._id`
+9. Validation failures MUST assert:
+   - Field name
+   - Error message
+   - Failure reason (missing, invalid, not found, conflict, unauthorized scope)
+
+### Controller Testing Rules (all write operations must use session)
+
+1. Controllers MUST be invoked directly as plain functions.
+2. Tests MUST manually construct `req.user` as the **actor**, including:
+   - `role`
+   - `organization`
+   - `organization.isDeleted`
+   - `organization.isPlatformOrg`
+   - `department`
+   - `department.isDeleted`
+   - `isPlatformOrgUser`
+   - `isHod`
+   - `isDeleted`
+3. Controllers MUST NOT read input data from `req.body`, `req.params`, or `req.query`.
+4. Controllers MUST ONLY consume validated input from:
+   ```js
+   req.validated = {
+     body: matchedData(req, { locations: ["body"] }),
+     params: matchedData(req, { locations: ["params"] }),
+     query: matchedData(req, { locations: ["query"] }),
+   };
+   ```
+
+5. Tests MUST populate `req.validated` exactly as the application does after validation middleware.
+6. Tests MUST use a manually mocked `res` object implementing:
+
+   - `status(code)`
+   - `json(payload)`
+
+7. Authorization, ownership, organization scoping, department scoping, and platform rules MUST be asserted explicitly.
+
+### Database Verification Rules
+
+1. Tests MUST verify database side effects explicitly:
+
+   - Created resources exist
+   - Updated resources reflect expected changes
+   - Deleted resources follow soft-delete rules (`isDeleted`, `deletedAt`)
+
+2. Multi-tenant rules MUST be validated:
+
+   - Same-organization access succeeds
+   - Cross-organization access fails
+   - Platform organization behavior is enforced correctly
+
+3. Ownership rules MUST be validated (createdBy, assignees, mentions, watchers, uploadedBy, etc).
+
+### Deletion & Restore Testing Rules
+
+1. Delete tests MUST verify:
+
+   - Resource existence before deletion
+   - Authorization and ownership checks
+   - Soft-delete behavior only (never hard delete)
+
+2. Cascade delete behavior MUST be validated:
+
+   - Child resources are affected correctly
+   - MongoDB transactions are respected
+
+3. Restore tests MUST verify:
+
+   - Resource existence using `.withDeleted()`
+   - Parent existence and correct restoration order
+   - Tenant and department isolation rules
+
+### Scope of Testing
+
+Tests MUST be written for:
+
+- Validators
+- Controllers
+- Authorization logic
+- Multi-tenant isolation
+- Soft delete, restore, and cascade behavior
+
+Tests MUST NOT be written for:
+
+- UI
+- Styling
+- Framework internals
+- Third-party libraries
+
+### Execution Rules
+
+1. Tests MUST be organized by resource and action:
+
+   - `test/task/createTask.test.js`
+   - `test/task/deleteTask.test.js`
+
+2. Each test script MUST be executable independently.
+3. Tests MUST clean up created data when required or use clearly identifiable test records.
+4. Tests MUST NEVER alter platform organization integrity or critical production data.
+
+## Execution Mindset
+
+1. Every validation and correction must be addressed with no shortcuts
+2. All changes must be documented in backend/docs
+3. Production readiness and best practices must be considered at all times
+4. Act with senior software engineer, team lead, architect, and validator mindset
+5. Don't limit yourself to requirements - think production readiness
+6. Always search existing codebase for issues before correcting
+7. Always reference available docs, utils, middlewares, constants, models, controllers, routes, services
+
+## Constants Management
+
+- Backend: `backend/utils/constants.js` is SINGLE SOURCE OF TRUTH
+- Frontend: `client/src/utils/constants.js` MUST match backend exactly
+- NEVER hardcode values - always import from constants
+- Enums: TASK_STATUS, TASK_PRIORITY, USER_ROLES, etc.
+
+## Soft Delete Rules
+
+- All resources use `isDeleted` flag
+- Show "Restore" button for deleted resources (isDeleted === true)
+- Hide "Delete" button for deleted resources
+- Include deleted toggle in filters
+- `isDeleted` flag (default: false)
+- `deletedAt` timestamp (null when not deleted)
+- `deletedBy` user reference (null when not deleted)
+- `withDeleted()` query helper to include deleted documents
+- `softDelete(deletedBy, session)` instance method
+- `restore(session)` instance method
+- `softDeleteById(id, deletedBy, session)` static method
+- `restoreById(id, session)` static method
+- `cascadeDelete(id, deletedBy, session, options)` static method
+- `cascadeRestore(id, session, options)` static method
+- `validateDeletion(document, session)` static method
+- `validateRestoration(document, session)` static method
+
+## Authorization Rules
+
+- Use authorization matrix for permission checks
+- Frontend: Use `useAuthorization` hook
+- Hide/disable actions based on user role and scope
+- Platform SuperAdmin: cross-org read access only
+- Customer users: own organization only
+- Ownership fields
+
+## Timezone Management
+
+- Backend: Store all dates in UTC timezone
+- Backend: Use dayjs with UTC plugin
+- Frontend: Use native JavaScript Intl API for all date/time formatting
+- Frontend: NEVER use dayjs - use Intl.DateTimeFormat
+- API responses: ISO 8601 format with UTC timezone
+
+## File Upload Flow
+
+1. Client selects file (react-dropzone)
+2. Client uploads directly to Cloudinary
+3. Client receives Cloudinary URL
+4. Client sends URL to backend
+5. Backend stores URL in database
+
+## Frontend Code Quality
+
+- Components MUST NEVER use hardcoded styling values
+- Theme values: `theme.palette`, `theme.typography`, `theme.spacing`
+- Custom styling: Use MUI `styled()` API
+- Responsive design: Use theme breakpoints
+- All MUI imports MUST be tree-shakable
+- React Hook Form: NEVER use `watch()` method
+- Form fields: ALWAYS use value and onChange when controlled
+- Complex form fields: Use Controller with control prop
+- Grid component: NEVER use item prop, use `size` prop instead
+- MUI Autocomplete: NEVER use deprecated renderTags
+- Custom rendering: Use slots API
+- MUI v7 components: Follow v7 syntax and deprecation guidelines
+
+## Validation Alignment
+
+- Frontend validation MUST match backend validators exactly
+- Use same max lengths, patterns, required fields
+- Import constants from `client/src/utils/constants.js`
+
+## API Integration
+
+- Use RTK Query endpoints from feature API slices
+- Handle loading states with skeletons/spinners
+- Invalidate cache tags on mutations
+- 401 errors: logout user if refreshing a token failed
+- 403 errors: show error toast (no logout)
+
+## Component Patterns
+
+- Use react-hook-form with Controller for all forms
+- Wrap MUI components with Mui prefix (MuiTextField, MuiSelectAutocomplete, etc.)
+- Apply React.memo for Card components
+- Use useCallback for event handlers
+- Use useMemo for computed values
+
+## Cascade Delete Operations
+
+### Organization Cascade
+
+```
+Organization (soft delete)
+├── Departments (cascade)
+│   ├── Users (cascade)
+│   │   ├── Remove from:
+│   │   │   ├── Task watchers
+│   │   │   ├── AssignedTask assignees
+│   │   │   ├── TaskComment mentions
+│   │   │   └── Notification entity user
+│   │   └── Tasks (createdBy) (cascade)
+│   ├── Tasks (department) (cascade)
+│   ├── Materials (soft delete)
+│   ├── TaskActivities (cascade)
+│   ├── TaskComments (cascade)
+│   ├── Attachments (soft delete)
+│   └── Notifications (soft delete)
+├── Users (direct org users) (cascade)
+├── Tasks (direct org tasks) (cascade)
+├── Materials (direct org materials) (soft delete)
+├── Vendors (soft delete)
+└── Notifications (direct org notifications) (soft delete)
+```
+
+### Department Cascade
+
+```
+Department (soft delete)
+├── Users (cascade)
+│   └── Remove from:
+│       ├── Task watchers
+│       ├── AssignedTask assignees
+│       ├── TaskComment mentions
+│       └── Notification entity user
+├── Tasks (cascade)
+├── Materials (soft delete)
+├── TaskActivities (cascade)
+├── TaskComments (cascade)
+├── Attachments (soft delete)
+└── Notifications (soft delete)
+```
+
+### User Cascade
+
+```
+User (soft delete)
+├── Tasks (where createdBy = User) (cascade)
+├── TaskActivities (where createdBy = User) (cascade)
+├── TaskComments (where createdBy = User) (cascade)
+├── Materials (where createdBy = User) (soft delete)
+├── Vendors (where createdBy = User) (soft delete)
+├── Attachments (where uploadedBy = User) (soft delete)
+└── Remove from:
+    ├── Task watchers array
+    ├── AssignedTask assignees array
+    ├── TaskComment mentions array
+    └── Notification entity user
+```
+
+### Task Cascade
+
+```
+Task (soft delete) [Applies to ProjectTask, AssignedTask, RoutineTask]
+├── TaskActivities (where parent=Task) (cascade)
+├── TaskComments (where parent=Task) (cascade)
+├── Attachments (where parent=Task) (soft delete)
+└── Notifications (where entity=Task) (soft delete)
+```
+
+### TaskActivity Cascade
+
+```
+TaskActivity (soft delete)
+├── TaskComments (where parent=TaskActivity) (cascade)
+├── Attachments (where parent=TaskActivity) (soft delete)
+└── Notifications (where entity=TaskActivity) (soft delete)
+```
+
+### TaskComment Cascade
+
+```
+TaskComment (soft delete)
+├── Child Comments (where parent=TaskComment) (recursive cascade)
+├── Attachments (where parent=TaskComment) (soft delete)
+└── Notifications (where entity=TaskComment) (soft delete)
+```
+
+#### Material Cascade
+
+```
+Material (soft delete)
+└── Remove from:
+    ├── RoutineTask materials array
+    └── TaskActivity materials array
+```
+
+#### Vendor Cascade
+
+```
+Vendor (soft delete)
+└── ProjectTasks (where vendor=Vendor) (set vendor to null or cascade depending on business logic)
+```
+
+## TTL Expiry Periods
+
+| Model        | TTL Period | Auto-Delete After  |
+| ------------ | ---------- | ------------------ |
+| Organization | Never      | null (manual only) |
+| Department   | 365 days   | 1 year             |
+| User         | 365 days   | 1 year             |
+| Task         | 180 days   | 6 months           |
+| TaskActivity | 90 days    | 3 months           |
+| TaskComment  | 180 days   | 6 months           |
+| Material     | 90 days    | 3 months           |
+| Vendor       | 90 days    | 3 months           |
+| Notification | 30 days    | 1 month            |
+| Attachment   | 30 days    | 1 month            |
+
+---
+
+## Error Handling
+
+**Backend Error Codes:**
+
+- 401 UNAUTHENTICATED_ERROR: Authentication failure (missing/invalid/expired token)
+- 403 UNAUTHORIZED_ERROR: Authorization failure (insufficient permissions)
+- 404 NOT_FOUND_ERROR: Resource not found
+- 400 VALIDATION_ERROR: Input validation failure
+- 409 CONFLICT_ERROR: Resource conflict
+- 429 RATE_LIMITED_ERROR: Too many requests
+- 500 INTERNAL_ERROR: Server error
+
+**Frontend Error Handling:**
+
+- Root-level: Catch all unhandled errors, display error page
+- Route-level: Catch route-specific errors, display RouteError
+- Component-level: Catch component errors, display fallback UI
+- API errors: 401 → refresh token on frontend → 401 → logout user; 403 → show error toast (no logout); 4xx/5xx → show error message
+
 
 ## 21. Task Execution Protocol (Mandatory 7 Steps)
 
@@ -5220,6 +5682,634 @@ Minimal checklist per phase:
 - Backend: exact filenames to implement, API contract (paths, methods, request/response), tests/stubs, socket event signatures.
 - Frontend: RTK endpoints to add, pages and components to implement, hooks to wire, acceptance tests (login + one resource CRUD + real-time event).
 
+
+### 22.1 Synchronous Development (Verbatim Canonical Copy)
+
+# Synchronous Dev Plan
+
+This document provides:
+
+1. A deep analysis of the attached structure, responsibilities, and dependencies.
+2. A phase-by-phase synchronous development plan that always flows Backend → Frontend within a phase, and ensures that anything required by Phase N is completed in Phase N−1 (within each side and across BE/FE).
+
+No setup instructions are included—only development sequencing and deliverables.
+
+---
+
+## 1 Structure, Responsibilities, Dependencies
+
+### Backend
+
+- Configuration Layer (`backend/config/*`)
+
+  - `allowedOrigins.js`, `corsOptions.js` feed CORS setup (consumed by `app.js`).
+  - `authorizationMatrix.json` holds role → permission mappings; used by `utils/authorizationMatrix.js` and `middlewares/authorization.js`.
+  - `db.js` creates the database connection. Used by `server.js`.
+
+- Error Handling (`backend/errorHandler/*`)
+
+  - `CustomError.js`: central app error class. Used throughout routes, middleware, services.
+  - `ErrorController.js`: central error responder; mounted in `app.js`.
+
+- Validation Layer (`backend/middlewares/validators/*`)
+
+  - `validation.js`: generic validator wrapper; used by specific validators.
+  - Feature validators for auth, organization, department, user, task, taskActivity, taskComment, material, vendor, notification.
+  - Validators depend on business constants and shapes; should not depend on models directly but may assume model-level invariants.
+
+- Middleware Layer (`backend/middlewares/*`)
+
+  - `authMiddleware.js`: verifies JWT, loads User context; depends on `utils/generateTokens.js`, `models/User.js`, `utils/constants.js`.
+  - `authorization.js`: enforces authorization rules per route; depends on `config/authorizationMatrix.json` and `utils/authorizationMatrix.js`.
+  - `rateLimiter.js`: generic rate limiting; used by `app.js`.
+  - `validation.js`: integrates validator with request lifecycle.
+
+- Model Layer (`backend/models/*`)
+
+  - `plugins/softDelete.js`: applied by many models; needs to exist before models.
+  - Models: `Organization.js`, `Department.js`, `User.js`, `Task.js`, `ProjectTask.js`, `AssignedTask.js`, `RoutineTask.js`, `TaskActivity.js`, `TaskComment.js`, `Material.js`, `Vendor.js`, `Notification.js`, `Attachment.js`
+  - Important dependencies: Many models reference Organization, Department, and User. TaskActivity and TaskComment reference Task and User. Notification references User (and possibly Task). Therefore Organization, Department, and User must come first.
+
+- Route Layer (`backend/routes/*`)
+
+  - Route files per resource: `authRoutes.js`, `organizationRoutes.js`, `departmentRoutes.js`, `userRoutes.js`, `taskRoutes.js`, `taskActivityRoutes.js`, `taskCommentRoutes.js`, `materialRoutes.js`, `vendorRoutes.js`, `notificationRoutes.js`.
+  - They depend on: validators, middleware (auth + authorization + validation), models, and sometimes services.
+  - Note: There’s no explicit “controllers” folder in the doc; route handlers will act as controllers or be co-located controller functions inside route modules.
+
+- Service Layer (`backend/services/*`)
+
+  - `emailService.js`: used for auth flows (forgot/reset password, invitations), and possibly notifications.
+  - `notificationService.js`: used by task/comment events and direct notification endpoints.
+
+- Utility Layer (`backend/utils/*`)
+
+  - `constants.js` (Single Source of Truth, SSOT): enumerations like roles, permissions, task states, validation sizes, regexes; must mirror frontend constants exactly.
+  - `logger.js`: shared logging.
+  - `helpers.js`: general utilities (ID parsing, pagination builders, etc.).
+  - `generateTokens.js`: JWT generation/rotation; used by `authMiddleware.js` and auth route handlers.
+  - `authorizationMatrix.js`: programmatic helper around `authorizationMatrix.json` to resolve permissions.
+  - `validateEnv.js`: runtime checks used by `server.js` / `config/db.js`.
+  - Sockets: `socket.js`, `socketEmitter.js`, `socketInstance.js`, `userStatus.js`—depend on verified user context and often on models (User, Notification). These should come after Auth & User are ready.
+
+- Application Entrypoints
+  - `app.js`: wires middleware, routes, error handling.
+  - `server.js`: bootstraps app and sockets; consumes `config/db.js`, mounts `utils/socket*`.
+
+Dependency summary (backend):
+
+- Earliest: utils (constants, logger, helpers, validateEnv), error handling, config (CORS), rate limiter.
+- Then: softDelete plugin → core models (Organization, Department, User) → auth utils (generateTokens) → auth middleware/authorization matrix → auth routes + email service.
+- Then: resource models and routes (Org/Dept/User management) → task models and task routes → task activity and comments → materials and vendors → notifications service/routes → sockets.
+
+### Frontend
+
+- Redux State Management (`client/src/redux/*`)
+
+  - `app/store.js`: configures RTK Query base API and slices.
+  - `features/*`: per-resource slices + RTK Query endpoints; depend on backend endpoints and constants.
+
+- Components (`client/src/components/*`)
+
+  - `reusable/*`, `common/*` incl. `ErrorBoundary.jsx`, `RouteError.jsx`, layouts, columns, filters, and domain components (auth, department, user, task, taskActivity, taskComment, material, vendor, attachment, notification, dashboard).
+  - Columns and filters depend on feature data shapes and constants.
+
+- Pages (`client/src/pages/*`)
+
+  - Home, Login, Register, ForgotPassword, ResetPassword, Dashboard, Departments, Users, Tasks, Materials, Vendors, NotFound.
+  - Each page depends on associated slices/endpoints, helpers, layout, and components.
+
+- Services (`client/src/services/*`)
+
+  - `socketService.js`, `socketEvents.js`: require backend sockets to be defined before integration.
+
+- Hooks (`client/src/hooks/*`)
+
+  - `useAuth.js`, `useSocket.js`, `useAuthorization.js`, `useTimezone.js`, `useResponsive.js`.
+  - `useAuthorization` depends on FE `constants.js` and the same role/permission model as backend.
+
+- Utils (`client/src/utils/*`)
+  - `constants.js` (must match backend/constants.js exactly).
+  - `dateUtils.js`, `authorizationHelper.js`, `validators.js`.
+
+Dependency summary (frontend):
+
+- Earliest: FE `constants.js`, `authorizationHelper.js`, `validators.js`, routing/shell layout, `ErrorBoundary`.
+- Then: configure RTK Base API; auth feature endpoints & pages (once BE auth is ready).
+- Then: per-resource features/pages in the same order as backend becomes available.
+- Then: sockets (notifications, user status) after BE sockets ready.
+- Dashboard depends on aggregated endpoints or resource stats available from existing routes.
+
+---
+
+## 2) Synchronous Development Plan (Backend → Frontend per phase)
+
+Conventions:
+
+- Within each phase: Backend first, then Frontend.
+- Route handlers act as controllers co-located in route modules (no separate controllers folder in the doc).
+- “Contracts” lists essential request/response shapes or endpoint semantics needed by the frontend in that phase.
+- Each phase’s deliverables ensure the next phase can proceed without backtracking.
+
+### Phase 1 — Backend Foundations (Cross-cutting) → Frontend Foundations (Constants/Scaffolds)
+
+Backend
+
+- Implement `backend/utils/constants.js` (SSOT) with:
+  - Roles (e.g., SUPER_ADMIN, ORG_ADMIN, MANAGER, STAFF), permission keys, task statuses, notification types, pagination defaults, date formats, validation constraints.
+- Implement foundational utils:
+  - `logger.js` (structured logs), `helpers.js` (pagination builder, safeObjectId, pick, omit, toLowerTrim, etc.), `validateEnv.js`.
+  - `generateTokens.js` (access/refresh pair, rotation rules, expiry).
+  - `authorizationMatrix.js` reading from `config/authorizationMatrix.json` to answer can(role, action, resource).
+- Error handling:
+  - `errorHandler/CustomError.js` and `errorHandler/ErrorController.js` integrated signature.
+- Config for HTTP:
+  - `config/allowedOrigins.js`, `config/corsOptions.js`.
+- Middleware scaffolds:
+  - `middlewares/validation.js`, `middlewares/rateLimiter.js` (global and sensitive endpoints variants).
+- App wiring (no routes yet):
+  - `app.js` wires CORS, JSON parser, rateLimiter, basic health endpoint, error handler.
+  - `config/db.js` implemented. `server.js` boots app and DB (socket is not mounted yet).
+
+Contracts
+
+- N/A (no external endpoints consumed yet), but constants published and frozen.
+
+Frontend
+
+- Mirror `client/src/utils/constants.js` exactly from backend SSOT.
+- Implement `client/src/utils/authorizationHelper.js` (role → capabilities mapping in sync with backend permissions).
+- Implement `client/src/utils/validators.js` (shared schema helpers aligned with backend validators intent).
+- Create app shell structure:
+  - `components/common/ErrorBoundary.jsx`, `components/common/RouteError.jsx`, `components/layout/*` basic layout scaffolding.
+- Prepare Redux base:
+  - `redux/app/store.js` with RTK Query base API (baseQuery with JSON, placeholder headers, and error handling). Do not call backend yet.
+
+Why now
+
+- Constants and cross-cutting utilities are prerequisites for everything else; FE constants must be identical before building features.
+
+---
+
+### Phase 2 — Core Data Layer and Security Primitives (Models + Auth Middleware/RBAC) → FE auth primitives (no network)
+
+Backend
+
+- Implement Mongoose plugin: `models/plugins/softDelete.js` (adds deletedAt, overrides find/findOne to exclude by default; add withDeleted options).
+- Implement core models in order:
+  - `Organization.js` (tenant root), includes name, slug, owner (User ref later), settings, isActive, softDelete.
+  - `Department.js` with org ref, name, code, softDelete, unique per org.
+  - `User.js` with org ref, department ref (nullable), email (unique per org or global per SaaS policy), password hash, roles array, status, profile, tokens metadata (refresh token family, lastLoginAt), softDelete, indexes.
+- RBAC scaffolds:
+  - Populate `config/authorizationMatrix.json` with minimum viable rules for upcoming phases (auth, org, user).
+  - Implement `middlewares/authorization.js` using `utils/authorizationMatrix.js`.
+- Auth middleware:
+  - `middlewares/authMiddleware.js` (verifies access token, loads user, ensures not soft-deleted, attaches orgId to req).
+- Rate limit profiles for auth endpoints (login, register, reset requests).
+- No business routes yet; only health.
+
+Contracts
+
+- Internal only (no FE yet), but ensures next auth phase has needed primitives.
+
+Frontend
+
+- Implement `hooks/useAuth.js` (local state only; token placeholders).
+- Implement `hooks/useAuthorization.js` consuming FE constants and helper; no API use yet.
+- Implement initial routing skeleton: Home, Login, Register, ForgotPassword, ResetPassword, Dashboard placeholders (no backend calls).
+
+Why now
+
+- Auth requires User/Organization model and RBAC to exist. Next phase will consume these.
+
+---
+
+### Phase 3 — Authentication Feature (Backend auth routes/services/validators) → Frontend Auth (pages, endpoints, guards)
+
+Backend
+
+- Validators: `middlewares/validators/authValidators.js` for:
+  - register (email, password, org context if required), login, refresh, logout, forgotPassword, resetPassword.
+- Services:
+  - `services/emailService.js` with transactional methods for reset link delivery.
+- Routes: `routes/authRoutes.js` with handlers:
+  - POST /auth/register — optionally create org if SUPER_ADMIN; or invite flow (if implemented later). Return minimal user and tokens.
+  - POST /auth/login — email/password within org context; return user, org, roles, tokens.
+  - POST /auth/refresh — rotate refresh token; return new tokens.
+  - POST /auth/logout — invalidate refresh token family.
+  - POST /auth/forgot-password — send email.
+  - POST /auth/reset-password — change password using token.
+- Use `authMiddleware` only where appropriate (not for login/register), apply `rateLimiter` on sensitive endpoints.
+- Wire into `app.js`.
+
+Contracts
+
+- Response shapes:
+  - User core: { id, email, name, roles, org: { id, name }, department?: { id, name } }.
+  - Tokens: { accessToken, refreshToken, expiresIn }.
+- Error format: { message, code, details? } aligned with `CustomError`.
+
+Frontend
+
+- RTK Query `features/authApi` with endpoints:
+  - register, login, refresh, logout, forgotPassword, resetPassword.
+- Auth pages: `pages/Login`, `Register`, `ForgotPassword`, `ResetPassword` with forms using `client/src/utils/validators.js`.
+- Token handling:
+  - Base API attaches access token, handles 401 with refresh flow using `authApi.endpoints.refresh`.
+  - Persist tokens securely (state-only or storage policy matching app design).
+- Route protection:
+  - Implement protected route wrapper using `useAuth`.
+- Basic layout sign-in/out changes; update `Home` and `Dashboard` placeholders to reflect auth status.
+
+Why now
+
+- Frontend auth can only proceed after backend auth endpoints are stable.
+
+---
+
+### Phase 4 — Organization & Department Management (RBAC enforced) → FE Org/Dept pages
+
+Backend
+
+- Validators: `organizationValidators.js`, `departmentValidators.js`.
+- Routes:
+  - `organizationRoutes.js`:
+    - GET /organizations/:id — ORG_ADMIN+; SUPER_ADMIN can access cross-tenant if policy allows.
+    - PATCH /organizations/:id — update org settings.
+    - (Optional) GET /organizations — SUPER_ADMIN only (listing all tenants).
+  - `departmentRoutes.js`:
+    - GET /departments — list by org.
+    - POST /departments — create (ORG_ADMIN/MANAGER).
+    - PATCH /departments/:id — update.
+    - DELETE /departments/:id — soft delete.
+- Enforce tenant scoping: all queries filter by req.user.orgId; SUPER_ADMIN bypass when allowed.
+- Pagination & filtering via helpers (e.g., ?page, ?limit, ?q).
+
+Contracts
+
+- Department list resp: { data: Department[], page, limit, total }.
+- Department entity: { id, name, code, orgId, createdAt, updatedAt }.
+
+Frontend
+
+- RTK Query `features/organizationApi` & `features/departmentApi`.
+- Pages:
+  - `pages/Departments` with list, create/update modals; use components: `components/department/*`, `components/columns/*`, `components/filter/*`.
+- Update `useAuthorization` to guard buttons (create/edit/delete) based on role and FE constants.
+
+Why now
+
+- Departments are prerequisites for user management and task assignment.
+
+---
+
+### Phase 5 — User Management (within tenant) → FE Users page and role/department assignment
+
+Backend
+
+- Validators: `userValidators.js`.
+- Routes: `userRoutes.js`
+  - GET /users — list users in org with pagination, search by email/name.
+  - POST /users — create/invite user (ORG_ADMIN/MANAGER; may trigger `emailService`).
+  - GET /users/:id — details.
+  - PATCH /users/:id — update profile, department, roles (RBAC enforced).
+  - DELETE /users/:id — soft delete.
+- Ensure role changes cannot escalate beyond caller’s permissions per `authorizationMatrix`.
+
+Contracts
+
+- User list resp, user entity shape consistent with auth responses.
+- Invite flow response may include status=INVITED.
+
+Frontend
+
+- RTK Query `features/userApi` (list, get, create, update, delete).
+- `pages/Users` with:
+  - Table (columns module), filters, inline role/department editing gated by `useAuthorization`.
+  - Common components in `components/user/*`.
+
+Why now
+
+- Users must exist and be manageable before task assignment.
+
+---
+
+### Phase 6 — Task Domain (Core Tasks) → FE Tasks (list/create/update/assign)
+
+Backend
+
+- Models: finalize/confirm `Task.js`, `ProjectTask.js`, `AssignedTask.js`, `RoutineTask.js`.
+  - Multi-tenant fields: orgId mandatory; departmentId optional; assignees: [User].
+  - Fields: title, description, type (PROJECT|ASSIGNED|ROUTINE), status (from constants), priority, dueAt, createdBy, updatedBy, tags, softDelete.
+  - Indexes for orgId+status, orgId+assignees, text index on title/description (depending on constraints).
+- Validators: `taskValidators.js` for create/update/list filters.
+- Routes: `taskRoutes.js`
+  - GET /tasks — filter by status, type, assignee, department, q (search), pagination.
+  - POST /tasks — create; support assignment on create.
+  - GET /tasks/:id — details (with minimal related counts).
+  - PATCH /tasks/:id — update fields (including status transitions).
+  - DELETE /tasks/:id — soft delete.
+- Authorization: creation/update allowed to roles per matrix; reading based on role or membership (assignee/creator).
+- Hooks to `notificationService` (stub) for future events, but do not send yet.
+
+Contracts
+
+- Task list resp pagination; Task entity includes computed flags (isOverdue).
+- Status/Type enums reflected from SSOT constants.
+
+Frontend
+
+- RTK Query `features/taskApi` with list/get/create/update/delete.
+- `pages/Tasks`:
+  - Table with `components/columns/taskColumns`, filters (`components/filter/*`), create/edit modal.
+  - Assignment UI (select users/departments).
+- Common UI improvements: reusable form components (`components/reusable/*`).
+
+Why now
+
+- Core task management is the central use case; activities/comments will follow.
+
+---
+
+### Phase 7 — Task Activity & Comment (history, collaboration) → FE Activity/Comment UIs
+
+Backend
+
+- Models: `TaskActivity.js` (immutable events: status change, assignment change, edits), `TaskComment.js` (message, mentions, createdBy).
+- Validators: `taskActivityValidators.js`, `taskCommentValidators.js`.
+- Routes:
+  - `taskActivityRoutes.js`:
+    - GET /tasks/:taskId/activities — list activities.
+    - (Activities are server-generated; no POST from client except admin-level migration/debug endpoints if needed.)
+  - `taskCommentRoutes.js`:
+    - GET /tasks/:taskId/comments — list.
+    - POST /tasks/:taskId/comments — add comment.
+    - DELETE /task-comments/:id — soft delete by author or admin.
+- Ensure all actions are tenant-scoped and RBAC enforced.
+- Generate activities in `taskRoutes.js` on state transitions or updates (e.g., create task → ACTIVITY_CREATED; status change → ACTIVITY_STATUS_CHANGED).
+
+Contracts
+
+- Comment entity: { id, taskId, text, mentions: [userId], createdBy, createdAt }.
+- Activity entity: { id, taskId, type, payload, createdBy, createdAt }.
+
+Frontend
+
+- RTK Query `features/taskActivityApi` (GET) and `features/taskCommentApi` (GET/POST/DELETE).
+- Components:
+  - `components/taskActivity/*` timeline.
+  - `components/taskComment/*` thread with composer, mention picker.
+- Integrate into Task details sidebar/modal.
+
+Why now
+
+- Collaboration features sit on top of tasks; they rely on Tasks, Users, Departments.
+
+---
+
+### Phase 8 — Materials & Vendors (Inventory/Procurement) → FE Materials/Vendors
+
+Backend
+
+- Models already exist: `Material.js`, `Vendor.js` (ensure orgId, softDelete, indexes).
+- Validators: `materialValidators.js`, `vendorValidators.js`.
+- Routes:
+  - `materialRoutes.js`:
+    - GET /materials — list with filtering (category, q).
+    - POST /materials — create.
+    - PATCH /materials/:id — update.
+    - DELETE /materials/:id — soft delete.
+  - `vendorRoutes.js` similarly for vendors.
+- RBAC rules from `authorizationMatrix.json` (e.g., MANAGER+ can manage, STAFF read-only).
+
+Contracts
+
+- Standard paginated lists and entities:
+  - Material: { id, name, sku, unit, stockQty, vendorId?, orgId }.
+  - Vendor: { id, name, contact, rating?, orgId }.
+
+Frontend
+
+- RTK Query `features/materialApi` and `features/vendorApi`.
+- Pages:
+  - `pages/Materials`, `pages/Vendors` with listings, filters, editors.
+- Components: `components/material/*`, `components/vendor/*`, integrate with columns and reusable forms.
+
+Why now
+
+- These resources are independent of sockets/notifications; adds functional breadth.
+
+---
+
+### Phase 9 — Notifications (REST) → FE Notifications (list/read/mark)
+
+Backend
+
+- Model: `Notification.js` (orgId, userId, type, payload, readAt, createdAt).
+- Validator: `notificationValidators.js`.
+- Service: `notificationService.js` with createNotification(userId, type, payload), markAsRead, bulk operations.
+- Routes: `notificationRoutes.js`
+  - GET /notifications — for current user, filter read/unread.
+  - PATCH /notifications/:id/read — mark single as read.
+  - PATCH /notifications/read-all — mark all read.
+- Integrate notification creation in task/comment flows (without sockets yet):
+  - On task assignment, notify assignees.
+  - On new comment, notify task assignees/participants (excluding author), respecting org scope.
+
+Contracts
+
+- Notification entity: { id, type, payload, readAt, createdAt }.
+- List pagination for bell UI.
+
+Frontend
+
+- RTK Query `features/notificationApi`.
+- Components: `components/notification/*` including bell dropdown, list page.
+- Pages: integrate notifications into layout (badge count from unread).
+
+Why now
+
+- REST notifications enable UI without websockets; sockets will enhance later.
+
+---
+
+### Phase 10 — Realtime (Sockets: presence, live updates) → FE Socket integration
+
+Backend
+
+- Implement sockets:
+  - `utils/socketInstance.js` to create and export the singleton Socket.IO server instance.
+  - `utils/socket.js` to initialize namespaces/rooms: per-org room, per-user room.
+  - `utils/userStatus.js` to track online users (map of userId → socketIds).
+  - `utils/socketEmitter.js` to emit domain events (TASK_ASSIGNED, COMMENT_ADDED, NOTIFICATION_CREATED, USER_ONLINE, USER_OFFLINE).
+- Authenticate socket connections (JWT in handshake), attach orgId and userId, reject unauthorized.
+- Hook emitters in REST flows:
+  - On new comment → emit to task participants.
+  - On notification creation → emit to the user’s room.
+  - On login/logout/disconnect → update presence status and emit USER_ONLINE/OFFLINE.
+
+Contracts
+
+- Socket events (to mirror `client/src/services/socketEvents.js`):
+  - server → client: user:online, user:offline, notification:new, task:updated, comment:new.
+  - client → server: user:ping (keep-alive), room:join (org), task:subscribe (optional).
+- Naming should align with FE `socketEvents.js`.
+
+Frontend
+
+- Services:
+  - `services/socketService.js` to connect with auth token, auto-reconnect, and room join by orgId.
+  - `services/socketEvents.js` enumerates event names matching backend.
+- Hook:
+  - `hooks/useSocket.js` to expose socket and convenience subscriptions.
+- UI:
+  - Live notification badge updates.
+  - Optional live updates in Tasks and Comments views (optimistic refresh or reconcile strategies).
+
+Why now
+
+- Sockets rely on auth and notification plumbing already in place.
+
+---
+
+### Phase 11 — Dashboard and Cross-Resource Aggregations → FE Dashboard
+
+Backend
+
+- Add aggregation endpoints within existing routes (no new folder needed):
+  - `taskRoutes.js`: GET /tasks/stats — counts by status, overdue, assigned-to-me, by department.
+  - `userRoutes.js`: GET /users/stats — active users per department/role.
+  - `notificationRoutes.js`: GET /notifications/stats — unread count.
+- Ensure org scoping and RBAC.
+
+Contracts
+
+- Stats payloads:
+  - tasks: { byStatus: { OPEN: n, IN_PROGRESS: n, DONE: n }, overdue: n, myOpen: n }
+  - users: { byRole: { ORG_ADMIN: n, MANAGER: n, STAFF: n }, byDepartment: [{ departmentId, count }] }
+  - notifications: { unread: n }
+
+Frontend
+
+- RTK Query `features/dashboardApi` (or reuse existing APIs with .stats endpoints).
+- `pages/Dashboard` with cards, charts (responsive), using `components/dashboard/*`.
+- Add time-zone aware labels via `hooks/useTimezone.js`.
+
+Why now
+
+- Aggregations are dependent on prior resources.
+
+---
+
+### Phase 12 — Hardening Pass (RBAC matrix finalization, validation polish, rate limiting) → FE guard polish and UX
+
+Backend
+
+- RBAC:
+  - Finalize `authorizationMatrix.json` to cover all routes consistently; add tests around `authorization.js`.
+- Validation:
+  - Tighten all validators to mirror FE validators; ensure consistent error messages/codes.
+- Rate limiting:
+  - Tailor profiles (auth, notifications mark-all, comments burst).
+- Error handling:
+  - Normalize error payloads; ensure `ErrorController.js` maps validation errors consistently.
+
+Frontend
+
+- `useAuthorization.js` and `authorizationHelper.js`: ensure guards match backend rules.
+- Improve form-level validation sync with backend (shared constraints from constants).
+- Refine lists with empty states, skeleton loaders, toast notifications.
+
+Why now
+
+- Hardening after main features are built ensures consistent UX and security.
+
+---
+
+### Phase 13 — Search, Filters, Columns Uniformity → FE table/filter standardization
+
+Backend
+
+- Ensure all list endpoints accept:
+  - q (text), page, limit, sort, filters (status, type, departmentId, assigneeId).
+- Index review for performance (orgId + common filters).
+
+Frontend
+
+- Centralize table column definitions per entity under `components/columns/*`.
+- Centralize filter UI under `components/filter/*` with consistent patterns and URL-sync.
+- Reusable table wrapper under `components/reusable/*`.
+
+Why now
+
+- Consistency and performance tuning across lists.
+
+---
+
+### Phase 14 — Notifications & Activity Integration with Sockets (Refinement) → FE Real-time UX Finalization
+
+Backend
+
+- Ensure all key actions fire socket and create notifications as per policy:
+  - Task assignment/reassignment, status change, comment created/deleted, user role updated.
+- Debounce or batch socket emits where needed.
+
+Frontend
+
+- Ensure `useSocket` subscriptions are wired in Tasks and Comments pages.
+- Add toasts / inline badges for new updates; reconcile if the current view is active.
+
+---
+
+### Phase 15 — Final Multi-tenant Safeguards and Soft-Delete UX → FE Soft-delete visibility
+
+Backend
+
+- Verify every route enforces org scoping (no cross-tenant leakage).
+- Soft delete consistently applied; add withDeleted admin queries only where permitted.
+- Add cascade safe-guards (e.g., cannot delete department with active users unless policy defined).
+
+Frontend
+
+- Show “restored” states only to permitted roles (if restore endpoints exist).
+- Visual cues for deactivated vendors/materials/users.
+
+---
+
+## Cross-Phase Notes (Ensuring N depends on N−1)
+
+- Constants parity: Phase 1 aligns FE/BE constants; no feature proceeds before constants are mirrored.
+- Models before routes: Core models (Org, Dept, User) in Phase 2 precede any auth or resource routes.
+- Auth before anything needing user context: Auth endpoints (Phase 3) precede FE auth (Phase 3) and any protected resource development (Phase 4+).
+- Departments before Users page (role/department assignment), Users before Tasks (assignees), Tasks before Comments/Activities, Comments before Notifications, Notifications REST before Sockets, Sockets before Live UI, Aggregations last.
+- Authorization matrix created early and finalized during hardening to avoid rework.
+
+---
+
+## Deliverable Checklist by Phase (Quick Reference)
+
+- P1: SSOT constants, logger/helpers, error/cors/rate-limit, app skeleton → FE constants/shell/store base.
+- P2: softDelete, Org/Dept/User models, auth & authorization middleware → FE auth/authorization hooks (no network).
+- P3: Auth validators/routes/services → FE auth pages/endpoints/guards.
+- P4: Org/Dept validators/routes → FE Departments page.
+- P5: User validators/routes → FE Users page.
+- P6: Task models/validators/routes → FE Tasks page.
+- P7: TaskActivity/TaskComment validators/routes → FE activity/comments UI.
+- P8: Materials/Vendors validators/routes → FE Materials/Vendors pages.
+- P9: Notification model/service/routes (REST) → FE Notifications UI.
+- P10: Sockets utils/instance/emitter/presence → FE socket service/hook/live notifications.
+- P11: Stats/aggregations → FE Dashboard.
+- P12: RBAC/validation hardening → FE guard/UX polish.
+- P13: Search/filter/columns standardization → FE tables uniformity.
+- P14: Realtime refinement (events coverage) → FE real-time UX finishing.
+- P15: Multi-tenant and soft-delete safeguards → FE soft-delete visibility.
+
+This plan satisfies:
+
+- Backend-first readiness per phase.
+- Each side’s Phase N only requires dependencies that were completed by Phase N−1 for that side and the other side.
+- Strict adherence to the provided project structure, without introducing new layers beyond what exists in the doc.
+
+
 ## 23. Acceptance Criteria and Traceability Checklist
 
 This checklist is mandatory for “done”. All items MUST be true with no exceptions.
@@ -5340,3 +6430,18 @@ Each screen name below MUST appear in the implemented app, and MUST match the UI
 - [ ] Task Execution Protocol (7 steps) is followed for every task.
 - [ ] Starting Phase 1, backend and frontend dev servers run concurrently to surface integration issues early.
 - [ ] At every phase/sub-task, previously built components are updated for integration and correctness (no stale mismatches).
+
+
+### 23.8 Exhaustive Source-Document Reconciliation Gate
+
+- [ ] Development rules are reflected without contradiction in Sections 20-21 and enforced in implementation/test review.
+- [ ] Functional/UI behaviors are fully represented in Sections 6, 10, 11, 15, and 18.
+- [ ] Task-execution process constraints are represented in Section 21 and are followed per task.
+- [ ] Schema field constraints (regex, enums, lengths, defaults, relations) are represented in Section 7 and Section 18 payload contracts.
+- [ ] Project user-story flows and persona scenarios are represented in Sections 3-4 and Section 6 requirements.
+- [ ] Backend/frontend synchronization rules are represented in Section 22 phase gates and integration rules.
+- [ ] Legacy requirements not deprecated by canonical decisions are preserved in this PRD.
+- [ ] Canonical test cases are fully incorporated by Section 19.1 and used as mandatory QA acceptance input.
+- [ ] FR-UI mappings and per-screen checkpoints are fully represented in Sections 10.4 and 23.2/23.3.
+- [ ] All `docs/ui/*.png` reference screens listed in Section 23.2 have matching implementation coverage and responsive behavior parity.
+
