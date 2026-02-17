@@ -1,3 +1,7 @@
+/**
+ * @file MUI data-display component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { alpha } from "@mui/material/styles";
 import { svgIconClasses } from "@mui/material/SvgIcon";
 import { typographyClasses } from "@mui/material/Typography";

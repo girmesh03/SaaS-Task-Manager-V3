@@ -6,6 +6,13 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 
+/**
+ * Lightweight KPI/statistics card component.
+ *
+ * @param {Record<string, unknown>} props - Stat card props.
+ * @returns {JSX.Element} Stat card element.
+ * @throws {never} This component does not throw.
+ */
 const MuiStatCard = ({
   title,
   value,

@@ -1,3 +1,7 @@
+/**
+ * @file Barrel exports for theme customization modules.
+ * @throws {never} Module initialization does not throw.
+ */
 export { default as inputsCustomizations } from "./inputs";
 export { default as dataDisplayCustomizations } from "./dataDisplay";
 export { default as feedbackCustomizations } from "./feedback";

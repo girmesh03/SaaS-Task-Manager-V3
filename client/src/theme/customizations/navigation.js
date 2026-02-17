@@ -1,3 +1,7 @@
+/**
+ * @file MUI navigation component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { createElement, forwardRef } from "react";
 import { alpha } from "@mui/material/styles";
 import { buttonBaseClasses } from "@mui/material/ButtonBase";

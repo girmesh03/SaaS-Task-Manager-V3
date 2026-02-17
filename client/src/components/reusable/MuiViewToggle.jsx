@@ -5,6 +5,13 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import MuiToggleButton from "./MuiToggleButton";
 
+/**
+ * Grid/List view toggle control.
+ *
+ * @param {Record<string, unknown>} props - View-toggle props.
+ * @returns {JSX.Element} View-toggle element.
+ * @throws {never} This component does not throw.
+ */
 const MuiViewToggle = ({
   value,
   onChange,

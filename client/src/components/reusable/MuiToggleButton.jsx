@@ -7,6 +7,13 @@ import { forwardRef } from "react";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
+/**
+ * Toggle-button-group wrapper.
+ *
+ * @param {Record<string, unknown>} props - Toggle-button props.
+ * @returns {JSX.Element} Toggle-button group element.
+ * @throws {never} This component does not throw.
+ */
 const MuiToggleButton = forwardRef(
   (
     {

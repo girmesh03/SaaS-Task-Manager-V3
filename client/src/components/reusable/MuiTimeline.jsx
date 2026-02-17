@@ -10,6 +10,13 @@ import TimelineContent from "@mui/lab/TimelineContent";
 import TimelineDot from "@mui/lab/TimelineDot";
 import TimelineOppositeContent from "@mui/lab/TimelineOppositeContent";
 
+/**
+ * Timeline feed renderer for activity-like data.
+ *
+ * @param {Record<string, unknown>} props - Timeline props.
+ * @returns {JSX.Element} Timeline element.
+ * @throws {never} This component does not throw.
+ */
 const MuiTimeline = ({
   items = [],
   dense = false,

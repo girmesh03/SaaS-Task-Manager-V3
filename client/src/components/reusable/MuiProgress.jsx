@@ -9,6 +9,13 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
+/**
+ * Progress indicator wrapper.
+ *
+ * @param {Record<string, unknown>} props - Progress props.
+ * @returns {JSX.Element} Progress element.
+ * @throws {never} This component does not throw.
+ */
 const MuiProgress = forwardRef(
   (
     {

@@ -9,6 +9,13 @@ import DensityMediumIcon from "@mui/icons-material/DensityMedium";
 import DownloadIcon from "@mui/icons-material/Download";
 import MuiSearchField from "./MuiSearchField";
 
+/**
+ * Toolbar component for grid/list screens with search and quick actions.
+ *
+ * @param {Record<string, unknown>} props - Toolbar props.
+ * @returns {JSX.Element} Toolbar element.
+ * @throws {never} This component does not throw.
+ */
 const MuiDataGridToolbar = ({
   searchValue = "",
   onSearchChange,

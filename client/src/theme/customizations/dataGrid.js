@@ -1,3 +1,7 @@
+/**
+ * @file MUI DataGrid theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { paperClasses } from "@mui/material/Paper";
 import { alpha } from "@mui/material/styles";
 

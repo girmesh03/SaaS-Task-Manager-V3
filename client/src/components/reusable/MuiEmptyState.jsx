@@ -29,6 +29,13 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import InboxIcon from "@mui/icons-material/Inbox";
 
+/**
+ * Empty-state renderer for list/detail screens.
+ *
+ * @param {Record<string, unknown>} props - Empty-state props.
+ * @returns {JSX.Element} Empty-state element.
+ * @throws {never} This component does not throw.
+ */
 const MuiEmptyState = ({
   message = "No data available",
   secondaryMessage,

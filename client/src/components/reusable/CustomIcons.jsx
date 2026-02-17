@@ -1,6 +1,12 @@
 import Box from "@mui/material/Box";
 import CheckIcon from "@mui/icons-material/Check";
 
+/**
+ * Brand icon/logo used in public and dashboard shells.
+ *
+ * @returns {JSX.Element} Brand icon element.
+ * @throws {never} This component does not throw.
+ */
 export const MuiAppIconLogo = () => {
   return (
     <Box
@@ -11,9 +17,9 @@ export const MuiAppIconLogo = () => {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "common.white",
-        background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-        boxShadow: "0 4px 10px rgba(37, 99, 235, 0.35)",
+        color: "primary.contrastText",
+        bgcolor: "primary.main",
+        boxShadow: (theme) => theme.shadows[2],
       }}
     >
       <CheckIcon sx={{ fontSize: 20 }} />

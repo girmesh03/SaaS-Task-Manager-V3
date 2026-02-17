@@ -6,6 +6,24 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import MuiTextField from "./MuiTextField";
 
+/**
+ * Search-field wrapper built on top of `MuiTextField`.
+ *
+ * @param {{
+ *   value?: string | number;
+ *   onChange?: (event: { target: { value: string } }) => void;
+ *   placeholder?: string;
+ *   ariaLabel?: string;
+ *   clearable?: boolean;
+ *   onClear?: () => void;
+ *   fullWidth?: boolean;
+ *   size?: "small" | "medium";
+ *   reserveHelperTextSpace?: boolean;
+ *   sx?: import("@mui/system").SxProps<import("@mui/material/styles").Theme>;
+ * }} props - Component props.
+ * @returns {JSX.Element} Search input element.
+ * @throws {never} This component does not throw.
+ */
 const MuiSearchField = ({
   value,
   onChange,
@@ -15,6 +33,7 @@ const MuiSearchField = ({
   onClear,
   fullWidth = true,
   size = "small",
+  reserveHelperTextSpace = false,
   sx,
   ...muiProps
 }) => {
@@ -37,6 +56,7 @@ const MuiSearchField = ({
       aria-label={ariaLabel}
       fullWidth={fullWidth}
       size={size}
+      reserveHelperTextSpace={reserveHelperTextSpace}
       startAdornment={<SearchIcon fontSize="small" color="action" />}
       endAdornment={
         clearable && value ? (
@@ -66,6 +86,7 @@ MuiSearchField.propTypes = {
   onClear: PropTypes.func,
   fullWidth: PropTypes.bool,
   size: PropTypes.oneOf(["small", "medium"]),
+  reserveHelperTextSpace: PropTypes.bool,
   sx: PropTypes.object,
 };
 

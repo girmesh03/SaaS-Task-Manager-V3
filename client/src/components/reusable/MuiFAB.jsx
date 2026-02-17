@@ -41,6 +41,13 @@ import { forwardRef } from "react";
 import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";
 
+/**
+ * Floating action button wrapper.
+ *
+ * @param {Record<string, unknown>} props - FAB props.
+ * @returns {JSX.Element | null} FAB element.
+ * @throws {never} This component does not throw.
+ */
 const MuiFAB = forwardRef(
   (
     {

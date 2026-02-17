@@ -41,6 +41,8 @@ import RestoreIcon from "@mui/icons-material/Restore";
  * @param {boolean} props.showEdit - Show edit button
  * @param {boolean} props.showDelete - Show delete button
  * @param {boolean} props.showRestore - Show restore button
+ * @returns {JSX.Element} Action-column element.
+ * @throws {never} This component does not throw.
  */
 const MuiActionColumn = ({
   row,

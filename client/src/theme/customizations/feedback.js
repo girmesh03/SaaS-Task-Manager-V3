@@ -1,3 +1,7 @@
+/**
+ * @file MUI feedback component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { alpha } from "@mui/material/styles";
 import { gray, orange } from "../themePrimitives";
 

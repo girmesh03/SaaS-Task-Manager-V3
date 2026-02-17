@@ -57,6 +57,8 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
  * @param {number} props.limitTags - Maximum number of tags to show
  * @param {string} props.noOptionsText - Text to show when no options available
  * @param {string} props.loadingText - Text to show while loading
+ * @returns {JSX.Element} Multi-select element.
+ * @throws {never} This component does not throw.
  */
 const MuiMultiSelect = forwardRef(
   (

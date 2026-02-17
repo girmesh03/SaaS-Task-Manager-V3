@@ -1,3 +1,7 @@
+/**
+ * @file MUI chart component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { axisClasses, legendClasses, chartsGridClasses } from "@mui/x-charts";
 import { gray } from "../themePrimitives";
 

@@ -40,6 +40,13 @@ import { forwardRef } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import Zoom from "@mui/material/Zoom";
 
+/**
+ * Tooltip wrapper with canonical defaults.
+ *
+ * @param {Record<string, unknown>} props - Tooltip props.
+ * @returns {JSX.Element | React.ReactNode} Tooltip element or raw child when title is empty.
+ * @throws {never} This component does not throw.
+ */
 const MuiTooltip = forwardRef(
   (
     {

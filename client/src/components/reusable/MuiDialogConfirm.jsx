@@ -9,6 +9,13 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import MuiDialog from "./MuiDialog";
 
+/**
+ * Confirm dialog wrapper for destructive or sensitive actions.
+ *
+ * @param {Record<string, unknown>} props - Confirm-dialog props.
+ * @returns {JSX.Element} Confirm dialog element.
+ * @throws {never} This component does not throw.
+ */
 const MuiDialogConfirm = memo(
   ({
     open,

@@ -3,6 +3,12 @@ import Box from "@mui/material/Box";
 import { DataGrid } from "@mui/x-data-grid";
 import MuiEmptyState from "./MuiEmptyState";
 
+/**
+ * DataGrid no-rows overlay content.
+ *
+ * @returns {JSX.Element} Empty-state overlay element.
+ * @throws {never} This component does not throw.
+ */
 const NoRowsOverlay = () => (
   <MuiEmptyState
     message="No records found"
@@ -11,6 +17,13 @@ const NoRowsOverlay = () => (
   />
 );
 
+/**
+ * Wrapper around MUI X DataGrid with canonical defaults.
+ *
+ * @param {Record<string, unknown>} props - Data grid props.
+ * @returns {JSX.Element} Wrapped data-grid element.
+ * @throws {never} This component does not throw.
+ */
 const MuiDataGrid = forwardRef(
   (
     {

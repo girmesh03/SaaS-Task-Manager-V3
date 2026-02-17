@@ -9,6 +9,13 @@ import MenuItem from "@mui/material/MenuItem";
 import DarkModeIcon from "@mui/icons-material/DarkModeRounded";
 import LightModeIcon from "@mui/icons-material/LightModeRounded";
 
+/**
+ * Theme mode selector drop-down.
+ *
+ * @param {Record<string, unknown>} props - Icon-button passthrough props.
+ * @returns {JSX.Element} Theme selector element.
+ * @throws {never} This component does not throw.
+ */
 const MuiThemeDropDown = memo((props) => {
   const { mode, systemMode, setMode } = useColorScheme();
   const [anchorEl, setAnchorEl] = useState(null);

@@ -1,3 +1,7 @@
+/**
+ * @file Barrel exports for reusable MUI wrapper components.
+ * @throws {never} Module initialization does not throw.
+ */
 // Text Input Components
 export { default as MuiTextField } from "./MuiTextField";
 

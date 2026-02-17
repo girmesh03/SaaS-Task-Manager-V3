@@ -29,6 +29,8 @@ import FormHelperText from "@mui/material/FormHelperText";
  *   helperText="Keep me signed in"
  *   label="Remember Me"
  * />
+ * @returns {JSX.Element} Checkbox element.
+ * @throws {never} This component does not throw.
  */
 const MuiCheckbox = forwardRef(
   (

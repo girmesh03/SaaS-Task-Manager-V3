@@ -1,3 +1,7 @@
+/**
+ * @file MUI input component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { createElement } from "react";
 import { alpha } from "@mui/material/styles";
 import { outlinedInputClasses } from "@mui/material/OutlinedInput";

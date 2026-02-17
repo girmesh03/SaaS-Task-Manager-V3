@@ -32,6 +32,8 @@ import Box from "@mui/material/Box";
  *   label="Quantity"
  *   min={0}
  * />
+ * @returns {JSX.Element} Number-field element.
+ * @throws {never} This component does not throw.
  */
 const MuiNumberField = forwardRef(
   (

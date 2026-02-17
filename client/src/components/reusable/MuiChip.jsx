@@ -69,6 +69,13 @@ const getColorForType = (type, value) => {
   return COLOR_MAPPINGS[type]?.[value] || "default";
 };
 
+/**
+ * Status/enum chip wrapper.
+ *
+ * @param {Record<string, unknown>} props - Chip props.
+ * @returns {JSX.Element} Chip element.
+ * @throws {never} This component does not throw.
+ */
 const MuiChip = forwardRef(
   (
     {

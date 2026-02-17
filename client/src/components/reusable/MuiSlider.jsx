@@ -25,6 +25,8 @@ import Typography from "@mui/material/Typography";
 
 /**
  * MuiSlider Component
+ * @returns {JSX.Element} Slider element.
+ * @throws {never} This component does not throw.
  */
 const MuiSlider = forwardRef(
   (

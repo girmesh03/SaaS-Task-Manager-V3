@@ -51,6 +51,9 @@ import InputAdornment from "@mui/material/InputAdornment";
  *   size="small"
  *   startAdornment={<EmailIcon fontSize="small" color="primary" />}
  * />
+ *
+ * @returns {JSX.Element} Configured MUI text field.
+ * @throws {never} This component does not throw.
  */
 const MuiTextField = forwardRef(
   (
@@ -74,6 +77,7 @@ const MuiTextField = forwardRef(
       maxRows,
       minRows,
       multiline = false,
+      reserveHelperTextSpace = true,
       startAdornment,
       endAdornment,
       ...muiProps
@@ -110,7 +114,7 @@ const MuiTextField = forwardRef(
         required={required}
         type={type}
         error={!!error}
-        helperText={error?.message || helperText || " "}
+        helperText={error?.message || helperText || (reserveHelperTextSpace ? " " : "")}
         slotProps={{
           input: {
             startAdornment: computedStartAdornment,

@@ -4,6 +4,13 @@ import Avatar from "@mui/material/Avatar";
 import AvatarGroup from "@mui/material/AvatarGroup";
 import Tooltip from "@mui/material/Tooltip";
 
+/**
+ * Stacked avatar group renderer.
+ *
+ * @param {Record<string, unknown>} props - Avatar stack props.
+ * @returns {JSX.Element} Avatar stack element.
+ * @throws {never} This component does not throw.
+ */
 const MuiAvatarStack = ({
   users = [],
   max = 3,

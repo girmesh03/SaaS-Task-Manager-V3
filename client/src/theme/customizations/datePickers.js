@@ -1,3 +1,7 @@
+/**
+ * @file MUI date-picker theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { alpha } from '@mui/material/styles';
 import { menuItemClasses } from '@mui/material/MenuItem';
 import { pickersDayClasses, yearCalendarClasses } from '@mui/x-date-pickers';

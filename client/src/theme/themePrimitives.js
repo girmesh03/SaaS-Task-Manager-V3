@@ -1,3 +1,7 @@
+/**
+ * @file Theme primitive tokens and palette foundations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { createTheme, alpha } from "@mui/material/styles";
 
 const defaultTheme = createTheme();

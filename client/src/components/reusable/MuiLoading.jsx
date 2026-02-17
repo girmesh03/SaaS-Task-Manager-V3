@@ -32,6 +32,13 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 
+/**
+ * Loading-state renderer.
+ *
+ * @param {Record<string, unknown>} props - Loading component props.
+ * @returns {JSX.Element} Loading-state element.
+ * @throws {never} This component does not throw.
+ */
 const MuiLoading = ({
   message = "Loading",
   size = 40,

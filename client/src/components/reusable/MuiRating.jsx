@@ -39,6 +39,8 @@ import Box from "@mui/material/Box";
  *   onChange={(e, newValue) => setValue("rating", newValue)}
  *   readOnly={false}
  * />
+ * @returns {JSX.Element} Rating element.
+ * @throws {never} This component does not throw.
  */
 const MuiRating = forwardRef(
   (

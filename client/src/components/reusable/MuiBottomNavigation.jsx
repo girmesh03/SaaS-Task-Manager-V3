@@ -41,6 +41,13 @@ import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Paper from "@mui/material/Paper";
 
+/**
+ * Bottom navigation wrapper with fixed/static positioning support.
+ *
+ * @param {Record<string, unknown>} props - Bottom-navigation props.
+ * @returns {JSX.Element} Bottom navigation element.
+ * @throws {never} This component does not throw.
+ */
 const MuiBottomNavigation = forwardRef(
   (
     {

@@ -1,14 +1,23 @@
+/**
+ * @file Root layout that mounts shared providers and toast container.
+ */
 import { Outlet } from "react-router";
-import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useTheme } from "@mui/material/styles";
+import "react-toastify/dist/ReactToastify.css";
 
+/**
+ * Root route layout.
+ *
+ * @returns {JSX.Element} Root layout element.
+ * @throws {never} This component does not throw.
+ */
 const RootLayout = () => {
   const theme = useTheme();
 
   return (
-    <Container disableGutters>
+    <Box sx={{ minHeight: "100vh" }}>
       <Outlet />
       <ToastContainer
         position="top-right"
@@ -22,7 +31,7 @@ const RootLayout = () => {
         pauseOnHover
         theme={theme.palette.mode === "dark" ? "dark" : "light"}
       />
-    </Container>
+    </Box>
   );
 };
 

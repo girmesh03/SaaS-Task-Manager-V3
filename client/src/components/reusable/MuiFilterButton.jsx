@@ -4,6 +4,13 @@ import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import FilterListIcon from "@mui/icons-material/FilterList";
 
+/**
+ * Filter trigger button with active-filter badge.
+ *
+ * @param {Record<string, unknown>} props - Filter button props.
+ * @returns {JSX.Element} Filter button element.
+ * @throws {never} This component does not throw.
+ */
 const MuiFilterButton = ({
   label = "Filter",
   activeCount = 0,

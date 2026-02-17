@@ -37,6 +37,13 @@ import SpeedDial from "@mui/material/SpeedDial";
 import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import SpeedDialAction from "@mui/material/SpeedDialAction";
 
+/**
+ * Speed-dial action wrapper.
+ *
+ * @param {Record<string, unknown>} props - Speed-dial props.
+ * @returns {JSX.Element} Speed-dial element.
+ * @throws {never} This component does not throw.
+ */
 const MuiSpeedDial = forwardRef(
   (
     {

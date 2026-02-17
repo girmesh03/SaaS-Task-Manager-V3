@@ -1,6 +1,13 @@
 import { forwardRef } from "react";
 import Pagination from "@mui/material/Pagination";
 
+/**
+ * Pagination wrapper with canonical defaults.
+ *
+ * @param {Record<string, unknown>} props - Pagination props.
+ * @returns {JSX.Element} Pagination element.
+ * @throws {never} This component does not throw.
+ */
 const MuiPagination = forwardRef(
   (
     {

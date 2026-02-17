@@ -18,6 +18,13 @@ const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+/**
+ * Dialog wrapper with responsive mobile behavior.
+ *
+ * @param {Record<string, unknown>} props - Dialog props.
+ * @returns {JSX.Element} Dialog element.
+ * @throws {never} This component does not throw.
+ */
 const MuiDialog = forwardRef(
   (
     {

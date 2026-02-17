@@ -45,7 +45,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 1.1 Establish backend project structure and baseline modules
-
   - Create folders: `backend/config`, `backend/controllers`, `backend/middleware`, `backend/models`, `backend/plugins`, `backend/routes`, `backend/services`, `backend/utils`, `backend/validators`, `backend/mock`
   - Preserve existing entry files: `backend/app.js`, `backend/server.js`
   - Add barrel exports only where helpful; avoid circular imports
@@ -59,7 +58,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 34.9, 34.15, 61, Design: Backend Architecture_
 
 - [ ] 1.2 Implement environment and constants foundation
-
   - Create `backend/utils/constants.js` for enums, limits, regex, API defaults, error codes
   - Create `backend/utils/validateEnv.js` to validate required env keys at startup
   - Add canonical regex and enum mappings from PRD (phone regex, status/priority mapping)
@@ -75,7 +73,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 34.8, 35 (CAN-006, CAN-013), Design: Utilities_
 
 - [ ] 1.3 Implement shared backend helpers and logging
-
   - Create `backend/utils/helpers.js` (date helpers, pagination parser, response helpers)
   - Create `backend/utils/logger.js` (structured logger with environment-aware transports)
   - Create `backend/utils/errors.js` with custom error classes matching canonical error taxonomy
@@ -89,7 +86,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 24, 58, Design: Error Handling + Logging_
 
 - [ ] 1.4 Implement baseline config modules
-
   - Create `backend/config/db.js` (Mongoose connection lifecycle and graceful shutdown hooks)
   - Create `backend/config/allowedOrigins.js` and `backend/config/corsOptions.js`
   - Create `backend/config/authorizationMatrix.json` seeded from PRD canonical matrix
@@ -103,7 +99,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 19, 43, 62, Design: Config Layer_
 
 - [ ] 1.5 Implement middleware skeleton (foundation only)
-
   - Create `backend/middleware/errorHandler.js` (final responder)
   - Create `backend/middleware/notFound.js`
   - Create `backend/middleware/rateLimiter.js` baseline profiles
@@ -119,7 +114,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 19, 24, 43, 44, Design: Middleware_
 
 - [ ] 1.6 Synchronize `app.js` and `server.js` runtime wiring
-
   - Update `backend/app.js` to use core middleware stack and health/root routes
   - Update `backend/server.js` to initialize env validation, db connection, and app startup consistently
   - Ensure startup order: validate env -> connect db -> start server
@@ -132,22 +126,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Any future socket bootstrap in later phases must be attached in synchronized app/server flow without duplicating auth/config initialization.
   - _Requirements: 19, 61, Design: Server Lifecycle_
 
-- [ ] 1.7 Create seed/wipe baseline scripts
-
-  - Create `backend/mock/seed.js` for platform org bootstrap (`isPlatformOrg=true`)
-  - Create `backend/mock/wipe.js` to clear test data safely
-  - Reserve `backend/mock/data.js` for deterministic test fixtures
-  - Ensure seed creates platform org + platform dept + platform SuperAdmin (`isPlatformOrgUser=true`, `isHod=true`)
-  - Detailed extraction to enforce in this task:
-    - Seed flow must create Platform Organization (immutable), Platform Department, and Platform SuperAdmin user with `isPlatformOrgUser=true` and `isHod=true`.
-    - Platform creation must resolve circular references in sequence: create org, create dept, create user, then update `department.manager` and `organization.createdBy`.
-    - Seeded platform entities are required prerequisites for cross-organization authorization and role-matrix regression scenarios in later phases.
-    - Wipe script must protect against accidental destructive behavior and remain suitable for repeatable manual API verification cycles.
-    - Fixture file reservation must support deterministic IDs/relations for org, dept, user, task, material, and vendor scenarios introduced in later phases.
-  - _Requirements: 62, 44, Design: Seeding_
-
-- [ ] 1.8 Tests (Backend)
-
+- [ ] 1.7 Tests (Backend)
   - No backend controller/resource tests in Phase 1
   - Validate startup manually: env validation, DB connect/disconnect, health route, seed command
   - Detailed manual verification extraction:
@@ -160,8 +139,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 
 ### Frontend
 
-- [ ] 1.9 Stabilize existing frontend entry and layout baseline
-
+- [ ] 1.8 Stabilize existing frontend entry and layout baseline
   - Keep and extend existing files: `client/src/main.jsx`, `client/src/router/routes.jsx`, `client/src/components/layouts/RootLayout.jsx`
   - Ensure `ToastContainer` remains globally available
   - Keep lazy loading in route config and ensure fallback behavior via `MuiLoading`
@@ -178,8 +156,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Entry/layout baseline must preserve canonical navigation naming and placement rules already fixed by requirements, including sidebar terminology and shared header action zones.
   - _Requirements: 61, 59, Design: Frontend Architecture_
 
-- [ ] 1.10 Build frontend folder architecture (without breaking current files)
-
+- [ ] 1.9 Build frontend folder architecture (without breaking current files)
   - Add folders: `client/src/store`, `client/src/services`, `client/src/hooks`, `client/src/utils`, `client/src/components/common`, `client/src/components/columns`, `client/src/components/features`
   - Keep existing `client/src/theme/*` customization architecture as the baseline design system
   - Add index exports only where it improves import hygiene
@@ -192,8 +169,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Organization of store/services/hooks must match Section 18 endpoint segmentation and permission-gated UI composition patterns defined in requirements/design.
   - _Requirements: 58, 61, Design: Frontend Structure_
 
-- [ ] 1.11 Implement layout shells from UI references
-
+- [ ] 1.10 Implement layout shells from UI references
   - Public layout shell aligned to `docs/ui/public_layout_screen.png` and `docs/ui/landing-page.png`
   - Dashboard layout shell aligned to `docs/ui/desktop-dashboard-layout.png` and `docs/ui/mobile-dashboard-layout.png`
   - Enforce CAN-024 now: dashboard header has no logo; sidebar owns logo
@@ -213,8 +189,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Global search placement and spacing must align with desktop dashboard layout references and remain reusable across resource list pages.
   - _Requirements: 61, 35 (CAN-002, CAN-024), Design: Layouts_
 
-- [ ] 1.12 Add protected/public route map placeholders
-
+- [ ] 1.11 Add protected/public route map placeholders
   - Public placeholders: `/`, `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password`
   - Protected placeholders: `/dashboard`, `/dashboard/tasks`, `/dashboard/tasks/:taskId`, `/dashboard/users`, `/dashboard/users/:userId`, `/dashboard/departments`, `/dashboard/departments/:departmentId`, `/dashboard/materials`, `/dashboard/materials/:materialId`, `/dashboard/vendors`, `/dashboard/vendors/:vendorId`, `/dashboard/settings`
   - Keep file extension consistency with current project (`.jsx`)
@@ -227,8 +202,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - URL naming must remain stable and unchanged across phases to avoid API/UI traceability drift with requirements and UI reference files.
   - _Requirements: 61, 40-42, Design: Routing_
 
-- [ ] 1.13 Tests (Frontend)
-
+- [ ] 1.12 Tests (Frontend)
   - No frontend test implementation in this project
   - Manual validation only: route rendering, layout responsiveness, header/sidebar/bottom-nav behavior
   - Detailed manual verification extraction:
@@ -262,7 +236,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 2.1 Implement soft-delete and schema base plugins
-
   - Create `backend/plugins/softDelete.js` with `isDeleted`, `deletedAt`, `deletedBy`, `restore()` helpers
   - Add query helpers to include/exclude deleted records deterministically
   - Ensure plugin support for cascade logic later
@@ -275,7 +248,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 34.1, 46, Design: Data Lifecycle_
 
 - [ ] 2.2 Implement all core models with canonical fields/indexes
-
   - Create models: `Organization`, `Department`, `User`, `Task` (base + discriminators), `TaskActivity`, `TaskComment`, `Material`, `Vendor`, `Attachment`, `Notification`
   - Enforce canonical enums, constraints, and immutable-field rules
   - Add multi-tenant indexes (organization/department scoped uniques)
@@ -300,7 +272,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 44, 46, 35 (CAN-015, CAN-016, CAN-019, CAN-020, CAN-021, CAN-022, CAN-026, CAN-027), Design: Models_
 
 - [ ] 2.3 Implement validator modules for all resources
-
   - Create per-resource validators in `backend/validators/*`
   - Enforce `.run(req)` execution and centralized validation middleware response shape
   - Ensure withDeleted existence checks for create/restore collision paths
@@ -318,7 +289,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 44, 24, 35 (CAN-004, CAN-006, CAN-027), Design: Validation_
 
 - [ ] 2.4 Implement auth + authorization + tenant scoping middleware (full)
-
   - Complete JWT cookie extraction and verification
   - Attach normalized `req.user` context (`role`, `organization`, `department`, `isPlatformOrgUser`, `isHod`)
   - Implement authorization engine from canonical matrix JSON (allow if ANY rule passes)
@@ -335,7 +305,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 19, 43, 60, 62, 35 (CAN-005, CAN-012)_
 
 - [ ] 2.5 Implement service scaffolds
-
   - `backend/services/emailService.js` (verification/welcome/reset/contact templates)
   - `backend/services/notificationService.js` (in-app + optional email orchestration)
   - `backend/services/socketService.js` (connect/auth/room/event abstractions)
@@ -349,7 +318,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 14, 15, 19, Design: Services_
 
 - [ ] 2.6 Create canonical route files with controller placeholders
-
   - `backend/routes/authRoutes.js`
   - `backend/routes/userRoutes.js`
   - `backend/routes/departmentRoutes.js`
@@ -375,7 +343,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 54, 62, Design: API Contract_
 
 - [ ] 2.7 Wire all routes and middleware in app/server
-
   - Mount canonical API route prefixes in `backend/app.js`
   - Attach error/notFound middleware at the end of stack
   - Initialize socket service from `backend/server.js` with shared auth secret
@@ -388,8 +355,20 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Any bootstrapping change must keep `app.js` and `server.js` synchronized by phase rule.
   - _Requirements: 14, 19, 54, Design: Bootstrap_
 
-- [ ] 2.8 Prepare fixture data and scripts for vertical-slice phases
+- [ ] 2.8 Create seed/wipe baseline scripts
+  - Create `backend/mock/seed.js` for platform org bootstrap (`isPlatformOrg=true`)
+  - Create `backend/mock/wipe.js` to clear test data safely
+  - Reserve `backend/mock/data.js` for deterministic test fixtures
+  - Ensure seed creates platform org + platform dept + platform SuperAdmin (`isPlatformOrgUser=true`, `isHod=true`)
+  - Detailed extraction to enforce in this task:
+    - Seed flow must create Platform Organization (immutable), Platform Department, and Platform SuperAdmin user with `isPlatformOrgUser=true` and `isHod=true`.
+    - Platform creation must resolve circular references in sequence: create org, create dept, create user, then update `department.manager` and `organization.createdBy`.
+    - Seeded platform entities are required prerequisites for cross-organization authorization and role-matrix regression scenarios in later phases.
+    - Wipe script must protect against accidental destructive behavior and remain suitable for repeatable manual API verification cycles.
+    - Fixture file reservation must support deterministic IDs/relations for org, dept, user, task, material, and vendor scenarios introduced in later phases.
+  - _Requirements: 62, 44, Design: Seeding_
 
+- [ ] 2.9 Prepare fixture data and scripts for vertical-slice phases
   - Extend `backend/mock/data.js` with org/department/user/task/material/vendor fixtures
   - Ensure fixtures cover status/priority/type permutations and deleted records
   - Add scripted scenarios for low stock, vendor associations, comment depth, inactive departments
@@ -404,8 +383,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Include soft-deleted fixtures for list/includeDeleted/restore conflict scenarios.
   - _Requirements: 34, 46, Design: Test Data_
 
-- [ ] 2.9 Tests (Backend)
-
+- [ ] 2.10 Tests (Backend)
   - No backend resource tests in Phase 2 (controllers are still placeholders or partial)
   - Manual verification: model validation, route registration, middleware authorization flow
   - Detailed manual verification extraction:
@@ -416,8 +394,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 
 ### Frontend
 
-- [ ] 2.10 Configure store and RTK Query base layer
-
+- [ ] 2.11 Configure store and RTK Query base layer
   - Create `client/src/store/index.js` and slices for auth/theme/resource view state
   - Create `client/src/services/api.js` with baseQuery and credentials policy
   - Implement auth refresh flow integration at API layer
@@ -429,8 +406,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Base-layer error mapping must remain compatible with centralized toast behavior, preserving deterministic handling for 401/403/409/429/network failures.
   - _Requirements: 19, 58, 61, Design: State/API Architecture_
 
-- [ ] 2.11 Add endpoint scaffolds matching backend canonical contracts
-
+- [ ] 2.12 Add endpoint scaffolds matching backend canonical contracts
   - Auth endpoints
   - Users endpoints (`/preferences`, `/security`, `/activity`, `/performance`)
   - Departments endpoints (`/activity`, `/dashboard`)
@@ -451,8 +427,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Typed endpoint contracts must align with reusable UI wrappers so list pages, dialogs, and detail tabs consume a single normalized request/response schema.
   - _Requirements: 54, 63, Design: API Contracts_
 
-- [ ] 2.12 Implement cross-cutting hooks/utilities
-
+- [ ] 2.13 Implement cross-cutting hooks/utilities
   - `useAuth`, `useAuthorization`, `useResponsive`, `useDebounce`, `useTimezone`
   - Date formatting via `Intl.DateTimeFormat` for all user-facing formatting
   - Error-to-toast normalization helper (403 toast-only)
@@ -468,8 +443,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Error normalization helper must preserve canonical UX: 403 toast-only, 401 refresh-first semantics, conflict and rate-limit messaging surfaced via toast contracts.
   - _Requirements: 58, 60, 35 (CAN-012, CAN-014), Design: Hooks/Utils_
 
-- [ ] 2.13 Implement reusable component foundations
-
+- [ ] 2.14 Implement reusable component foundations
   - Reusable `MuiDataGrid` wrapper + toolbar
   - Full-height mobile dialog helper pattern (CAN-017)
   - Shared empty/loading/error states
@@ -503,8 +477,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - Reusable exports must preserve strict `Mui*` naming and remain the only component surface used by feature pages for consistency.
   - _Requirements: 59, 61, 35 (CAN-017, CAN-023), Design: Reusable Components_
 
-- [ ] 2.14 Build auth/public page skeletons (connected to placeholder APIs)
-
+- [ ] 2.15 Build auth/public page skeletons (connected to placeholder APIs)
   - Pages: Login, Register (4-step wizard), Verify Email, Forgot Password, Reset Password
   - Enforce CAN-007 (no terms checkbox)
   - Use PRD image/copy alignment for public CTAs: “Log In” and “Sign Up” (CAN-025)
@@ -521,8 +494,7 @@ This implementation plan provides a complete, phase-by-phase execution checklist
     - All auth/public modal behaviors must respect canonical responsive dialog rules, especially xs full-height handling.
   - _Requirements: 19, 35 (CAN-007, CAN-025), UI refs: `landing-page.png`, `public_layout_screen.png`_
 
-- [ ] 2.15 Tests (Frontend)
-
+- [ ] 2.16 Tests (Frontend)
   - No frontend test implementation
   - Manual validation only: auth skeleton flows, toasts, route guards, responsive dialog behavior
   - Detailed manual verification extraction:
@@ -555,7 +527,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 3.1 Implement Department controller logic (full)
-
   - `listDepartments` with canonical filters (search/status/manager/member-count/date/includeDeleted/organizationId rules)
   - `createDepartment` with manager validation and description max 500
   - `getDepartment` with detail aggregates required by header cards
@@ -575,7 +546,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 41, 42, 54, 62, 35 (CAN-018, CAN-022, CAN-026)_
 
 - [ ] 3.2 Implement User controller logic (full)
-
   - `listUsers` with canonical filters (department/role/joined/includeDeleted)
   - `createUser` with auto-verified onboarding + welcome email behavior
   - `getUser` detail payload for Overview tab
@@ -596,7 +566,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 40, 43, 54, 63, 35 (CAN-011, CAN-016)_
 
 - [ ] 3.3 Finalize auth controllers for production behavior
-
   - Register/verify-email/resend verification flow
   - Login/refresh/logout cookie + token rotation semantics
   - Forgot/reset/change password flows
@@ -613,7 +582,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 19, 62, 35 (CAN-008)_
 
 - [ ] 3.4 Finalize Dept/User/Auth route wiring with validation and authorization
-
   - Attach validators to all payload and param routes
   - Ensure organizationId query parameter restrictions for non-platform users
   - Ensure standardized success/error response shapes
@@ -626,7 +594,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 24, 43, 54_
 
 - [ ] 3.5 Implement Dept/User socket + notification events
-
   - Emit user create/update/status events to scoped rooms
   - Emit department update events where required
   - Ensure event payloads contain only tenant-scoped data
@@ -639,7 +606,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 14, 15, 60_
 
 - [ ] 3.6 Tests (Backend)
-
   - Manual API verification for Auth, Users, Departments
   - Validate role matrix behavior across platform and customer org contexts
   - Validate immutable fields, inactive department restrictions, includeDeleted behavior
@@ -656,7 +622,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Frontend
 
 - [ ] 3.7 Implement Users list page (grid/list) + filter dialog + create/edit dialog
-
   - Align with `docs/ui/users_grid_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/users_filter_dialog_screen.png`, `docs/ui/create_update_user_dialog_screen.png`
   - Keep view-toggle semantics consistent with CAN-023
   - Support role-gated actions and includeDeleted toggle behavior
@@ -680,7 +645,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 40, 61, 59_
 
 - [ ] 3.8 Implement User details page with canonical tabs
-
   - Tabs: Overview, Tasks, Activity, Performance
   - Overview aligned to `docs/ui/user_details_overview_screen.png`
   - Tasks aligned to `docs/ui/user_details_tasks_screen.png`
@@ -708,7 +672,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 40, 35 (CAN-011), UI refs listed above_
 
 - [ ] 3.9 Implement Departments list page (grid/list) + filter + create/edit dialog
-
   - Align with `docs/ui/departments_grid_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/departments_filter_dialog_screen.png`, `docs/ui/create_update_department_dialog_screen.png`
   - Enforce description max 500 and status chips
   - Reusable components to validate/develop for this task:
@@ -731,7 +694,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 41, 35 (CAN-022, CAN-026)_
 
 - [ ] 3.10 Implement Department details page with canonical IA
-
   - Top-level tabs: Overview, Members, Tasks (no top-level Activity tab)
   - Overview aligned to `docs/ui/dept_details_overview_tab_screen.png`
   - Members aligned to `docs/ui/dept_details_users_tab_screen.png`
@@ -759,7 +721,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 41, 61, 35 (CAN-009, CAN-018)_
 
 - [ ] 3.11 Integrate Users/Departments with API and role gating
-
   - Hook page-level data dependencies into RTK Query
   - Implement optimistic updates only where safe
   - Add toast-only handling for 403 responses
@@ -777,7 +738,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 60, 59, 35 (CAN-012)_
 
 - [ ] 3.12 Tests (Frontend)
-
   - No frontend test implementation
   - Manual validation only: users/departments flows in xs/sm/md and role-based action visibility
   - Detailed manual verification extraction:
@@ -810,7 +770,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 4.1 Implement Task controller logic for all task types
-
   - `listTasks` with full union-filter support
   - `createTask` with type-specific validation:
     - ProjectTask (vendor/startDate/dueDate)
@@ -832,7 +791,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 42, 43, 54, 35 (CAN-004, CAN-013)_
 
 - [ ] 4.2 Implement TaskActivity controllers
-
   - `GET /api/tasks/:taskId/activities`
   - `POST /api/tasks/:taskId/activities`
   - Block activity creation for RoutineTask parents (409)
@@ -846,7 +804,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 8, 42, 46, 35 (CAN-019)_
 
 - [ ] 4.3 Implement TaskComment controllers
-
   - `GET /api/tasks/:taskId/comments`
   - `POST /api/tasks/:taskId/comments`
   - Enforce depth max 5 and mention parsing
@@ -861,7 +818,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 10, 42, 35 (CAN-003)_
 
 - [ ] 4.4 Implement Attachment controllers for task contexts
-
   - `POST /api/attachments`
   - `DELETE /api/attachments/:attachmentId`
   - `PATCH /api/attachments/:attachmentId/restore`
@@ -876,7 +832,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 11, 54, 35 (CAN-021, CAN-027)_
 
 - [ ] 4.5 Implement task-triggered notification/event orchestration
-
   - On assignment, mention, status change, activity/comment/file add
   - Emit scoped socket events for list and detail updates
   - Detailed extraction to enforce in this task:
@@ -888,7 +843,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 14, 15, 42_
 
 - [ ] 4.6 Tests (Backend)
-
   - Manual API verification for Task CRUD, Activity, Comments, Attachments
   - Validate RoutineTask activity block (409)
   - Validate comment depth guard and mention notifications
@@ -906,7 +860,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Frontend
 
 - [ ] 4.7 Implement Tasks listing module (grid/list/tabs/filter/create CTA)
-
   - Align with `docs/ui/tasks_grid_view_screen.png` and `docs/ui/tasks_list_view_screen.png`
   - Tabs: All Tasks, Assigned to Me, Completed
   - Enforce grid/list toggle and DataGrid row selection behavior
@@ -929,7 +882,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 42, 61, 59, 35 (CAN-023)_
 
 - [ ] 4.8 Implement Task filter dialog and dynamic create/update dialog
-
   - Filter dialog aligned to `docs/ui/tasks_filter_dialog_screen.png`
   - Create/update dialog aligned to `docs/ui/create_update_task_dialog_screen.png`
   - Include type-specific fields and validation mapping
@@ -953,7 +905,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 42, 35 (CAN-004, CAN-019)_
 
 - [ ] 4.9 Implement Task details page with canonical tab naming
-
   - Tabs: Overview, Activities, Comments, Files
   - Overview aligned to `docs/ui/task_details_overview_screen.png`
   - Activities aligned to `docs/ui/task_details_activities_screen.png`
@@ -981,7 +932,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 32, 42, 35 (CAN-003)_
 
 - [ ] 4.10 Implement task detail subcomponents
-
   - Activity log with search and add-note actions
   - Threaded comment editor/replies/mentions (depth-aware UX)
   - File dropzone/gallery/preview/download/remove actions
@@ -1002,7 +952,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 32, 42, 11_
 
 - [ ] 4.11 Integrate task pages with real-time updates
-
   - Subscribe/unsubscribe task rooms on detail mount/unmount
   - Update list/detail cache on task/activity/comment/file events
   - Keep unread notification count synchronized
@@ -1019,7 +968,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 14, 15_
 
 - [ ] 4.12 Tests (Frontend)
-
   - No frontend test implementation
   - Manual validation only: task creation/edit/delete/restore, filters, tabs, activity/comments/files UX across breakpoints
   - Detailed manual verification extraction:
@@ -1052,7 +1000,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 5.1 Implement Material controller logic
-
   - `listMaterials` with canonical filters
   - `createMaterial`, `getMaterial`, `updateMaterial`
   - `POST /api/materials/:materialId/restock`
@@ -1071,7 +1018,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 39, 54, 35 (CAN-015, CAN-019)_
 
 - [ ] 5.2 Implement Vendor controller logic
-
   - `listVendors`, `createVendor`, `getVendor`, `updateVendor`
   - `POST /api/vendors/:vendorId/contact`
   - `deleteVendor`/`restoreVendor`
@@ -1088,7 +1034,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 13, 54, 35 (CAN-015, CAN-020)_
 
 - [ ] 5.3 Finalize material/vendor routes, validators, and service hooks
-
   - Attach role and tenant scoping middleware
   - Integrate notification/email hooks for vendor contact action
   - Ensure standard paginated response format
@@ -1101,7 +1046,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 24, 43, 54_
 
 - [ ] 5.4 Tests (Backend)
-
   - Manual API verification for Materials and Vendors
   - Validate low-stock/restock behavior and usage endpoint payloads
   - Validate delete conflict (409) for associated resources
@@ -1117,7 +1061,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Frontend
 
 - [ ] 5.5 Implement Materials list and details flows
-
   - Align list with `docs/ui/materials_list_view_screen.png`
   - Align details with `docs/ui/material_details_screen.png`
   - Implement search/filter/create/edit/delete/restore and restock dialog
@@ -1142,7 +1085,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 39, 35 (CAN-019, CAN-021)_
 
 - [ ] 5.6 Implement Vendors list and details flows
-
   - Align list with `docs/ui/vendors_list_view_screen.png`
   - Align details with `docs/ui/vendor_details_screen.png`
   - Implement search/filter/create/edit/delete/restore and contact vendor action
@@ -1167,7 +1109,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 13, 35 (CAN-020)_
 
 - [ ] 5.7 Integrate Materials/Vendors with task workflows
-
   - Ensure task dialogs use active-only material/vendor selectors
   - Display conflict toasts from blocked deletes
   - Maintain consistent status chip and enum label mapping
@@ -1184,7 +1125,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 42, 13, 39, 35 (CAN-013, CAN-015)_
 
 - [ ] 5.8 Tests (Frontend)
-
   - No frontend test implementation
   - Manual validation only: list/detail/filter/pagination/restock/contact flows and error handling
   - Detailed manual verification extraction:
@@ -1217,7 +1157,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 6.1 Implement dashboard endpoints and aggregations
-
   - `GET /api/dashboard/overview`
   - `GET /api/departments/:departmentId/dashboard`
   - Return KPI cards, chart series, upcoming deadlines, recent activity, and scoped filters
@@ -1234,7 +1173,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 16, 41, 54_
 
 - [ ] 6.2 Implement notifications endpoint logic
-
   - `GET /api/notifications`
   - `PATCH /api/notifications/:notificationId/read`
   - `PATCH /api/notifications/mark-all-read`
@@ -1250,7 +1188,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 15, 54_
 
 - [ ] 6.3 Complete settings-related update endpoints
-
   - Ensure `PUT /api/users/:userId/preferences` supports notifications + appearance payloads
   - Ensure `PUT /api/users/:userId/security` supports two-factor persistence
   - Ensure `POST /api/auth/change-password` behavior aligns with Account tab UX
@@ -1263,7 +1200,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 33, 63, 54_
 
 - [ ] 6.4 Complete real-time delivery integration
-
   - Notification push to user rooms
   - Entity change events needed by dashboard/activity widgets
   - Ensure cross-tenant event isolation
@@ -1276,7 +1212,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 14, 15, 60_
 
 - [ ] 6.5 Tests (Backend)
-
   - Manual API verification for dashboard, notifications, settings endpoints
   - Validate filter combinations and payload consistency
   - Validate mark-all-read route path and behavior
@@ -1291,7 +1226,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Frontend
 
 - [ ] 6.6 Implement Dashboard overview page from UI specs
-
   - Align with `docs/ui/desktop_dashboard_overview_screen.png`
   - Implement filters row, chips, refresh, export, and chart interactions
   - Keep header/left-nav behavior aligned with layout canonical rules
@@ -1315,7 +1249,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 16, 61, 35 (CAN-024)_
 
 - [ ] 6.7 Implement notification UI module
-
   - Notification bell + badge + dropdown
   - Read single, mark all read, optional delete
   - Route navigation from notification entity links
@@ -1339,7 +1272,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 15_
 
 - [ ] 6.8 Implement Settings page with canonical tabs
-
   - Tabs: Profile, Account, Notifications, Appearance
   - Profile aligned to `docs/ui/settings_profile_tab_screen.png`
   - Account aligned to `docs/ui/settings_account_tab_screen.png`
@@ -1363,7 +1295,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 33, 63_
 
 - [ ] 6.9 Integrate settings persistence and app-wide theme behavior
-
   - Persist profile/account/security/preferences changes through proper endpoints
   - Keep theme persistence via Redux and backend preference sync
   - Enforce toast-only 403 handling in settings actions
@@ -1379,7 +1310,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 60, 63, 35 (CAN-012, CAN-014)_
 
 - [ ] 6.10 Tests (Frontend)
-
   - No frontend test implementation
   - Manual validation only: dashboard widgets, notification interactions, settings tabs and persistence behavior
   - Detailed manual verification extraction:
@@ -1412,7 +1342,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Backend
 
 - [ ] 7.1 Run full backend manual regression by role and tenant
-
   - Role matrix: Platform SuperAdmin, SuperAdmin, Admin, Manager, User
   - Scope checks: ownOrg, crossOrg, ownDept, crossDept, ownership predicates
   - Resource lifecycle checks: create/read/update/delete/restore for all resources
@@ -1426,7 +1355,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 43, 60, 62_
 
 - [ ] 7.2 Complete backend canonical decision compliance pass (CAN-001 to CAN-027)
-
   - Verify enum mappings, filters, immutable fields, association delete blocks, regex, TTL, attachment guards
   - Verify no forbidden `/api/organizations` dependency in canonical MVP flow
   - Verify log/error response consistency and endpoint contracts
@@ -1443,7 +1371,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 35, 54, 58_
 
 - [ ] 7.3 Performance and security hardening
-
   - Validate and optimize indexes for common list/query paths
   - Confirm rate limit profiles and CORS correctness
   - Confirm no tenant data leaks in response serializers
@@ -1458,7 +1385,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 19, 24, 43, 44_
 
 - [ ] 7.4 Tests (Backend)
-
   - Execute final manual backend checklist and capture evidence
   - Focus on high-risk flows: auth refresh, cross-tenant access, task/file/comment workflows, dashboard aggregations
   - Document all defects and retest closures
@@ -1472,7 +1398,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
 ### Frontend
 
 - [ ] 7.5 Run UI parity pass against all provided reference screens
-
   - Landing/public: `landing-page.png`, `public_layout_screen.png`
   - Layout: `desktop-dashboard-layout.png`, `mobile-dashboard-layout.png`
   - Dashboard: `desktop_dashboard_overview_screen.png`
@@ -1496,7 +1421,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 61, 63, 35_
 
 - [ ] 7.6 Responsive/accessibility/usability hardening
-
   - Validate xs/sm/md/lg/xl behavior and mobile full-height dialogs
   - Validate keyboard focus order, contrast, and label semantics
   - Validate overflow ellipsis behavior in lists/cards/tables
@@ -1515,7 +1439,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 59, 61, 35 (CAN-001, CAN-017, CAN-023)_
 
 - [ ] 7.7 Final frontend integration and bug-fix sweep
-
   - Resolve API mismatch issues immediately with backend contract owners
   - Ensure route guards, toasts, optimistic updates, and cache invalidation are stable
   - Validate no forbidden page on 403; session continuity preserved
@@ -1532,7 +1455,6 @@ This implementation plan provides a complete, phase-by-phase execution checklist
   - _Requirements: 60, 59, 35 (CAN-012)_
 
 - [ ] 7.8 Tests (Frontend)
-
   - No frontend test implementation
   - Execute final manual UAT checklist for all major flows and breakpoints
   - Detailed manual verification extraction:

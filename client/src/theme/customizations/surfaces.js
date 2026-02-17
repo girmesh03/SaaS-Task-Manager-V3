@@ -1,3 +1,7 @@
+/**
+ * @file MUI surface component theme customizations.
+ * @throws {never} Module initialization does not throw.
+ */
 import { alpha } from "@mui/material/styles";
 import { gray } from "../themePrimitives";
 

@@ -30,6 +30,8 @@ import Box from "@mui/material/Box";
  *   helperText="Receive email updates"
  *   label="Email Notifications"
  * />
+ * @returns {JSX.Element} Switch element.
+ * @throws {never} This component does not throw.
  */
 const MuiSwitch = forwardRef(
   (

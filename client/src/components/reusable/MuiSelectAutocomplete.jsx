@@ -50,6 +50,8 @@ import CircularProgress from "@mui/material/CircularProgress";
  * @param {number} props.limitTags - Maximum number of tags to show
  * @param {string} props.noOptionsText - Text to show when no options available
  * @param {string} props.loadingText - Text to show while loading
+ * @returns {JSX.Element} Select-autocomplete element.
+ * @throws {never} This component does not throw.
  */
 const MuiSelectAutocomplete = forwardRef(
   (

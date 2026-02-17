@@ -7,6 +7,13 @@ import { forwardRef } from "react";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
+/**
+ * Backdrop overlay wrapper.
+ *
+ * @param {Record<string, unknown>} props - Backdrop props.
+ * @returns {JSX.Element} Backdrop element.
+ * @throws {never} This component does not throw.
+ */
 const MuiBackdrop = forwardRef(
   (
     {

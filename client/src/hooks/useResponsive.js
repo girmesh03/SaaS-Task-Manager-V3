@@ -1,7 +1,25 @@
+/**
+ * @file Responsive breakpoint hook utility.
+ */
 import { useMemo } from "react";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 
+/**
+ * Resolves breakpoint and device-mode booleans from the active MUI theme.
+ *
+ * @returns {{
+ *   isXs: boolean;
+ *   isSm: boolean;
+ *   isMd: boolean;
+ *   isLg: boolean;
+ *   isXl: boolean;
+ *   isMobile: boolean;
+ *   isTablet: boolean;
+ *   isDesktop: boolean;
+ * }} Responsive state object.
+ * @throws {never} This hook does not throw.
+ */
 const useResponsive = () => {
   const theme = useTheme();
 

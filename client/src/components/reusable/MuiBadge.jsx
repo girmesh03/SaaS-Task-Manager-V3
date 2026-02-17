@@ -34,6 +34,13 @@
 import { forwardRef, useMemo } from "react";
 import Badge from "@mui/material/Badge";
 
+/**
+ * Badge wrapper component.
+ *
+ * @param {Record<string, unknown>} props - Badge props.
+ * @returns {JSX.Element} Badge element.
+ * @throws {never} This component does not throw.
+ */
 const MuiBadge = forwardRef(
   (
     {
