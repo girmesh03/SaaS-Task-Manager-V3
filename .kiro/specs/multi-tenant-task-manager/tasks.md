@@ -2,1866 +2,1566 @@
 
 ## Overview
 
-This implementation plan provides a comprehensive, actionable task list for building the multi-tenant task management system. The plan is organized into sequential phases covering backend implementation, frontend implementation, integration, testing, and alignment corrections.
+This implementation plan provides a complete, phase-by-phase execution checklist aligned with:
 
-**Total Requirements**: 63 requirements with 1,104 lines of acceptance criteria
-**Design Scope**: 2,807 lines covering architecture, data models, API endpoints, and authorization
-**Technology Stack**: MERN (MongoDB, Express, React, Node.js) with Socket.IO, Redux Toolkit, Material UI
+- `docs/product-requirements-document-new.md`
+- `docs/ui/*`
+- `.kiro/specs/multi-tenant-task-manager/requirements.md`
+- `.kiro/specs/multi-tenant-task-manager/design.md`
 
-**Implementation Order**:
+**Total Requirements**: 63 requirements with detailed acceptance criteria
+**Design Scope**: architecture, data models, API contracts, authorization matrix, UI flows
+**Technology Stack**: MERN (MongoDB, Express, React, Node.js), Socket.IO, Redux Toolkit, Material UI
 
-1. Backend foundation (database, models, middleware)
-2. Backend API (controllers, routes, services)
-3. Frontend foundation (setup, authentication, layouts)
-4. Frontend features (components, pages, real-time)
-5. Integration and testing
-6. Alignment corrections
+**Synchronous Phase Rule (Mandatory)**:
 
-**Key Constraints**:
-
-- No test frameworks allowed (Jest, Mocha, Chai, Supertest, Vitest, Cypress forbidden)
-- Manual testing only with comprehensive test scenarios
-- Soft delete only (no hard deletes)
-- Multi-tenant data isolation enforced at all layers
-- RBAC authorization matrix enforced on all operations
+1. Backend tasks in a phase MUST be completed first.
+2. Frontend tasks in the same phase MUST start only after backend tasks are complete and manually verified.
+3. Any dependency required by Phase N MUST already be delivered in Phase N-1.
+4. `backend/app.js` and `backend/server.js` MUST be updated together in every backend phase where bootstrapping changes.
+5. Backend tests are manual/API verification tasks only (no Jest/Mocha/Chai/Supertest/Vitest/Cypress).
+6. Frontend tests are not implemented in this project (manual verification only).
 
 ---
 
-## Phase 1: Backend Foundation
+## Phase 1: Foundation and Runtime Baseline (Backend -> Frontend)
 
-### 1. Database Setup and Configuration
+**Phase Gate**:
 
-- [ ] 1.1 Initialize MongoDB connection
+- No business resource controllers in this phase.
+- Deliver only foundational runtime, shared utilities, and shell UI/layout baselines.
 
-  - Create `backend/config/database.js` with Mongoose connection
-  - Configure connection options (useNewUrlParser, useUnifiedTopology)
-  - Add connection event handlers (connected, error, disconnected)
-  - Add graceful shutdown on SIGINT
-  - _Requirements: 19.1, 19.2_
+**Task Execution Protocol (Mandatory 7 Steps)**:
 
-- [ ] 1.2 Create environment configuration
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
 
-  - Create (if doesn't exist) `backend/.env.example` with all required variables
-  - Document: MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN
-  - Document: EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-  - Document: NODE_ENV, PORT, CLIENT_URL, CORS_ORIGIN
-  - _Requirements: 19.1, 19.2_
+### Backend
 
-- [ ] 1.3 Create database seeding script
+- [ ] 1.1 Establish backend project structure and baseline modules
 
-  - Create `backend/mock/seed.js` for platform organization setup
-  - Create platform organization with isPlatformOrg=true
-  - Create platform department with status=ACTIVE
-  - Create Platform SuperAdmin user with isPlatformOrgUser=true, isHod=true, isVerified=true
-  - Resolve circular dependencies (org → dept → user → update manager/createdBy)
-  - _Requirements: 1.1, 1.2, 1.3_
+  - Create folders: `backend/config`, `backend/controllers`, `backend/middleware`, `backend/models`, `backend/plugins`, `backend/routes`, `backend/services`, `backend/utils`, `backend/validators`, `backend/mock`
+  - Preserve existing entry files: `backend/app.js`, `backend/server.js`
+  - Add barrel exports only where helpful; avoid circular imports
+  - Ensure all modules use ES modules (`type: "module"`)
+  - Detailed architecture extraction to enforce in this task:
+    - Backend layering is fixed as: Routes -> Authentication Middleware -> Validation Middleware -> Authorization Middleware -> Controllers -> Services -> Models -> Database; folder boundaries must preserve this order to avoid mixed concerns.
+    - Multi-tenant boundaries are model-layer and middleware-layer concerns from the start: organization-scoped resources and organization+department-scoped resources must be separated in structure and naming.
+    - This phase is foundational only: do not implement business resource logic in controllers yet; only prepare module locations, import surfaces, and runtime wiring points.
+    - File naming and placement must align with canonical backend artifacts referenced across docs: `allowedOrigins.js`, `authorizationMatrix.json`, `corsOptions.js`, `db.js`, middleware validators, model set, route set, services, and utility modules.
+    - All subsequent phases depend on this structure for synchronous backend-first delivery; missing folders or incorrect placement blocks route/model/controller progression in Phases 2-6.
+  - _Requirements: 34.9, 34.15, 61, Design: Backend Architecture_
 
-- [ ] 1.4 Create database wipe script
-  - Create `backend/mock/wipe.js` to clear all collections
-  - Add confirmation prompt before wiping
-  - Preserve platform organization (skip deletion)
-  - _Requirements: Testing support_
+- [ ] 1.2 Implement environment and constants foundation
 
-### 2. Mongoose Models
+  - Create `backend/utils/constants.js` for enums, limits, regex, API defaults, error codes
+  - Create `backend/utils/validateEnv.js` to validate required env keys at startup
+  - Add canonical regex and enum mappings from PRD (phone regex, status/priority mapping)
+  - Keep all constants centralized (no hardcoded literals in controllers)
+  - Detailed canonical extraction to enforce in this task:
+    - Phone regex must be canonical everywhere: `^(\+251\d{9}|0\d{9})$` for Organization/User/Vendor validation and examples.
+    - Task status enum source of truth is fixed: `TODO`, `IN_PROGRESS`, `PENDING`, `COMPLETED`; task priority enum source of truth is fixed: `LOW`, `MEDIUM`, `HIGH`, `URGENT`.
+    - UI label mapping must remain a serializer concern based on canonical enums: `TODO->To Do`, `IN_PROGRESS->In Progress`, `PENDING->In Review`, `COMPLETED->Completed`, `URGENT->Critical`; backend stores and validates canonical enum values only.
+    - Attachment extension allowlist constants must include: `.svg`, `.jpg`, `.jpeg`, `.png`, `.gif`, `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`, `.txt`, `.mp4`, `.mp3`.
+    - Attachment fileUrl validation constants must support Cloudinary `image|video|raw` URL pattern with required version segment.
+    - Environment validation must fail startup deterministically when required keys are missing: database URI, auth secrets, cookie/token settings, email transport settings, cloudinary settings, runtime environment, and client origin/cors settings.
+    - Constants module must include pagination/search defaults and must define includeDeleted default behavior as excluded unless explicitly requested.
+  - _Requirements: 34.8, 35 (CAN-006, CAN-013), Design: Utilities_
 
-- [ ] 2.1 Create Organization model
+- [ ] 1.3 Implement shared backend helpers and logging
 
-  - Create `backend/models/Organization.js` with schema
-  - Fields: name, email, phone, address, industry, size, description, logo, isPlatformOrg, isVerified, verifiedAt, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: name (2-100 chars, pattern), email (unique), phone (Ethiopian format), industry (enum), size (enum)
-  - Indexes: { email: 1 } unique, { isPlatformOrg: 1 }, { isDeleted: 1 }
-  - Virtuals: departments, users
-  - Hooks: pre-save (validate email uniqueness), pre-delete (prevent if isPlatformOrg=true)
-  - _Requirements: 2.2, 2.3, 2.9, Design: Organization Schema_
+  - Create `backend/utils/helpers.js` (date helpers, pagination parser, response helpers)
+  - Create `backend/utils/logger.js` (structured logger with environment-aware transports)
+  - Create `backend/utils/errors.js` with custom error classes matching canonical error taxonomy
+  - Replace direct `console.log` usage in runtime path with logger
+  - Detailed extraction to enforce in this task:
+    - Error taxonomy must include canonical categories used across contracts: `VALIDATION_ERROR`, `UNAUTHENTICATED_ERROR`, `UNAUTHORIZED_ERROR`, `NOT_FOUND_ERROR`, `CONFLICT_ERROR`, `RATE_LIMITED_ERROR`, `INTERNAL_ERROR`.
+    - Standard error response shape must be uniform for all controllers and middleware: success flag false, human-readable message, machine-readable error code, and optional validation/detail payload.
+    - Pagination helper must normalize `page`, `limit`, `sortBy`, `sortOrder`, and search query inputs for consistent list endpoint behavior in every resource controller.
+    - Date/time helpers must preserve UTC storage semantics and support ISO output formatting contracts expected by frontend formatting rules.
+    - Logging utility must replace runtime `console` statements in app startup, shutdown, db lifecycle, and middleware error paths; logs must include enough context for traceability without leaking tenant-sensitive payloads.
+  - _Requirements: 24, 58, Design: Error Handling + Logging_
 
-- [ ] 2.2 Create Department model
+- [ ] 1.4 Implement baseline config modules
 
-  - Create `backend/models/Department.js` with schema
-  - Fields: name, description, status, manager, organization, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: name (2-100 chars, pattern), description (max 500 chars), status (enum: ACTIVE|INACTIVE)
-  - Indexes: { organization: 1, name: 1 } unique (case-insensitive), { organization: 1, status: 1 }, { organization: 1, isDeleted: 1 }, { manager: 1 }
-  - Virtuals: users, tasks, materials, memberCount, taskCount, activeTaskCount
-  - Hooks: pre-delete (cascade soft-delete to users, tasks, materials, activities, comments, attachments, notifications)
-  - _Requirements: 5.1, 5.2, 5.4, 5.5, Design: Department Schema_
+  - Create `backend/config/db.js` (Mongoose connection lifecycle and graceful shutdown hooks)
+  - Create `backend/config/allowedOrigins.js` and `backend/config/corsOptions.js`
+  - Create `backend/config/authorizationMatrix.json` seeded from PRD canonical matrix
+  - Create `backend/config/cloudinary.js` and `backend/config/email.js` placeholders
+  - Detailed extraction to enforce in this task:
+    - Authorization matrix JSON from PRD Section 8.4 is backend source of truth; later middleware and frontend permission helpers must consume this canonical contract without parallel rule definitions.
+    - CORS config must support credentialed cookie auth and environment-based allowed origins while preventing wildcard leakage for authenticated routes.
+    - Database config must support explicit connect/disconnect lifecycle hooks and graceful process termination sequencing.
+    - Cloudinary and email config modules must expose deterministic behavior in local/non-configured environments (safe fallback strategy) and production (strict config requirement).
+    - Config modules must avoid embedding business logic and remain pure infrastructure concerns consumed by app/server/services.
+  - _Requirements: 19, 43, 62, Design: Config Layer_
 
-- [ ] 2.3 Create User model
+- [ ] 1.5 Implement middleware skeleton (foundation only)
 
-  - Create `backend/models/User.js` with schema
-  - Fields: firstName, lastName, position, email, password, phone, role, status, department, organization, isHod, employeeId, joinedAt, dateOfBirth, skills, profilePicture, preferences, security, isPlatformOrgUser, isVerified, emailVerifiedAt, verificationToken, verificationTokenExpiry, passwordResetToken, passwordResetExpiry, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: firstName/lastName (2-50 chars, pattern), position (2-100 chars), email (unique per org), phone (Ethiopian format), role (enum), employeeId (4 digits, not 0000, unique per org)
-  - Preferences: themeMode, dateFormat, timeFormat, timezone, notifications (emailEnabled, inAppEnabled, emailEvents, inAppEvents)
-  - Indexes: { organization: 1, email: 1 } unique, { organization: 1, employeeId: 1 } unique, { organization: 1, department: 1, status: 1 }, { organization: 1, role: 1 }, { verificationToken: 1 } sparse, { passwordResetToken: 1 } sparse, { isDeleted: 1 }
-  - Virtuals: fullName, createdTasks, assignedTasks, watchingTasks
-  - Hooks: pre-save (hash password with bcrypt >=12 rounds, auto-generate employeeId), pre-delete (cascade soft-delete, remove from watchers/assignees/mentions)
-  - Immutability: department, role, employeeId, joinedAt, isHod for Admin/Manager/User targets
-  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.7, 6.8, Design: User Schema_
+  - Create `backend/middleware/errorHandler.js` (final responder)
+  - Create `backend/middleware/notFound.js`
+  - Create `backend/middleware/rateLimiter.js` baseline profiles
+  - Create `backend/middleware/validation.js` runner (`.run(req)`, `validationResult(req)`)
+  - Create `backend/middleware/authMiddleware.js` and `backend/middleware/authorization.js` skeletons (full rules in Phase 2)
+  - Detailed extraction to enforce in this task:
+    - Validation middleware contract must run validators with `.run(req)` and use `validationResult(req)` for unified request rejection behavior.
+    - Auth middleware skeleton must read JWT auth context from HttpOnly cookie flow and prepare normalized `req.user` shape used by authorization and controllers.
+    - Authorization skeleton must target canonical rule evaluation strategy: collect candidate rules and allow when any rule passes.
+    - Rate limiter skeleton must reserve dedicated profiles for auth-sensitive endpoints and general API endpoints with 429 error mapping.
+    - Error middleware must map known failure classes to canonical status/error-code behavior and leave unknowns as `INTERNAL_ERROR`.
+    - Not-found middleware must be final unmatched route guard before error responder.
+  - _Requirements: 19, 24, 43, 44, Design: Middleware_
 
-- [ ] 2.4 Create Task base model with discriminators
+- [ ] 1.6 Synchronize `app.js` and `server.js` runtime wiring
 
-  - Create `backend/models/Task.js` with base schema and discriminators
-  - Base fields: type, title, description, status, priority, tags, watchers, organization, department, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: title (3-200 chars), description (10-5000 chars), status (enum), priority (enum), tags (max 5, each max 50 chars, lowercase, unique case-insensitive)
-  - ProjectTask discriminator: vendor, startDate, dueDate (must be after startDate)
-  - AssignedTask discriminator: assignees (min 1, max 50), startDate, dueDate
-  - RoutineTask discriminator: date, materials (max 20 embedded subdocuments with material ref and quantity)
-  - Indexes: { organization: 1, department: 1, status: 1 }, { organization: 1, department: 1, type: 1 }, { organization: 1, department: 1, priority: 1 }, { organization: 1, department: 1, createdBy: 1 }, { organization: 1, department: 1, dueDate: 1 }, { organization: 1, department: 1, date: 1 }, { assignees: 1 }, { watchers: 1 }, { vendor: 1 }, { isDeleted: 1 }, text index on title and description
-  - Virtuals: activities, comments, attachments
-  - Hooks: pre-save (validate dueDate > startDate, normalize tags, validate watchers/assignees are active), post-save (create initial TaskActivity for ProjectTask/AssignedTask, emit socket events, create notifications), pre-delete (cascade soft-delete, restore material stock for RoutineTask)
-  - _Requirements: 7.1-7.10, 8.1-8.10, 9.1-9.10, Design: Task Schema_
+  - Update `backend/app.js` to use core middleware stack and health/root routes
+  - Update `backend/server.js` to initialize env validation, db connection, and app startup consistently
+  - Ensure startup order: validate env -> connect db -> start server
+  - Ensure shutdown order: stop accepting requests -> close db -> exit
+  - Detailed extraction to enforce in this task:
+    - App/server separation must remain explicit: `app.js` composes middleware/routes; `server.js` owns process/bootstrap lifecycle and network listener control.
+    - Health and root routes are required early to support manual readiness checks before resource endpoints are implemented.
+    - Startup path must be deterministic and fail-fast when env/database prerequisites are invalid.
+    - Shutdown path must prevent request acceptance first, then close network/database resources in strict order.
+    - Any future socket bootstrap in later phases must be attached in synchronized app/server flow without duplicating auth/config initialization.
+  - _Requirements: 19, 61, Design: Server Lifecycle_
 
-- [ ] 2.5 Create TaskActivity model
+- [ ] 1.7 Create seed/wipe baseline scripts
 
-  - Create `backend/models/TaskActivity.js` with schema
-  - Fields: parent, parentModel, activity, materials (embedded subdocuments), attachments, organization, department, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: activity (2-1000 chars), materials (max 20, unique by materialId), parentModel (enum: Task|TaskActivity|TaskComment)
-  - Business rule: parentModel=Task requires parent to be ProjectTask or AssignedTask (NOT RoutineTask)
-  - Indexes: { parent: 1, parentModel: 1 }, { organization: 1, department: 1 }, { createdBy: 1 }, { isDeleted: 1 }
-  - Hooks: pre-save (validate parent exists, decrement material stock atomically), post-save (emit socket event, create notifications), pre-delete (restore material stock, cascade soft-delete)
-  - _Requirements: 7.7, 7.8, 8.6, 8.7, Design: TaskActivity Schema_
+  - Create `backend/mock/seed.js` for platform org bootstrap (`isPlatformOrg=true`)
+  - Create `backend/mock/wipe.js` to clear test data safely
+  - Reserve `backend/mock/data.js` for deterministic test fixtures
+  - Ensure seed creates platform org + platform dept + platform SuperAdmin (`isPlatformOrgUser=true`, `isHod=true`)
+  - Detailed extraction to enforce in this task:
+    - Seed flow must create Platform Organization (immutable), Platform Department, and Platform SuperAdmin user with `isPlatformOrgUser=true` and `isHod=true`.
+    - Platform creation must resolve circular references in sequence: create org, create dept, create user, then update `department.manager` and `organization.createdBy`.
+    - Seeded platform entities are required prerequisites for cross-organization authorization and role-matrix regression scenarios in later phases.
+    - Wipe script must protect against accidental destructive behavior and remain suitable for repeatable manual API verification cycles.
+    - Fixture file reservation must support deterministic IDs/relations for org, dept, user, task, material, and vendor scenarios introduced in later phases.
+  - _Requirements: 62, 44, Design: Seeding_
 
-- [ ] 2.6 Create TaskComment model
+- [ ] 1.8 Tests (Backend)
 
-  - Create `backend/models/TaskComment.js` with schema
-  - Fields: parent, parentModel, comment, mentions, depth, attachments, organization, department, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: comment (2-2000 chars), mentions (max 20), depth (0-5), parentModel (enum: Task|TaskActivity|TaskComment)
-  - Indexes: { parent: 1, parentModel: 1 }, { organization: 1, department: 1 }, { createdBy: 1 }, { mentions: 1 }, { isDeleted: 1 }
-  - Hooks: pre-save (parse @mentions, validate mentioned users, calculate depth), post-save (emit socket event, create notifications), pre-delete (cascade soft-delete to nested comments)
-  - _Requirements: 10.1-10.10, Design: TaskComment Schema_
+  - No backend controller/resource tests in Phase 1
+  - Validate startup manually: env validation, DB connect/disconnect, health route, seed command
+  - Detailed manual verification extraction:
+    - Validate startup failure path when required environment variables are missing.
+    - Validate successful startup path with ordered logs and healthy process state.
+    - Validate database connection and graceful shutdown behavior under manual stop.
+    - Validate health/root route responses and error middleware fallback behavior for unknown route requests.
+    - Validate seed idempotency behavior and platform baseline entity existence.
+  - _Rules: tests begin after resource controllers are implemented_
 
-- [ ] 2.7 Create Material model
+### Frontend
 
-  - Create `backend/models/Material.js` with schema
-  - Fields: name, sku, status, description, unit, category, price, inventory (stockOnHand, lowStockThreshold, reorderQuantity, lastRestockedAt), organization, department, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: name (2-200 chars, unique per dept case-insensitive), sku (pattern, uppercase, unique per dept), unit (1-50 chars), category (enum), price (min 0), inventory fields (min 0)
-  - Indexes: { organization: 1, department: 1, name: 1 } unique, { organization: 1, department: 1, sku: 1 } unique, { organization: 1, department: 1, category: 1 }, { organization: 1, department: 1, status: 1 }, { 'inventory.stockOnHand': 1 }, { isDeleted: 1 }
-  - Virtuals: isLowStock, usageHistory
-  - Hooks: pre-save (normalize SKU to uppercase), pre-delete (check associations with RoutineTask/TaskActivity using .withDeleted(), return 409 if associated)
-  - _Requirements: 12.1-12.11, Design: Material Schema_
+- [ ] 1.9 Stabilize existing frontend entry and layout baseline
 
-- [ ] 2.8 Create Vendor model
+  - Keep and extend existing files: `client/src/main.jsx`, `client/src/router/routes.jsx`, `client/src/components/layouts/RootLayout.jsx`
+  - Ensure `ToastContainer` remains globally available
+  - Keep lazy loading in route config and ensure fallback behavior via `MuiLoading`
+  - Reusable components to validate/develop for this task:
+    - `MuiLoading`: global lazy-route fallback and page transition loading state for public and dashboard shells (`docs/ui/public_layout_screen.png`, `docs/ui/desktop-dashboard-layout.png`)
+    - `MuiThemeDropDown`: header theme toggle behavior in authenticated and public shells (`docs/ui/desktop-dashboard-layout.png`, `docs/ui/mobile-dashboard-layout.png`, `docs/ui/landing-page.png`)
+    - `MuiBottomNavigation` + `MuiFAB`: xs-only navigation and centered create action per CAN-002 (`docs/ui/mobile-dashboard-layout.png`)
+    - `MuiAppIconLogo`: sidebar/public brand mark alignment with logo placement constraints (sidebar owns logo in dashboard layout per CAN-024) (`docs/ui/desktop-dashboard-layout.png`, `docs/ui/public_layout_screen.png`, `docs/ui/landing-page.png`)
+  - Detailed extraction to enforce in this task:
+    - Frontend entry pipeline must preserve the canonical layout chain (`RootLayout` -> `DashboardLayout` -> page outlet) for protected routes and the public-layout chain for unauthenticated routes.
+    - Global toast handling must remain mounted once at app root because canonical error-handling requires consistent toast behavior for 401/403/409/429/500 and success flows.
+    - Route-level lazy loading must cover heavy modules (data grids, charts, dialogs) and must expose `MuiLoading` as the shared fallback state.
+    - Core auth UX contract must remain compatible with API rules: frontend handles 401 via refresh flow and logout-on-refresh-failure, while 403 is toast-only with no forbidden page and no forced logout (CAN-012).
+    - Entry/layout baseline must preserve canonical navigation naming and placement rules already fixed by requirements, including sidebar terminology and shared header action zones.
+  - _Requirements: 61, 59, Design: Frontend Architecture_
 
-  - Create `backend/models/Vendor.js` with schema
-  - Fields: name, email, phone, website, location, address, description, status, isVerifiedPartner, rating, organization, createdBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: name (2-200 chars, unique per org), email (unique per org), phone (Ethiopian format, unique per org), website (valid URL), rating (1-5, 0.5 increments)
-  - Indexes: { organization: 1, name: 1 } unique, { organization: 1, email: 1 } unique, { organization: 1, phone: 1 } unique, { organization: 1, status: 1 }, { organization: 1, rating: 1 }, { isDeleted: 1 }
-  - Virtuals: projects, metrics (total projects, active projects, completed projects, on-time delivery rate, average project duration, total spend)
-  - Hooks: pre-delete (check associations with ProjectTasks using .withDeleted(), return 409 if associated)
-  - _Requirements: 13.1-13.11, Design: Vendor Schema_
+- [ ] 1.10 Build frontend folder architecture (without breaking current files)
 
-- [ ] 2.9 Create Attachment model
+  - Add folders: `client/src/store`, `client/src/services`, `client/src/hooks`, `client/src/utils`, `client/src/components/common`, `client/src/components/columns`, `client/src/components/features`
+  - Keep existing `client/src/theme/*` customization architecture as the baseline design system
+  - Add index exports only where it improves import hygiene
+  - Reusable-component inventory source of truth for this phase: `client/src/components/reusable/index.js` must export only canonical `Mui*` wrappers used by screen specs and list/detail/dialog flows.
+  - Detailed extraction to enforce in this task:
+    - Folder boundaries must map directly to architecture contracts: reusable UI wrappers, feature components, per-resource DataGrid column definitions, hooks for auth/authorization/responsive/date logic, and service modules for RTK Query/socket integration.
+    - Reusable component exports must remain canonicalized behind `client/src/components/reusable/index.js` so downstream pages consume consistent `Mui*` wrappers instead of raw ad-hoc MUI variants.
+    - Structure must support cross-phase delivery order: list/grid/dialog foundations are reused across Tasks/Users/Departments/Materials/Vendors and Settings/Dashboard flows without duplicated component logic.
+    - Theme architecture must remain centralized under `client/src/theme/*` so appearance toggles and preference persistence can apply globally with no per-page theme drift.
+    - Organization of store/services/hooks must match Section 18 endpoint segmentation and permission-gated UI composition patterns defined in requirements/design.
+  - _Requirements: 58, 61, Design: Frontend Structure_
 
-  - Create `backend/models/Attachment.js` with schema
-  - Fields: filename, fileUrl, fileType, fileSize, parent, parentModel, organization, department, uploadedBy, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: filename (1-255 chars), fileUrl (Cloudinary URL pattern with version segment), fileType (enum: Image|Video|Document|Audio|Other), fileSize (max 10MB), parentModel (enum: Task|TaskActivity|TaskComment)
-  - Indexes: { parent: 1, parentModel: 1 }, { organization: 1, department: 1 }, { uploadedBy: 1 }, { isDeleted: 1 }
-  - Hooks: pre-save (validate fileUrl matches Cloudinary pattern)
-  - _Requirements: 11.1-11.10, Design: Attachment Schema_
+- [ ] 1.11 Implement layout shells from UI references
 
-- [ ] 2.10 Create Notification model
-  - Create `backend/models/Notification.js` with schema
-  - Fields: title, message, entity, entityModel, isRead, expiresAt, organization, department, user, isDeleted, deletedAt, deletedBy, timestamps
-  - Validation: title (max 200 chars), message (1-500 chars), entityModel (enum: Task|TaskActivity|TaskComment|User|Department|Material|Vendor)
-  - Indexes: { user: 1, isRead: 1 }, { organization: 1, department: 1 }, { entity: 1, entityModel: 1 }, { expiresAt: 1 } TTL index (30 days), { isDeleted: 1 }
-  - Hooks: post-save (emit socket event to user room)
-  - _Requirements: 15.1-15.11, Design: Notification Schema_
+  - Public layout shell aligned to `docs/ui/public_layout_screen.png` and `docs/ui/landing-page.png`
+  - Dashboard layout shell aligned to `docs/ui/desktop-dashboard-layout.png` and `docs/ui/mobile-dashboard-layout.png`
+  - Enforce CAN-024 now: dashboard header has no logo; sidebar owns logo
+  - Enforce CAN-002 now: bottom nav on xs only with 4 items + centered FAB
+  - Reusable components to validate/develop for this task:
+    - `MuiAppIconLogo`: render in sidebar/public header branding; never in dashboard top header (CAN-024)
+    - `MuiThemeDropDown`: theme control in header on all dashboard/public shells
+    - `MuiBottomNavigation`: enforce canonical items Dashboard/Tasks/Users/Profile on xs only (CAN-002)
+    - `MuiFAB`: centered mobile create trigger on xs (`docs/ui/mobile-dashboard-layout.png`)
+    - `MuiSearchField`: top-header global search visual/interaction baseline for dashboard shells (`docs/ui/desktop-dashboard-layout.png`)
+  - Detailed extraction to enforce in this task:
+    - Public header must keep canonical CTA labels exactly `Log In` and `Sign Up` (CAN-025) and preserve nav structure from landing/public reference screens.
+    - Dashboard header composition must follow canonical layout: page title, optional org switcher (platform superadmin only), search, theme toggle, notifications, and user menu; product logo must be excluded from this header (CAN-024).
+    - Sidebar composition must own product logo placement and include workspace/manage/configuration groupings with canonical nav wording, including `Tasks` label (CAN-010).
+    - Responsive behavior must follow canonical breakpoints (CAN-001): xs mobile drawer + bottom navigation, sm+ hide bottom navigation, and auto-close drawer on mobile route changes.
+    - Bottom navigation must include exactly 4 items (`Dashboard`, `Tasks`, `Users`, `Profile`) with centered FAB; `Profile` must open menu entries for additional destinations (Departments/Materials/Vendors) per mobile IA rules (CAN-002).
+    - Global search placement and spacing must align with desktop dashboard layout references and remain reusable across resource list pages.
+  - _Requirements: 61, 35 (CAN-002, CAN-024), Design: Layouts_
 
-### 3. Middleware Layer
+- [ ] 1.12 Add protected/public route map placeholders
 
-- [ ] 3.1 Create authentication middleware
+  - Public placeholders: `/`, `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password`
+  - Protected placeholders: `/dashboard`, `/dashboard/tasks`, `/dashboard/tasks/:taskId`, `/dashboard/users`, `/dashboard/users/:userId`, `/dashboard/departments`, `/dashboard/departments/:departmentId`, `/dashboard/materials`, `/dashboard/materials/:materialId`, `/dashboard/vendors`, `/dashboard/vendors/:vendorId`, `/dashboard/settings`
+  - Keep file extension consistency with current project (`.jsx`)
+  - Route-level reusable wrappers required at placeholder stage: `MuiLoading` (lazy fallback), `MuiDialog` (mobile full-height recipe for all modal routes/components), `MuiEmptyState` (placeholder empty content states where data is not connected yet).
+  - Detailed extraction to enforce in this task:
+    - Route inventory must mirror canonical page set from requirements and PRD UI coverage, including all list/detail/settings/auth paths required by Section 18 data contracts.
+    - Protected routes must be nested under authenticated layout wrappers and remain compatible with role/tenant authorization handling introduced in later phases.
+    - Placeholder routes must be scaffolded with reusable fallback states (`MuiLoading`, `MuiEmptyState`) so UI behavior remains deterministic before API integration.
+    - Any route that will host modal workflows must adopt canonical dialog foundations early, including mobile full-height behavior contract for xs screens (CAN-017).
+    - URL naming must remain stable and unchanged across phases to avoid API/UI traceability drift with requirements and UI reference files.
+  - _Requirements: 61, 40-42, Design: Routing_
 
-  - Create `backend/middleware/auth.js` with JWT verification
-  - Extract token from HttpOnly cookies (accessToken)
-  - Verify token using JWT_SECRET
-  - Decode user payload (userId, organizationId, departmentId, role, isPlatformOrgUser)
-  - Attach user object to req.user
-  - Handle token expiration (401 UNAUTHENTICATED_ERROR)
-  - Handle invalid token (401 UNAUTHENTICATED_ERROR)
-  - Handle missing token (401 UNAUTHENTICATED_ERROR)
-  - _Requirements: 19.1, 19.2, 19.3, Design: Authentication Middleware_
+- [ ] 1.13 Tests (Frontend)
 
-- [ ] 3.2 Create validation middleware
-
-  - Create `backend/middleware/validate.js` with express-validator schemas
-  - Implement validation runner using `.run(req)` and `validationResult(req)`
-  - Create validation schemas for all resources (Organization, Department, User, Task, Material, Vendor, Attachment, Notification)
-  - Implement existence checks using `.withDeleted()` for create/restore operations
-  - Scope validators by req.user.organization for org-level resources (Vendor)
-  - Scope validators by req.user.organization AND req.user.department for dept-level resources (User, Task, Material)
-  - Return 400 VALIDATION_ERROR with detailed error messages
-  - _Requirements: 23.1-23.12, Design: Validation Middleware, Alignment Gap 2.3_
-
-- [ ] 3.3 Create authorization middleware
-
-  - Create `backend/middleware/authorize.js` with RBAC checks
-  - Implement authorization matrix evaluation logic (ANY rule passes → ALLOW)
-  - Check requires predicates (isPlatformOrgUser, !isPlatformOrgUser)
-  - Check scope (any, ownOrg, ownOrg.ownDept, ownOrg.crossDept)
-  - Check ownership (self, createdBy, assignees, watchers, uploadedBy)
-  - Check resourceType for task subtypes (ProjectTask, AssignedTask, RoutineTask)
-  - Enforce multi-tenant data isolation (filter by organization and department)
-  - Return 403 UNAUTHORIZED_ERROR with clear message
-  - Block INACTIVE users from login/refresh (403 FORBIDDEN)
-  - Block unverified users from protected routes (403 FORBIDDEN)
-  - _Requirements: 4.1-4.10, 43.1-43.10, Design: Authorization Matrix, Alignment Gap 3.6_
-
-- [ ] 3.4 Create error handling middleware
-
-  - Create `backend/middleware/errorHandler.js` with centralized error handling
-  - Handle Mongoose validation errors (400 VALIDATION_ERROR)
-  - Handle Mongoose duplicate key errors (409 CONFLICT_ERROR)
-  - Handle Mongoose cast errors (400 VALIDATION_ERROR)
-  - Handle JWT errors (401 UNAUTHENTICATED_ERROR)
-  - Handle custom error classes (VALIDATION_ERROR, UNAUTHENTICATED_ERROR, UNAUTHORIZED_ERROR, NOT_FOUND_ERROR, CONFLICT_ERROR, RATE_LIMITED_ERROR, INTERNAL_ERROR)
-  - Format error response: { success: false, message, error: { code, details } }
-  - Log errors using Winston
-  - _Requirements: 24.1-24.10, Design: Error Handling_
-
-- [ ] 3.5 Create rate limiting middleware
-
-  - Create `backend/middleware/rateLimit.js` with express-rate-limit
-  - Configure rate limits per endpoint (login: 5 req/15min, register: 3 req/hour, general: 100 req/15min)
-  - Return 429 RATE_LIMITED_ERROR when limit exceeded
-  - _Requirements: 19.7, Design: Security_
-
-- [ ] 3.6 Create security middleware
-  - Create `backend/middleware/security.js` with helmet, cors, express-mongo-sanitize
-  - Configure helmet for security headers (CSP, HSTS, etc.)
-  - Configure CORS with CLIENT_URL origin
-  - Configure express-mongo-sanitize for NoSQL injection prevention
-  - _Requirements: 19.7, Design: Security_
+  - No frontend test implementation in this project
+  - Manual validation only: route rendering, layout responsiveness, header/sidebar/bottom-nav behavior
+  - Detailed manual verification extraction:
+    - Validate public and protected route placeholders mount under correct layout wrappers and that lazy fallback states render consistently.
+    - Validate breakpoints and navigation rules: xs bottom navigation/FAB visibility, sm+ bottom nav hidden, sidebar drawer behavior on mobile route transitions.
+    - Validate header/sidebar logo placement contract (logo in sidebar/public layouts only, not dashboard header) and canonical header actions presence.
+    - Validate public CTA labels are exactly `Log In` and `Sign Up` and route links navigate to the correct placeholders.
+    - Validate global toast container availability and baseline error-notification visibility in route shell flows.
 
 ---
 
-## Phase 2: Backend API Implementation
+## Phase 2: Data Model + Contract Scaffolding (Backend -> Frontend)
 
-### 4. Authentication Controllers and Routes
+**Phase Gate**:
 
-- [ ] 4.1 Create authentication controller
+- Phase 1 completed.
+- Deliver schemas, validators, route contracts, and API/service scaffolds.
+- Use placeholders for non-complete controllers where needed.
 
-  - Create `backend/controllers/authController.js` with authentication logic
-  - Implement register (4-step wizard backend handling): create org, dept, user, resolve circular dependencies, generate verification token, send verification email
-  - Implement verifyEmail: validate token, set isVerified=true for org and user, clear tokens, send welcome email (idempotent)
-  - Implement resendVerification: generate new token, send email
-  - Implement login: validate credentials, check isVerified, check status=ACTIVE, generate access and refresh tokens, set HttpOnly cookies
-  - Implement refresh: validate refresh token, generate new access token, rotate refresh token
-  - Implement logout: clear cookies, invalidate refresh token
-  - Implement forgotPassword: generate reset token, send email
-  - Implement resetPassword: validate token, hash new password, clear token
-  - Implement changePassword: validate old password, hash new password
-  - _Requirements: 2.1-2.9, 19.1-19.10, Design: Authentication Flow_
+**Task Execution Protocol (Mandatory 7 Steps)**:
 
-- [ ] 4.2 Create authentication routes
-  - Create `backend/routes/authRoutes.js` with authentication endpoints
-  - POST /api/auth/register (no auth, rate limit: 3 req/hour)
-  - POST /api/auth/verify-email (no auth)
-  - POST /api/auth/resend-verification (no auth, rate limit: 3 req/15min)
-  - POST /api/auth/login (no auth, rate limit: 5 req/15min)
-  - POST /api/auth/refresh (no auth, requires refresh token cookie)
-  - POST /api/auth/logout (requires auth)
-  - POST /api/auth/forgot-password (no auth, rate limit: 3 req/15min)
-  - POST /api/auth/reset-password (no auth)
-  - POST /api/auth/change-password (requires auth)
-  - Apply validation middleware to all routes
-  - _Requirements: 19.1-19.10, Design: API Endpoints_
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
 
-### 5. Organization Controllers and Routes
+### Backend
 
-- [ ] 5.1 Create organization controller
+- [ ] 2.1 Implement soft-delete and schema base plugins
 
-  - Create `backend/controllers/organizationController.js` with organization logic
-  - Implement listOrganizations: filter by isPlatformOrg, includeDeleted (Platform SuperAdmin only), pagination, sorting
-  - Implement getOrganization: fetch by ID, check authorization
-  - Implement updateOrganization: validate fields, check authorization, emit socket event
-  - Implement deleteOrganization: soft delete (Platform SuperAdmin only, NOT platform org), cascade to departments/users/tasks, emit socket event
-  - Implement restoreOrganization: restore soft-deleted org (Platform SuperAdmin only), restore cascaded resources
-  - _Requirements: 1.3, 1.4, 1.5, Design: Organization Endpoints_
+  - Create `backend/plugins/softDelete.js` with `isDeleted`, `deletedAt`, `deletedBy`, `restore()` helpers
+  - Add query helpers to include/exclude deleted records deterministically
+  - Ensure plugin support for cascade logic later
+  - Detailed extraction to enforce in this task:
+    - Soft-delete lifecycle is canonical for this project; hard delete is excluded from normal business flows.
+    - Query behavior must exclude deleted records by default and include them only when includeDeleted is explicitly requested.
+    - `.withDeleted()` support is required for create/restore collision checks and association conflict checks before delete (CAN-015).
+    - Restore behavior must clear deletion markers and support ordered parent/child restore operations used by cascade restoration.
+    - Plugin behavior must be reusable across all resources to avoid inconsistent delete/restore semantics.
+  - _Requirements: 34.1, 46, Design: Data Lifecycle_
 
-- [ ] 5.2 Create organization routes
-  - Create `backend/routes/organizationRoutes.js` with organization endpoints
-  - GET /api/organizations (requires auth, authorization check)
-  - GET /api/organizations/:organizationId (requires auth, authorization check)
-  - PUT /api/organizations/:organizationId (requires auth, authorization check, validation)
-  - DELETE /api/organizations/:organizationId (requires auth, authorization check)
-  - PATCH /api/organizations/:organizationId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 1.3, 1.4, 1.5, Design: API Endpoints_
+- [ ] 2.2 Implement all core models with canonical fields/indexes
 
-### 6. Department Controllers and Routes
+  - Create models: `Organization`, `Department`, `User`, `Task` (base + discriminators), `TaskActivity`, `TaskComment`, `Material`, `Vendor`, `Attachment`, `Notification`
+  - Enforce canonical enums, constraints, and immutable-field rules
+  - Add multi-tenant indexes (organization/department scoped uniques)
+  - Add notification TTL index (`expiresAt`)
+  - Enforce CAN-021: Attachment parentModel excludes Material
+  - Detailed model extraction to enforce in this task:
+    - Organization model must include identity/contact, verification metadata, and immutable `isPlatformOrg` behavior with soft-delete support.
+    - Department model must enforce status enum `ACTIVE|INACTIVE` (CAN-022), description max 500 (CAN-026), manager relation, and organization-scoped uniqueness.
+    - User model must enforce role/status enums, org+dept references, `isHod`, `isPlatformOrgUser`, verification and security metadata, and immutable-field guard targets (CAN-016).
+    - User employeeId must follow canonical 4-digit non-`0000` pattern with organization-scoped uniqueness.
+    - Task base model must enforce canonical status/priority enums (CAN-013), tag limits, tenant scope fields, and soft-delete fields.
+    - Task discriminators must enforce type-specific required fields:
+      - ProjectTask vendor + `startDate/dueDate` ordering.
+      - AssignedTask assignee constraints + date ordering.
+      - RoutineTask date + embedded materials behavior.
+    - TaskActivity and TaskComment models must support parent polymorphism and tenant scope; TaskComment depth metadata must support depth <= 5 enforcement.
+    - Material model must include canonical SKU/inventory/status structure and department-scoped uniqueness (CAN-019).
+    - Vendor model must include extended fields and status/rating/partner metadata (CAN-020).
+    - Attachment model must enforce parent allowlist excluding Material (CAN-021) and file metadata needed for extension/fileUrl validation (CAN-027).
+    - Notification model must support read-state and expiry with TTL index for auto-cleanup.
+    - Indexes must support canonical list/filter contracts for org/dept/status/role/type/priority/date and includeDeleted scenarios.
+  - _Requirements: 44, 46, 35 (CAN-015, CAN-016, CAN-019, CAN-020, CAN-021, CAN-022, CAN-026, CAN-027), Design: Models_
 
-- [ ] 6.1 Create department controller
+- [ ] 2.3 Implement validator modules for all resources
 
-  - Create `backend/controllers/departmentController.js` with department logic
-  - Implement listDepartments: filter by organization, status, includeDeleted, pagination, sorting, search
-  - Implement createDepartment: validate fields, check authorization, set organization, emit socket event
-  - Implement getDepartment: fetch by ID, check authorization, populate manager
-  - Implement getDepartmentDashboard: aggregate stats (total users, total tasks, active tasks)
-  - Implement getDepartmentActivity: fetch activity feed with filtering by entityModel
-  - Implement updateDepartment: validate fields, check authorization, emit socket event
-  - Implement deleteDepartment: soft delete, cascade to users/tasks/materials/activities/comments/attachments/notifications, emit socket event
-  - Implement restoreDepartment: restore soft-deleted dept, restore cascaded resources
-  - _Requirements: 5.1-5.9, Design: Department Endpoints_
+  - Create per-resource validators in `backend/validators/*`
+  - Enforce `.run(req)` execution and centralized validation middleware response shape
+  - Ensure withDeleted existence checks for create/restore collision paths
+  - Enforce scope-aware validation (org-only vs org+dept)
+  - Detailed validation extraction to enforce in this task:
+    - Validators must encode canonical field bounds and formats (lengths, enums, required/optional logic) for auth, users, departments, tasks, comments, activities, materials, vendors, attachments, notifications, and dashboard filters.
+    - Organization/User/Vendor phone validators must use canonical Ethiopian regex (CAN-006).
+    - Department validators must enforce 500-char description maximum on create/update (CAN-026).
+    - Task validators must enforce per-type required payload fields, status/priority enums, date ordering, and tag constraints.
+    - Comment validators must enforce depth <= 5 and mention constraints.
+    - Attachment validators must enforce extension allowlist and cloudinary URL pattern rules.
+    - Material/Vendor delete and restore validators must use `.withDeleted()` checks and deterministic conflict behavior (CAN-015).
+    - User update validators must enforce immutable-field conflict rules for Admin/Manager/User targets (CAN-016).
+    - Filter validators must normalize and sanitize union-filter combinations required by CAN-004.
+  - _Requirements: 44, 24, 35 (CAN-004, CAN-006, CAN-027), Design: Validation_
 
-- [ ] 6.2 Create department routes
-  - Create `backend/routes/departmentRoutes.js` with department endpoints
-  - GET /api/departments (requires auth, authorization check, validation)
-  - POST /api/departments (requires auth, authorization check, validation)
-  - GET /api/departments/:departmentId (requires auth, authorization check)
-  - GET /api/departments/:departmentId/dashboard (requires auth, authorization check)
-  - GET /api/departments/:departmentId/activity (requires auth, authorization check, validation)
-  - PUT /api/departments/:departmentId (requires auth, authorization check, validation)
-  - DELETE /api/departments/:departmentId (requires auth, authorization check)
-  - PATCH /api/departments/:departmentId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 5.1-5.9, Design: API Endpoints_
+- [ ] 2.4 Implement auth + authorization + tenant scoping middleware (full)
 
-### 7. User Controllers and Routes
+  - Complete JWT cookie extraction and verification
+  - Attach normalized `req.user` context (`role`, `organization`, `department`, `isPlatformOrgUser`, `isHod`)
+  - Implement authorization engine from canonical matrix JSON (allow if ANY rule passes)
+  - Implement 401 refresh behavior and 403 handling semantics (do not force logout behavior in API)
+  - Detailed auth/rbac extraction to enforce in this task:
+    - Authorization matrix JSON from PRD Section 8.4 is single source of truth; middleware must evaluate matrix candidates and allow if any candidate rule passes (CAN-005).
+    - Middleware must evaluate `requires`, `scope`, `ownership`, and resource-type predicates consistently.
+    - Scope semantics must cover `any`, `ownOrg`, `ownOrg.ownDept`, and allowed cross-department reads per role matrix.
+    - Ownership checks must support canonical ownership predicates (`self`, `createdBy`, `assignees`, `watchers`, `mentioned`, `uploadedBy`, `manager`).
+    - Non-platform users must be prevented from cross-organization access in all protected flows.
+    - Platform SuperAdmin cross-org access must remain matrix-restricted, not unconditional.
+    - Inactive and unverified account restrictions must be enforced in auth paths according to canonical behavior.
+    - 401 and 403 behaviors must remain contract-distinct to preserve frontend refresh/toast-only handling expectations.
+  - _Requirements: 19, 43, 60, 62, 35 (CAN-005, CAN-012)_
 
-- [ ] 7.1 Create user controller
+- [ ] 2.5 Implement service scaffolds
 
-  - Create `backend/controllers/userController.js` with user logic
-  - Implement listUsers: filter by organization, department, role, status, includeInactive, includeDeleted, pagination, sorting, search
-  - Implement createUser: validate fields, check authorization, auto-generate employeeId, set isVerified=true, generate temp password, send welcome email with setup link
-  - Implement getUser: fetch by ID, check authorization, populate department
-  - Implement getUserActivity: fetch activity feed
-  - Implement getUserPerformance: calculate metrics (completion rate, avg task time, throughput, comparison to dept averages)
-  - Implement updateUser: validate fields, check authorization, enforce immutability rules (department, role, employeeId, joinedAt, isHod for Admin/Manager/User targets), emit socket event
-  - Implement updateUserPreferences: update preferences (theme, date format, time format, timezone, notifications)
-  - Implement updateUserSecurity: update security settings (twoFactorEnabled)
-  - Implement deleteUser: soft delete, cascade to tasks/activities/comments/attachments/notifications, remove from watchers/assignees/mentions, emit socket event
-  - Implement restoreUser: restore soft-deleted user, restore cascaded resources
-  - _Requirements: 6.1-6.11, Design: User Endpoints_
+  - `backend/services/emailService.js` (verification/welcome/reset/contact templates)
+  - `backend/services/notificationService.js` (in-app + optional email orchestration)
+  - `backend/services/socketService.js` (connect/auth/room/event abstractions)
+  - Keep runtime-safe no-op fallbacks for missing integrations in local dev
+  - Detailed service extraction to enforce in this task:
+    - Email service templates must support verification, welcome/onboarding, password reset, and vendor contact workflows.
+    - Notification service must support notification creation, single-read, mark-all-read, optional delete, and expiry compatibility.
+    - Socket service must support authenticated room orchestration (`user:{id}`, `org:{id}`, `dept:{id}`, `task:{id}`) and event broadcast primitives.
+    - Service interfaces must remain controller-oriented and integration-safe for local development when external providers are not configured.
+    - Event and notification payloads must remain tenant-safe and authorization-compatible.
+  - _Requirements: 14, 15, 19, Design: Services_
 
-- [ ] 7.2 Create user routes
-  - Create `backend/routes/userRoutes.js` with user endpoints
-  - GET /api/users (requires auth, authorization check, validation)
-  - POST /api/users (requires auth, authorization check, validation)
-  - GET /api/users/:userId (requires auth, authorization check)
-  - GET /api/users/:userId/activity (requires auth, authorization check, validation)
-  - GET /api/users/:userId/performance (requires auth, authorization check)
-  - PUT /api/users/:userId (requires auth, authorization check, validation)
-  - PUT /api/users/:userId/preferences (requires auth, authorization check, validation)
-  - PUT /api/users/:userId/security (requires auth, authorization check, validation)
-  - DELETE /api/users/:userId (requires auth, authorization check)
-  - PATCH /api/users/:userId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 6.1-6.11, Design: API Endpoints_
+- [ ] 2.6 Create canonical route files with controller placeholders
 
-### 8. Task Controllers and Routes
+  - `backend/routes/authRoutes.js`
+  - `backend/routes/userRoutes.js`
+  - `backend/routes/departmentRoutes.js`
+  - `backend/routes/taskRoutes.js`
+  - `backend/routes/materialRoutes.js`
+  - `backend/routes/vendorRoutes.js`
+  - `backend/routes/attachmentRoutes.js`
+  - `backend/routes/notificationRoutes.js`
+  - `backend/routes/dashboardRoutes.js`
+  - Include only canonical MVP endpoints from PRD Section 18
+  - Detailed route-contract extraction to enforce in this task:
+    - Auth endpoints: register, verify-email, resend-verification, login, refresh, logout, forgot-password, reset-password, change-password.
+    - User endpoints: list/create/get/update/delete/restore plus preferences, security, activity, performance.
+    - Department endpoints: list/create/get/update/delete/restore plus department dashboard and department activity feed.
+    - Task endpoints: list/create/get/update/delete/restore plus nested activity/comment resource endpoints.
+    - Material endpoints: list/create/get/update/delete/restore, usage history, restock.
+    - Vendor endpoints: list/create/get/update/delete/restore and contact vendor.
+    - Attachment endpoints: create/delete/restore with task-context parent allowlist.
+    - Notification endpoints: list/read-one/mark-all-read/optional delete.
+    - Dashboard endpoints: org overview and department dashboard.
+    - Explicitly keep `/api/organizations` standalone CRUD out of canonical MVP route inventory.
+    - Route declaration order must preserve middleware chain contract: auth -> validation -> authorization -> controller.
+  - _Requirements: 54, 62, Design: API Contract_
 
-- [ ] 8.1 Create task controller
+- [ ] 2.7 Wire all routes and middleware in app/server
 
-  - Create `backend/controllers/taskController.js` with task logic
-  - Implement listTasks: filter by organization, department, type, status, priority, createdBy, assignees, watchers, tags (union filters), date ranges, includeDeleted, pagination, sorting, search (min 3 chars)
-  - Implement createTask: validate fields based on type (ProjectTask: vendor, startDate, dueDate; AssignedTask: assignees, startDate, dueDate; RoutineTask: date, materials), check authorization, decrement material stock for RoutineTask, create initial TaskActivity for ProjectTask/AssignedTask, emit socket events, create notifications
-  - Implement getTask: fetch by ID, check authorization, populate vendor/assignees/watchers/materials
-  - Implement getTaskActivities: fetch activities for task (ProjectTask/AssignedTask only)
-  - Implement createTaskActivity: validate fields, check authorization, validate parent is ProjectTask or AssignedTask (NOT RoutineTask), decrement material stock, emit socket event, create notifications
-  - Implement getTaskComments: fetch comments for task with nested replies (max depth 5)
-  - Implement createTaskComment: validate fields, check authorization, parse @mentions, validate mentioned users, calculate depth, emit socket event, create notifications
-  - Implement updateTask: validate fields, check authorization, enforce dueDate > startDate, emit socket event
-  - Implement deleteTask: soft delete, cascade to activities/comments/attachments/notifications, restore material stock for RoutineTask, emit socket event
-  - Implement restoreTask: restore soft-deleted task, restore cascaded resources (do NOT restore material stock for RoutineTask)
-  - _Requirements: 7.1-7.10, 8.1-8.10, 9.1-9.10, 10.1-10.10, Design: Task Endpoints_
+  - Mount canonical API route prefixes in `backend/app.js`
+  - Attach error/notFound middleware at the end of stack
+  - Initialize socket service from `backend/server.js` with shared auth secret
+  - Keep app/server startup flow synchronized
+  - Detailed bootstrap extraction to enforce in this task:
+    - Prefix mounts must remain stable and canonical for all resource groups (`/api/auth`, `/api/users`, `/api/departments`, `/api/tasks`, `/api/materials`, `/api/vendors`, `/api/attachments`, `/api/notifications`, `/api/dashboard`).
+    - Middleware order in app composition must preserve deterministic validation and authorization behavior across resources.
+    - `notFound` middleware must be after route mounts; centralized error responder must be final.
+    - Server bootstrap must initialize socket integration with JWT auth compatibility shared with HTTP auth middleware.
+    - Any bootstrapping change must keep `app.js` and `server.js` synchronized by phase rule.
+  - _Requirements: 14, 19, 54, Design: Bootstrap_
 
-- [ ] 8.2 Create task routes
-  - Create `backend/routes/taskRoutes.js` with task endpoints
-  - GET /api/tasks (requires auth, authorization check, validation)
-  - POST /api/tasks (requires auth, authorization check, validation)
-  - GET /api/tasks/:taskId (requires auth, authorization check)
-  - GET /api/tasks/:taskId/activities (requires auth, authorization check, validation)
-  - POST /api/tasks/:taskId/activities (requires auth, authorization check, validation)
-  - GET /api/tasks/:taskId/comments (requires auth, authorization check, validation)
-  - POST /api/tasks/:taskId/comments (requires auth, authorization check, validation)
-  - PUT /api/tasks/:taskId (requires auth, authorization check, validation)
-  - DELETE /api/tasks/:taskId (requires auth, authorization check)
-  - PATCH /api/tasks/:taskId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 7.1-7.10, 8.1-8.10, 9.1-9.10, 10.1-10.10, Design: API Endpoints_
+- [ ] 2.8 Prepare fixture data and scripts for vertical-slice phases
 
-### 9. Material Controllers and Routes
+  - Extend `backend/mock/data.js` with org/department/user/task/material/vendor fixtures
+  - Ensure fixtures cover status/priority/type permutations and deleted records
+  - Add scripted scenarios for low stock, vendor associations, comment depth, inactive departments
+  - Detailed fixture extraction to enforce in this task:
+    - Include platform and customer organization contexts for cross-tenant authorization verification.
+    - Include role fixtures for Platform SuperAdmin, SuperAdmin, Admin, Manager, and User with HOD and non-HOD variants.
+    - Include active and inactive department fixtures for create-block enforcement paths.
+    - Include task fixtures for all three types with varied status/priority/date/tag/assignee/watcher permutations.
+    - Include material fixtures with low-stock and inventory edge cases plus association links.
+    - Include vendor fixtures with status/rating/verified permutations and task associations.
+    - Include comment fixtures reaching depth boundary and mention scenarios.
+    - Include soft-deleted fixtures for list/includeDeleted/restore conflict scenarios.
+  - _Requirements: 34, 46, Design: Test Data_
 
-- [ ] 9.1 Create material controller
+- [ ] 2.9 Tests (Backend)
 
-  - Create `backend/controllers/materialController.js` with material logic
-  - Implement listMaterials: filter by organization, department, category, status, lowStock, includeDeleted, pagination, sorting, search
-  - Implement createMaterial: validate fields, check authorization, normalize SKU to uppercase, set organization and department
-  - Implement getMaterial: fetch by ID, check authorization, populate usageHistory
-  - Implement restockMaterial: increment inventory.stockOnHand atomically, update inventory.lastRestockedAt
-  - Implement updateMaterial: validate fields, check authorization
-  - Implement deleteMaterial: check associations with RoutineTask/TaskActivity using .withDeleted(), return 409 CONFLICT_ERROR if associated, otherwise soft delete
-  - Implement restoreMaterial: restore soft-deleted material
-  - _Requirements: 12.1-12.11, Design: Material Endpoints_
+  - No backend resource tests in Phase 2 (controllers are still placeholders or partial)
+  - Manual verification: model validation, route registration, middleware authorization flow
+  - Detailed manual verification extraction:
+    - Validate schema-level constraint failures and success paths for representative payloads.
+    - Validate route inventory matches canonical endpoint contracts from PRD Section 18.
+    - Validate auth middleware user-context extraction and authorization middleware allow/deny behavior for matrix sample cases.
+    - Validate default deleted exclusion and `.withDeleted()` query behavior in validation and existence checks.
 
-- [ ] 9.2 Create material routes
-  - Create `backend/routes/materialRoutes.js` with material endpoints
-  - GET /api/materials (requires auth, authorization check, validation)
-  - POST /api/materials (requires auth, authorization check, validation)
-  - GET /api/materials/:materialId (requires auth, authorization check)
-  - POST /api/materials/:materialId/restock (requires auth, authorization check, validation)
-  - PUT /api/materials/:materialId (requires auth, authorization check, validation)
-  - DELETE /api/materials/:materialId (requires auth, authorization check)
-  - PATCH /api/materials/:materialId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 12.1-12.11, Design: API Endpoints_
+### Frontend
 
-### 10. Vendor Controllers and Routes
+- [ ] 2.10 Configure store and RTK Query base layer
 
-- [ ] 10.1 Create vendor controller
+  - Create `client/src/store/index.js` and slices for auth/theme/resource view state
+  - Create `client/src/services/api.js` with baseQuery and credentials policy
+  - Implement auth refresh flow integration at API layer
+  - Detailed extraction to enforce in this task:
+    - Store architecture must separate auth/session state, UI preference state (including theme), and resource-view state (filters, pagination, view mode, dialog state) to support consistent behavior across all list/detail pages.
+    - RTK Query base layer must use cookie-auth credentials mode and canonical response/error transform contracts so frontend handlers receive stable payload shapes from Section 18 endpoints.
+    - Auth refresh behavior must follow canonical policy: on 401 attempt refresh, retry original request, and only logout if refresh fails; 403 must never trigger logout (CAN-012).
+    - API cache strategy must support per-resource invalidation and real-time reconciliation in later phases for tasks/comments/notifications/dashboard widgets.
+    - Base-layer error mapping must remain compatible with centralized toast behavior, preserving deterministic handling for 401/403/409/429/network failures.
+  - _Requirements: 19, 58, 61, Design: State/API Architecture_
 
-  - Create `backend/controllers/vendorController.js` with vendor logic
-  - Implement listVendors: filter by organization, status, rating, includeDeleted, pagination, sorting, search
-  - Implement createVendor: validate fields, check authorization (non-platform SuperAdmin/Admin only), set organization
-  - Implement getVendor: fetch by ID, check authorization, populate projects, calculate metrics
-  - Implement updateVendor: validate fields, check authorization
-  - Implement deleteVendor: check associations with ProjectTasks using .withDeleted(), return 409 CONFLICT_ERROR if associated, otherwise soft delete
-  - Implement restoreVendor: restore soft-deleted vendor
-  - _Requirements: 13.1-13.11, Design: Vendor Endpoints_
+- [ ] 2.11 Add endpoint scaffolds matching backend canonical contracts
 
-- [ ] 10.2 Create vendor routes
-  - Create `backend/routes/vendorRoutes.js` with vendor endpoints
-  - GET /api/vendors (requires auth, authorization check, validation)
-  - POST /api/vendors (requires auth, authorization check, validation)
-  - GET /api/vendors/:vendorId (requires auth, authorization check)
-  - PUT /api/vendors/:vendorId (requires auth, authorization check, validation)
-  - DELETE /api/vendors/:vendorId (requires auth, authorization check)
-  - PATCH /api/vendors/:vendorId/restore (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 13.1-13.11, Design: API Endpoints_
+  - Auth endpoints
+  - Users endpoints (`/preferences`, `/security`, `/activity`, `/performance`)
+  - Departments endpoints (`/activity`, `/dashboard`)
+  - Tasks endpoints (`/activities`, `/comments`, `/restore`)
+  - Materials endpoints (`/restock`, `/usage`, `/restore`)
+  - Vendors endpoints (`/contact`, `/restore`)
+  - Notifications endpoints (`PATCH /api/notifications/mark-all-read`)
+  - Dashboard endpoints (`/api/dashboard/overview`, `/api/departments/:departmentId/dashboard`)
+  - Reusable component contract impact:
+    - `MuiDataGrid` + `MuiDataGridToolbar` must receive endpoint-compatible server pagination, sorting, search, and union-filter params for all list resources.
+    - `MuiFilterButton`, `MuiSearchField`, and `MuiPagination` must map to canonical query contract (`page`, `limit`, `sortBy`, `sortOrder`, `q`, `includeDeleted`, resource filters) from PRD Section 18.
+    - `MuiDialog` and form wrappers must map submit payloads to canonical create/update endpoints for Users/Departments/Tasks/Materials/Vendors.
+  - Detailed extraction to enforce in this task:
+    - Endpoint scaffold inventory must match canonical Section 18 contracts exactly and remain segmented by resource domain (`auth`, `users`, `departments`, `tasks`, `materials`, `vendors`, `attachments`, `notifications`, `dashboard`).
+    - List endpoint query builders must normalize canonical list params (`page`, `limit`, `sortBy`, `sortOrder`, `search/q`, `includeDeleted`) plus resource-specific filter unions (CAN-004).
+    - Mutation endpoints must preserve canonical method/path behavior for soft-delete/restore actions and nested resource operations (activities/comments/usage/restock/contact/mark-all-read).
+    - Frontend endpoint layer must not introduce or depend on forbidden non-canonical routes (notably standalone `/api/organizations/*` CRUD in canonical MVP flow).
+    - Typed endpoint contracts must align with reusable UI wrappers so list pages, dialogs, and detail tabs consume a single normalized request/response schema.
+  - _Requirements: 54, 63, Design: API Contracts_
 
-### 11. Attachment Controllers and Routes
+- [ ] 2.12 Implement cross-cutting hooks/utilities
 
-- [ ] 11.1 Create attachment controller
+  - `useAuth`, `useAuthorization`, `useResponsive`, `useDebounce`, `useTimezone`
+  - Date formatting via `Intl.DateTimeFormat` for all user-facing formatting
+  - Error-to-toast normalization helper (403 toast-only)
+  - Reusable component dependencies:
+    - `useResponsive` drives `MuiDialog` full-height xs behavior (CAN-017), `MuiBottomNavigation` visibility (CAN-002), and `MuiDataGrid` responsive column handling (CAN-023).
+    - `useTimezone` and `Intl.DateTimeFormat` formatting utilities are consumed by `MuiDataGrid` columns, `MuiTimeline`, and dashboard/task/user activity timestamps (CAN-014).
+  - Detailed extraction to enforce in this task:
+    - `useAuth` must expose authenticated user/session state and canonical auth helpers used by route guards, profile menus, and protected action controls.
+    - `useAuthorization` must evaluate permissions using the canonical matrix contract and route/component-level checks, avoiding duplicated hardcoded role logic.
+    - `useResponsive` must implement canonical breakpoints (CAN-001) and drive mobile-only behaviors (bottom nav/FAB/dialog full-height/list-card columns).
+    - `useDebounce` must be used for search/filter commit behavior so list querying remains performant and consistent with requirements around controlled rerenders.
+    - `useTimezone` and date utilities must enforce CAN-014: user-facing formatting via `Intl.DateTimeFormat`; dayjs usage restricted to internal computations and picker adapters.
+    - Error normalization helper must preserve canonical UX: 403 toast-only, 401 refresh-first semantics, conflict and rate-limit messaging surfaced via toast contracts.
+  - _Requirements: 58, 60, 35 (CAN-012, CAN-014), Design: Hooks/Utils_
 
-  - Create `backend/controllers/attachmentController.js` with attachment logic
-  - Implement createAttachment: validate fields (filename, fileUrl, fileType, fileSize, parent, parentModel), check authorization, validate fileUrl matches Cloudinary pattern, set organization and department
-  - Implement getAttachment: fetch by ID, check authorization
-  - Implement deleteAttachment: soft delete, check authorization (uploadedBy only)
-  - _Requirements: 11.1-11.10, Design: Attachment Endpoints_
+- [ ] 2.13 Implement reusable component foundations
 
-- [ ] 11.2 Create attachment routes
-  - Create `backend/routes/attachmentRoutes.js` with attachment endpoints
-  - POST /api/attachments (requires auth, authorization check, validation)
-  - GET /api/attachments/:attachmentId (requires auth, authorization check)
-  - DELETE /api/attachments/:attachmentId (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 11.1-11.10, Design: API Endpoints_
+  - Reusable `MuiDataGrid` wrapper + toolbar
+  - Full-height mobile dialog helper pattern (CAN-017)
+  - Shared empty/loading/error states
+  - File upload input primitives for later task/detail modules
+  - Reusable components to validate/develop from UI references and canonical requirements:
+    - `MuiDataGrid`: canonical Grid view for Tasks/Users/Departments/Materials/Vendors and dashboard deadlines table; must support row selection, server pagination, sorting, loading, empty state (`docs/ui/tasks_list_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/materials_list_view_screen.png`, `docs/ui/vendors_list_view_screen.png`, `docs/ui/desktop_dashboard_overview_screen.png`).
+    - `MuiDataGridToolbar`: shared search/filter/export/column visibility/density controls in all Grid views (`docs/ui/tasks_list_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_list_view_screen.png`).
+    - `MuiViewToggle`: grid/list mode toggle for Tasks/Users/Departments, with Grid=`MuiDataGrid` and List=cards semantics (CAN-023) (`docs/ui/tasks_grid_view_screen.png`, `docs/ui/tasks_list_view_screen.png`, `docs/ui/users_grid_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_grid_view_screen.png`, `docs/ui/departments_list_view_screen.png`).
+    - `MuiFilterButton`: canonical entry action to open resource filter dialogs (`docs/ui/tasks_filter_dialog_screen.png`, `docs/ui/users_filter_dialog_screen.png`, `docs/ui/departments_filter_dialog_screen.png`).
+    - `MuiSearchField`: standard search input appearance/behavior in list and details headers (`docs/ui/tasks_list_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/materials_list_view_screen.png`, `docs/ui/vendors_list_view_screen.png`, `docs/ui/material_details_screen.png`, `docs/ui/vendor_details_screen.png`).
+    - `MuiDialog`: canonical modal container for create/update/filter/contact/restock flows; must enforce xs `100vh` pattern and required MUI a11y props (CAN-017) (`docs/ui/create_update_task_dialog_screen.png`, `docs/ui/create_update_user_dialog_screen.png`, `docs/ui/create_update_department_dialog_screen.png`, `docs/ui/tasks_filter_dialog_screen.png`, `docs/ui/users_filter_dialog_screen.png`, `docs/ui/departments_filter_dialog_screen.png`).
+    - `MuiDialogConfirm`: reusable soft-delete/restore confirmation dialog for all resources with conflict-safe messaging (CAN-015).
+    - `MuiEmptyState`: consistent no-data state with optional CTA for empty lists/details.
+    - `MuiLoading`: shared loading block/full-screen loading pattern for route/page/modal waiting states.
+    - `MuiTimeline`: activity feed renderer for task comments/activities, department all-activity stream, user activity stream, and dashboard recent activity (`docs/ui/task_details_activities_screen.png`, `docs/ui/task_details_comments_screen.png`, `docs/ui/dept_details_activity_tab_screen.png`, `docs/ui/user_details_activity_screen.png`, `docs/ui/desktop_dashboard_overview_screen.png`).
+    - `MuiAvatarStack`: assignee/member stacks in tasks, departments, and detail cards (`docs/ui/tasks_grid_view_screen.png`, `docs/ui/departments_grid_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/task_details_overview_screen.png`).
+    - `MuiChip`: canonical status/priority/role/category chips with enum mapping (CAN-013) (`docs/ui/tasks_grid_view_screen.png`, `docs/ui/tasks_list_view_screen.png`, `docs/ui/users_grid_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_filter_dialog_screen.png`, `docs/ui/materials_list_view_screen.png`, `docs/ui/vendors_list_view_screen.png`).
+    - `MuiPagination`: standardized page navigation in list/grid pages (`docs/ui/tasks_grid_view_screen.png`, `docs/ui/tasks_list_view_screen.png`, `docs/ui/users_grid_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/departments_grid_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/materials_list_view_screen.png`, `docs/ui/vendors_list_view_screen.png`).
+    - `MuiActionColumn`: reusable action-cell controls (view/edit/delete/restore) for all tabular resources.
+    - `MuiStatCard` + `MuiProgress`: KPI/metric card primitives for dashboard, department overview, user performance, vendor/material details (`docs/ui/desktop_dashboard_overview_screen.png`, `docs/ui/dept_details_overview_tab_screen.png`, `docs/ui/user_details_performance_screen.png`, `docs/ui/vendor_details_screen.png`, `docs/ui/material_details_screen.png`).
+    - Form wrappers required by dialogs/forms: `MuiTextField`, `MuiNumberField`, `MuiSelectAutocomplete`, `MuiMultiSelect`, `MuiCheckbox`, `MuiSwitch`, `MuiRating`, `MuiSlider`.
+    - Shared utility wrappers required across list/dialog/form flows: `MuiToggleButton`, `MuiTooltip`, `MuiBackdrop`.
+    - Layout wrappers required by canonical navigation: `MuiBottomNavigation`, `MuiFAB`, `MuiThemeDropDown`, `MuiAppIconLogo`.
+  - Detailed extraction to enforce in this task:
+    - Component foundations must encode canonical view semantics: Grid view uses `MuiDataGrid`, List view uses cards in responsive MUI Grid layout (CAN-023).
+    - `MuiDataGrid` wrappers must support server pagination/sort/search, row selection, virtualized rendering for long lists, and default page-size behavior aligned with canonical list contracts.
+    - Dialog foundation must encode full-height mobile behavior at width <= 600 with required accessibility props and safe-area styling (CAN-017).
+    - Shared chips/badges/labels must implement canonical enum-to-label mapping for status/priority/role/category, preserving backend enum values in payloads (CAN-013).
+    - Shared file-input primitives must enforce canonical attachment guards for extension/file size/user feedback patterns and support task-context flows only (CAN-021/CAN-027).
+    - Shared loading/empty/error primitives must remain consistent across all pages to satisfy traceability checklist criteria for frontend UX and error handling.
+    - Reusable exports must preserve strict `Mui*` naming and remain the only component surface used by feature pages for consistency.
+  - _Requirements: 59, 61, 35 (CAN-017, CAN-023), Design: Reusable Components_
 
-### 12. Notification Controllers and Routes
+- [ ] 2.14 Build auth/public page skeletons (connected to placeholder APIs)
 
-- [ ] 12.1 Create notification controller
+  - Pages: Login, Register (4-step wizard), Verify Email, Forgot Password, Reset Password
+  - Enforce CAN-007 (no terms checkbox)
+  - Use PRD image/copy alignment for public CTAs: “Log In” and “Sign Up” (CAN-025)
+  - Reusable components to validate/develop for this task:
+    - `MuiAppIconLogo`, `MuiThemeDropDown`, and public CTA/button patterns aligned to `docs/ui/landing-page.png` and `docs/ui/public_layout_screen.png`.
+    - Auth-form wrappers: `MuiTextField`, `MuiNumberField`, `MuiSelectAutocomplete`, `MuiCheckbox`, `MuiLoading`.
+    - `MuiDialog` for verification/reset helper modals with canonical mobile behavior.
+  - Detailed extraction to enforce in this task:
+    - Public/auth screens must preserve canonical page inventory and flow sequence: Login, 4-step Register wizard, Verify Email, Forgot Password, Reset Password.
+    - Registration UX must explicitly omit terms acceptance controls (CAN-007) and align onboarding semantics with org+department+superadmin creation contract.
+    - Public header/footer and hero content must remain aligned with landing/public references, including canonical CTA labels `Log In` and `Sign Up` (CAN-025).
+    - Verification flow skeletons must support verify-email and resend-verification interactions, with state messaging for unverified/inactive access constraints.
+    - Login and password-recovery skeletons must align with auth endpoint contracts and preserve toast-first feedback behavior for validation and auth failures.
+    - All auth/public modal behaviors must respect canonical responsive dialog rules, especially xs full-height handling.
+  - _Requirements: 19, 35 (CAN-007, CAN-025), UI refs: `landing-page.png`, `public_layout_screen.png`_
 
-  - Create `backend/controllers/notificationController.js` with notification logic
-  - Implement listNotifications: filter by user, isRead, pagination (newest first)
-  - Implement markAsRead: update isRead=true for single notification
-  - Implement markAllAsRead: update isRead=true for all user notifications
-  - Implement deleteNotification: soft delete notification
-  - _Requirements: 15.1-15.11, Design: Notification Endpoints_
+- [ ] 2.15 Tests (Frontend)
 
-- [ ] 12.2 Create notification routes
-  - Create `backend/routes/notificationRoutes.js` with notification endpoints
-  - GET /api/notifications (requires auth, authorization check, validation)
-  - PATCH /api/notifications/:notificationId/read (requires auth, authorization check)
-  - PATCH /api/notifications/read-all (requires auth, authorization check)
-  - DELETE /api/notifications/:notificationId (requires auth, authorization check)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 15.1-15.11, Design: API Endpoints_
-
-### 13. Dashboard Controllers and Routes
-
-- [ ] 13.1 Create dashboard controller
-
-  - Create `backend/controllers/dashboardController.js` with dashboard logic
-  - Implement getDashboardOverview: aggregate KPIs (My Tasks, Department Tasks, Overdue, Completed This Week), charts (status distribution, priority breakdown, timeline trends), activity feed (newest first), upcoming deadlines (next 7 days)
-  - Support filters: date range, departmentId (Managers/Admins only), status, priority, taskType
-  - Calculate team performance metrics for Managers/Admins (comparison to department averages)
-  - _Requirements: 16.1-16.12, Design: Dashboard Endpoints_
-
-- [ ] 13.2 Create dashboard routes
-  - Create `backend/routes/dashboardRoutes.js` with dashboard endpoints
-  - GET /api/dashboard/overview (requires auth, authorization check, validation)
-  - Apply authentication, validation, and authorization middleware
-  - _Requirements: 16.1-16.12, Design: API Endpoints_
-
-### 14. Services Layer
-
-- [ ] 14.1 Create email service
-
-  - Create `backend/services/emailService.js` with Nodemailer
-  - Configure Gmail SMTP transport
-  - Implement sendVerificationEmail: send email with verification token link
-  - Implement sendWelcomeEmail: send welcome email after verification (idempotent)
-  - Implement sendPasswordResetEmail: send email with reset token link
-  - Implement sendPasswordSetupEmail: send email with setup link for new users
-  - Implement sendNotificationEmail: send email for important events (task assignments, mentions, due date reminders)
-  - Implement sendVendorContactEmail: send email to vendor (role-gated)
-  - _Requirements: 2.6, 6.4, 15.3, Design: Email Service_
-
-- [ ] 14.2 Create Socket.IO service
-
-  - Create `backend/services/socketService.js` with Socket.IO server
-  - Configure Socket.IO with CORS (CLIENT_URL)
-  - Implement JWT authentication on connection (verify token from auth object)
-  - Implement room management: join user:{userId}, org:{orgId}, dept:{deptId}, task:{taskId}
-  - Implement event emitters: task:created, task:updated, task:deleted, task:activity:added, task:comment:added, notification, user:status:changed
-  - Implement automatic reconnection with exponential backoff
-  - Implement connection status tracking
-  - _Requirements: 14.1-14.12, Design: Socket.IO Service_
-
-- [ ] 14.3 Create logger service
-
-  - Create `backend/utils/logger.js` with Winston
-  - Configure log levels (error, warn, info, debug)
-  - Configure log transports (console, file)
-  - Configure log format (timestamp, level, message, metadata)
-  - Implement error logging with stack traces
-  - _Requirements: Design: Logging_
-
-- [ ] 14.4 Create utility functions
-  - Create `backend/utils/constants.js` with enums and constants
-  - Create `backend/utils/errors.js` with custom error classes (ValidationError, UnauthenticatedError, UnauthorizedError, NotFoundError, ConflictError, RateLimitedError, InternalError)
-  - Create `backend/utils/helpers.js` with helper functions (generateEmployeeId, generateToken, hashPassword, comparePassword, etc.)
-  - _Requirements: Design: Utilities_
+  - No frontend test implementation
+  - Manual validation only: auth skeleton flows, toasts, route guards, responsive dialog behavior
+  - Detailed manual verification extraction:
+    - Validate public/auth route rendering and navigation links across desktop and mobile shell variants.
+    - Validate registration wizard structure, verify-email/resend placeholders, and absence of terms checkbox (CAN-007).
+    - Validate auth error UX contracts: 401 refresh/logout compatibility, 403 toast-only behavior, and consistent success/error toast rendering.
+    - Validate responsive dialog behavior for auth helpers at xs breakpoint (100vh full-height behavior).
+    - Validate canonical CTA labels and brand/header composition against public UI references.
 
 ---
 
-## Phase 3: Frontend Foundation
-
-### 15. Project Setup and Configuration
-
-- [ ] 15.1 Initialize React project with Vite
-
-  - Create `client/` directory with Vite + React + SWC
-  - Configure `vite.config.js` with path aliases (@components, @pages, @store, @services, @hooks, @utils, @theme)
-  - Configure `eslint.config.js` with React hooks and React refresh plugins
-  - Create `client/.env.example` with VITE_API_URL, VITE_SOCKET_URL, VITE_CLOUDINARY_CLOUD_NAME, VITE_CLOUDINARY_UPLOAD_PRESET
-  - _Requirements: Design: Frontend Architecture_
-
-- [ ] 15.2 Install and configure dependencies
-
-  - Install core dependencies: react, react-dom, react-router, redux toolkit, react-redux, redux-persist
-  - Install UI dependencies: @mui/material, @mui/icons-material, @mui/x-data-grid, @mui/x-charts, @mui/x-date-pickers, @emotion/react, @emotion/styled
-  - Install form dependencies: react-hook-form (no watch() usage)
-  - Install HTTP dependencies: axios, socket.io-client
-  - Install file upload dependencies: react-dropzone
-  - Install notification dependencies: react-toastify
-  - Install utility dependencies: dayjs (internal use only for date-picker adapter)
-  - _Requirements: Design: Technology Stack_
-
-- [ ] 15.3 Configure Redux store
-
-  - Create `client/src/store/index.js` with store configuration
-  - Configure redux-persist for auth state and user preferences
-  - Configure RTK Query API with baseQuery (axios interceptor for token refresh)
-  - Create `client/src/store/slices/authSlice.js` with auth state (user, isAuthenticated, loading)
-  - Create `client/src/store/slices/themeSlice.js` with theme preferences (mode: light|dark|system)
-  - Create `client/src/store/slices/taskSlice.js` with task UI state (filters, view mode: list|grid)
-  - Create `client/src/store/slices/userSlice.js` with user UI state (filters, view mode: list|grid)
-  - Create `client/src/store/slices/departmentSlice.js` with department UI state (filters, view mode: list|grid)
-  - Create `client/src/store/slices/notificationSlice.js` with notification state (unread count, notifications)
-  - _Requirements: Design: State Management_
-
-- [ ] 15.4 Configure MUI theme
-
-  - Create `client/src/theme/themePrimitives.js` with design tokens (colors, spacing, typography, breakpoints)
-  - Create `client/src/theme/AppTheme.jsx` with theme provider and mode toggle (light|dark|system)
-  - Create `client/src/theme/customizations/index.js` with component overrides
-  - Create `client/src/theme/customizations/inputs.js` (TextField, Select, Checkbox, Radio, Switch)
-  - Create `client/src/theme/customizations/surfaces.js` (Paper, Card, Accordion, AppBar)
-  - Create `client/src/theme/customizations/navigation.js` (Drawer, Menu, Tabs, BottomNavigation)
-  - Create `client/src/theme/customizations/feedback.js` (Alert, Snackbar, Progress, Skeleton)
-  - Create `client/src/theme/customizations/dataDisplay.js` (Typography, Avatar, Badge, Chip, Divider, List)
-  - Create `client/src/theme/customizations/dataGrid.js` (MUI X DataGrid)
-  - Create `client/src/theme/customizations/charts.js` (MUI X Charts)
-  - Create `client/src/theme/customizations/datePickers.js` (MUI X DatePickers)
-  - _Requirements: Design: Theme Configuration_
-
-- [ ] 15.5 Configure routing
-  - Create `client/src/router/routes.js` with route definitions
-  - Configure public routes: /, /login, /register, /verify-email, /forgot-password, /reset-password
-  - Configure protected routes: /dashboard, /dashboard/tasks, /dashboard/tasks/:taskId, /dashboard/users, /dashboard/users/:userId, /dashboard/departments, /dashboard/departments/:departmentId, /dashboard/materials, /dashboard/materials/:materialId, /dashboard/vendors, /dashboard/vendors/:vendorId, /dashboard/settings
-  - Implement route guards: redirect to /dashboard if authenticated on public routes, redirect to /login if not authenticated on protected routes
-  - Implement lazy loading for all page components
-  - _Requirements: Design: Routing Structure_
-
-### 16. API Services
-
-- [ ] 16.1 Create RTK Query API service
-
-  - Create `client/src/services/api.js` with RTK Query setup
-  - Configure baseQuery with axios interceptor for token refresh
-  - Define endpoints for all resources:
-    - Auth: register, verifyEmail, resendVerification, login, refresh, logout, forgotPassword, resetPassword, changePassword
-    - Organizations: listOrganizations, getOrganization, updateOrganization, deleteOrganization, restoreOrganization
-    - Departments: listDepartments, createDepartment, getDepartment, getDepartmentDashboard, getDepartmentActivity, updateDepartment, deleteDepartment, restoreDepartment
-    - Users: listUsers, createUser, getUser, getUserActivity, getUserPerformance, updateUser, updateUserPreferences, updateUserSecurity, deleteUser, restoreUser
-    - Tasks: listTasks, createTask, getTask, getTaskActivities, createTaskActivity, getTaskComments, createTaskComment, updateTask, deleteTask, restoreTask
-    - Materials: listMaterials, createMaterial, getMaterial, restockMaterial, updateMaterial, deleteMaterial, restoreMaterial
-    - Vendors: listVendors, createVendor, getVendor, updateVendor, deleteVendor, restoreVendor
-    - Attachments: createAttachment, getAttachment, deleteAttachment
-    - Notifications: listNotifications, markAsRead, markAllAsRead, deleteNotification
-    - Dashboard: getDashboardOverview
-  - Configure cache tags for automatic invalidation
-  - Configure optimistic updates for create/update/delete operations
-  - _Requirements: Design: API Services_
-
-- [ ] 16.2 Create Socket.IO service
-  - Create `client/src/services/socketService.js` with Socket.IO client
-  - Configure connection with JWT token from auth state
-  - Implement event listeners: task:created, task:updated, task:deleted, task:activity:added, task:comment:added, notification, user:status:changed
-  - Route events to RTK Query cache updates (invalidate tags, update cache entries)
-  - Implement automatic reconnection with exponential backoff
-  - Implement connection status tracking (connected, disconnected, reconnecting)
-  - Implement room management: join task:{taskId} on task detail page, leave on unmount
-  - _Requirements: 14.1-14.12, Design: Socket.IO Integration_
-
-### 17. Custom Hooks
-
-- [ ] 17.1 Create custom hooks
-  - Create `client/src/hooks/useAuth.js` with authentication hook (user, isAuthenticated, login, logout, register, etc.)
-  - Create `client/src/hooks/useSocket.js` with Socket.IO hook (socket, isConnected, emit, on, off)
-  - Create `client/src/hooks/useAuthorization.js` with RBAC hook (canCreate, canRead, canUpdate, canDelete based on authorization matrix)
-  - Create `client/src/hooks/useTimezone.js` with timezone handling hook (formatDate, formatTime, parseDate)
-  - Create `client/src/hooks/useResponsive.js` with responsive breakpoint hook (isMobile, isTablet, isDesktop)
-  - Create `client/src/hooks/useDebounce.js` with debounce hook for search (300ms delay)
-  - Create `client/src/hooks/useInfiniteScroll.js` with infinite scroll hook for feeds
-  - _Requirements: Design: Custom Hooks_
-
-### 18. Utility Functions
-
-- [ ] 18.1 Create utility functions
-  - Create `client/src/utils/constants.js` with enums, patterns, limits (same as backend)
-  - Create `client/src/utils/validators.js` with form validation helpers (aligned with backend validation)
-  - Create `client/src/utils/authorization.js` with RBAC helper functions (checkPermission, filterByPermission)
-  - Create `client/src/utils/dateUtils.js` with date formatting using native Intl API (dayjs only for internal computations and date-picker adapter)
-  - Create `client/src/utils/fileUtils.js` with file validation and Cloudinary upload
-  - Create `client/src/utils/errorHandlers.js` with error handling utilities (parseError, showErrorToast)
-  - _Requirements: Design: Utilities_
-
----
-
-## Phase 4: Frontend Features
-
-### 19. Authentication Pages
-
-- [ ] 19.1 Create Login page
-
-  - Create `client/src/pages/Login.jsx` with login form
-  - Fields: email, password
-  - Validation: email format, password required
-  - Submit: call login endpoint, set auth state, redirect to /dashboard
-  - Links: forgot password, register
-  - Error handling: display error toast
-  - _Requirements: 19.4, Design: Authentication Flow_
-
-- [ ] 19.2 Create Register page
-
-  - Create `client/src/pages/Register.jsx` with 4-step wizard
-  - Step 1 (Organization Details): name, email, phone, address, industry, size
-  - Step 2 (Department Setup): name, description
-  - Step 3 (Account Creation): firstName, lastName, position, email, password
-  - Step 4 (Review & Submit): display summary, submit button
-  - Validation: aligned with backend validation rules
-  - Submit: call register endpoint, redirect to /verify-email
-  - Error handling: display error toast, allow back navigation to fix errors
-  - _Requirements: 2.1-2.9, Design: Registration Flow_
-
-- [ ] 19.3 Create VerifyEmail page
-
-  - Create `client/src/pages/VerifyEmail.jsx` with verification pending state
-  - Display message: "Please check your email to verify your account"
-  - Button: "Resend verification email" (rate limited)
-  - Auto-verify on mount if token in URL query params
-  - Redirect to /login after successful verification
-  - _Requirements: 2.7, 2.8, Design: Email Verification_
-
-- [ ] 19.4 Create ForgotPassword page
-
-  - Create `client/src/pages/ForgotPassword.jsx` with email input
-  - Field: email
-  - Validation: email format
-  - Submit: call forgotPassword endpoint, display success message
-  - Link: back to login
-  - _Requirements: 19.8, Design: Password Reset_
-
-- [ ] 19.5 Create ResetPassword page
-  - Create `client/src/pages/ResetPassword.jsx` with password reset form
-  - Fields: password, confirmPassword
-  - Validation: password (8-128 chars), passwords match
-  - Submit: call resetPassword endpoint with token from URL, redirect to /login
-  - Error handling: display error toast if token invalid/expired
-  - _Requirements: 19.8, Design: Password Reset_
-
-### 20. Layout Components
-
-- [ ] 20.1 Create PublicLayout
-
-  - Create `client/src/components/layouts/PublicLayout/index.jsx` with public layout
-  - Header: logo, navigation links (Home, Login, Register)
-  - Footer: copyright, links
-  - Content area: render children
-  - _Requirements: Design: Layout Structure_
-
-- [ ] 20.2 Create DashboardLayout
-
-  - Create `client/src/components/layouts/DashboardLayout/index.jsx` with authenticated layout
-  - Header: logo (sidebar only), page title, organization switcher (Platform SuperAdmin only), theme toggle, search, notifications bell, user menu
-  - Sidebar: navigation menu (Dashboard, Tasks, Users, Departments, Materials, Vendors), department selector (HOD only), collapsible on tablet
-  - Bottom Navigation (mobile only, xs breakpoint): 4 items (Dashboard, Tasks, Users, Profile) + centered FAB (Add icon, primary color)
-  - Content area: render children
-  - Responsive: permanent sidebar on md+, temporary drawer on xs/sm, bottom nav on xs only
-  - _Requirements: 18.1-18.12, Design: Layout Structure, Alignment Gap 2.2_
-
-- [ ] 20.3 Create Header component
-
-  - Create `client/src/components/layouts/DashboardLayout/Header.jsx`
-  - Display: page title, organization switcher (Platform SuperAdmin only), theme toggle, search bar, notifications bell with badge, user menu
-  - Menu icon (mobile): toggle sidebar drawer
-  - User menu: profile, settings, logout
-  - _Requirements: 18.1, Design: Header Component, Alignment Gap 2.2_
-
-- [ ] 20.4 Create Sidebar component
-
-  - Create `client/src/components/layouts/DashboardLayout/Sidebar.jsx`
-  - Display: logo, navigation menu, department selector (HOD only)
-  - Navigation items: Dashboard, Tasks, Users, Departments, Materials, Vendors
-  - Active item: highlighted with primary color
-  - Collapsible: temporary drawer on xs/sm, permanent on md+
-  - _Requirements: 18.3, 18.4, Design: Sidebar Component_
-
-- [ ] 20.5 Create BottomNavigation component
-  - Create `client/src/components/layouts/DashboardLayout/BottomNavigation.jsx`
-  - Display: 4 items (Dashboard, Tasks, Users, Profile) + centered FAB
-  - FAB: Add icon, primary color, opens dialog/menu for creating new items
-  - Active item: highlighted with primary color
-  - Visible: xs breakpoint only (width < 600)
-  - _Requirements: 18.2, Design: Bottom Navigation, Alignment Gap 2.2_
-
-### 21. Common Components
-
-- [ ] 21.1 Create reusable components
-
-  - Create `client/src/components/common/ErrorBoundary.jsx` with error boundary
-  - Create `client/src/components/common/LoadingSkeleton.jsx` with loading skeletons
-  - Create `client/src/components/common/EmptyState.jsx` with empty state message and icon
-  - Create `client/src/components/common/ConfirmDialog.jsx` with confirmation dialog
-  - _Requirements: Design: Common Components_
-
-- [ ] 21.2 Create MuiDataGrid wrapper
-
-  - Create `client/src/components/reusable/MuiDataGrid.jsx` with reusable DataGrid wrapper
-  - Props: columns, rows, loading, pagination, onPageChange, onSortChange, onRowClick, checkboxSelection, actions
-  - Features: column visibility controls, density controls, export to CSV, search bar, filter button
-  - Responsive: hide less important columns on xs/sm breakpoints
-  - _Requirements: 17.12, Design: MuiDataGrid Wrapper, Alignment Gap 2.2_
-
-- [ ] 21.3 Create MuiDataGridToolbar
-
-  - Create `client/src/components/reusable/MuiDataGridToolbar.jsx` with shared toolbar
-  - Features: search bar, filter button, column visibility, density, export to CSV
-  - _Requirements: Design: MuiDataGrid Toolbar_
-
-- [ ] 21.4 Create MuiLoading component
-  - Create `client/src/components/reusable/MuiLoading.jsx` with loading component
-  - Display: circular progress with backdrop
-  - _Requirements: Design: Loading Component_
-
-### 22. Column Definitions
-
-- [ ] 22.1 Create column definitions for all resources
-  - Create `client/src/components/columns/taskColumns.js` with task grid columns (title, status, priority, assignees, due date, actions)
-  - Create `client/src/components/columns/userColumns.js` with user grid columns (name, email, role, department, status, actions)
-  - Create `client/src/components/columns/departmentColumns.js` with department grid columns (name, description, HOD, member count, actions)
-  - Create `client/src/components/columns/materialColumns.js` with material grid columns (name + SKU, category, unit, unit price, inventory stock, low-stock indicators, actions)
-  - Create `client/src/components/columns/vendorColumns.js` with vendor grid columns (name, contact info - email + phone, rating, projects - active/total, partner badge, actions)
-  - _Requirements: Design: Column Definitions, Alignment Gap 2.2_
-
-### 23. Task Feature Components
-
-- [ ] 23.1 Create TaskList component (List View)
-
-  - Create `client/src/components/task/TaskList.jsx` with list view (MUI Cards layout)
-  - Display: tabs (All Tasks, Assigned to Me, Completed), cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
-  - Card content: title, status badge, priority indicator, assignees avatars, due date, description preview
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: 17.1, Design: Task List View, Alignment Gap 2.2_
-
-- [ ] 23.2 Create TaskGrid component (Grid View)
-
-  - Create `client/src/components/task/TaskGrid.jsx` with grid view (MuiDataGrid wrapper)
-  - Display: tabular grid with columns from taskColumns.js, row selection checkboxes, action buttons
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: 17.1, Design: Task Grid View, Alignment Gap 2.2_
-
-- [ ] 23.3 Create TaskCard component
-
-  - Create `client/src/components/task/TaskCard.jsx` with task summary card for list view
-  - Display: title, status badge, priority indicator, assignees avatars, due date, description preview, tags
-  - Click: navigate to task detail page
-  - _Requirements: Design: Task Card_
-
-- [ ] 23.4 Create TaskFilters component
-
-  - Create `client/src/components/task/TaskFilters.jsx` with filter dialog
-  - Filters: status (multi-select, union), priority (multi-select, union), type (multi-select, union), created date range (presets + custom), due date range (presets + custom), department (multi-select, Managers/Admins only), assignment (Assigned to me, Created by me, Watching, All department tasks, Unassigned), tags (multi-select, AND/OR toggle), deleted toggle (SuperAdmin only)
-  - Actions: apply, clear all, close
-  - Persist filters in URL query params
-  - _Requirements: 17.2-17.11, Design: Task Filters, Alignment Gap 2.2_
-
-- [ ] 23.5 Create TaskForm component
-
-  - Create `client/src/components/task/TaskForm.jsx` with create/update dialog
-  - Fields: type selector (ProjectTask, AssignedTask, RoutineTask), title, description, priority, tags, vendor (ProjectTask), assignees (AssignedTask), date (RoutineTask), materials (RoutineTask), watchers (ProjectTask), startDate, dueDate
-  - Validation: aligned with backend validation rules, type-specific field visibility
-  - Submit: call createTask or updateTask endpoint, close dialog, show success toast
-  - Error handling: display error toast, keep dialog open
-  - _Requirements: 7.1, 8.1, 9.1, Design: Task Form, Alignment Gap 2.2_
-
-- [ ] 23.6 Create TaskDetails component
-
-  - Create `client/src/components/task/TaskDetails.jsx` with task detail page
-  - Tabs: Overview, Activities (ProjectTask/AssignedTask only), Comments, Attachments
-  - Overview: task header (title, status, priority, type, dates, vendor/assignees, watchers), description, tags
-  - Actions: edit, delete, restore (if soft-deleted)
-  - _Requirements: Design: Task Details_
-
-- [ ] 23.7 Create TaskActivity component
-
-  - Create `client/src/components/task/TaskActivity.jsx` with activity timeline
-  - Display: timeline with user avatars, timestamps, activity descriptions, materials, attachments, expandable details
-  - Actions: add activity button (opens dialog)
-  - Visible: ProjectTask and AssignedTask only (NOT RoutineTask)
-  - _Requirements: 7.7, 8.6, Design: Task Activity_
-
-- [ ] 23.8 Create TaskComments component
-
-  - Create `client/src/components/task/TaskComments.jsx` with comments section
-  - Display: threaded comments (max depth 5), user avatars, timestamps, @mentions highlighted, reply/edit/delete buttons
-  - Actions: add comment button (opens dialog), reply button (nested comment), edit button (own comments only), delete button (own comments only)
-  - _Requirements: 10.1-10.10, Design: Task Comments_
-
-- [ ] 23.9 Create TaskAttachments component
-  - Create `client/src/components/task/TaskAttachments.jsx` with attachments section
-  - Display: gallery view with previews (images), download buttons (all files), lightbox for images
-  - Actions: upload button (opens file picker), delete button (own attachments only)
-  - _Requirements: 11.1-11.10, Design: Task Attachments_
-
-### 24. User Feature Components
-
-- [ ] 24.1 Create UserList component (List View)
-
-  - Create `client/src/components/user/UserList.jsx` with list view (MUI Cards layout)
-  - Display: cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
-  - Card content: avatar, name, position, department, skills chart, role badge, status indicator
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: User List View, Alignment Gap 2.2_
-
-- [ ] 24.2 Create UserGrid component (Grid View)
-
-  - Create `client/src/components/user/UserGrid.jsx` with grid view (MuiDataGrid wrapper)
-  - Display: tabular grid with columns from userColumns.js, action buttons
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: User Grid View, Alignment Gap 2.2_
-
-- [ ] 24.3 Create UserCard component
-
-  - Create `client/src/components/user/UserCard.jsx` with user summary card for list view
-  - Display: avatar, name, position, department, skills chart, role badge, status indicator
-  - Click: navigate to user detail page
-  - _Requirements: Design: User Card_
-
-- [ ] 24.4 Create UserFilters component
-
-  - Create `client/src/components/user/UserFilters.jsx` with filter dialog
-  - Filters: role (multi-select), department (multi-select, Admins only), status (multi-select), joined date range, employee ID, include inactive toggle
-  - Actions: apply, clear all, close
-  - Persist filters in URL query params
-  - _Requirements: Design: User Filters, Alignment Gap 2.2_
-
-- [ ] 24.5 Create UserForm component
-
-  - Create `client/src/components/user/UserForm.jsx` with create/update dialog
-  - Fields: firstName, lastName, position, email, phone, role, department, isHod, employeeId (auto-generated, read-only), joinedAt, dateOfBirth, skills (array of skill + percentage), profilePicture (Cloudinary upload)
-  - Validation: aligned with backend validation rules, enforce immutability rules (department, role, employeeId, joinedAt, isHod for Admin/Manager/User targets)
-  - Submit: call createUser or updateUser endpoint, close dialog, show success toast
-  - Error handling: display error toast (409 for immutability violations), keep dialog open
-  - _Requirements: 6.1, 6.8, Design: User Form, Alignment Gap 2.2_
-
-- [ ] 24.6 Create UserDetails component
-
-  - Create `client/src/components/user/UserDetails.jsx` with user detail page
+## Phase 3: Department and User Vertical Slice (Backend -> Frontend)
+
+**Phase Gate**:
+
+- Phase 2 complete (models, validators, route scaffolds).
+- Backend Dept/User endpoints must be complete before frontend screens start.
+
+**Task Execution Protocol (Mandatory 7 Steps)**:
+
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
+
+### Backend
+
+- [ ] 3.1 Implement Department controller logic (full)
+
+  - `listDepartments` with canonical filters (search/status/manager/member-count/date/includeDeleted/organizationId rules)
+  - `createDepartment` with manager validation and description max 500
+  - `getDepartment` with detail aggregates required by header cards
+  - `getDepartmentDashboard` for overview tab KPIs/charts
+  - `getDepartmentActivity` for Tasks sub-tabs (All Activity / Comments / Files filtering)
+  - `updateDepartment` and `deleteDepartment`/`restoreDepartment`
+  - Enforce inactive department creation-block rules (users/tasks/materials)
+  - Detailed extraction to enforce in this task:
+    - Department list filtering must support canonical dimensions: text search, status, manager/HOD selection, member-count range, created date range, includeDeleted, and organizationId restrictions for platform-only contexts.
+    - Department create must enforce name + description constraints, org scope, and valid manager role constraints where manager is provided.
+    - Department description validation must remain max 500 chars in all create/update paths (CAN-026).
+    - Department status must enforce `ACTIVE|INACTIVE` lifecycle behavior (CAN-022), including 409 blocking of new User/Task/Material creation for inactive departments.
+    - Department detail payload must satisfy details screens/contracts: header metadata and summary aggregates for users/tasks/active tasks.
+    - Department dashboard endpoint must provide overview analytics payload for overview tab widgets.
+    - Department activity endpoint must provide chronological feed with filters supporting All Activity/Tasks/Comments/Files views.
+    - Delete/restore operations must follow soft-delete cascade expectations for department-scoped dependents.
+  - _Requirements: 41, 42, 54, 62, 35 (CAN-018, CAN-022, CAN-026)_
+
+- [ ] 3.2 Implement User controller logic (full)
+
+  - `listUsers` with canonical filters (department/role/joined/includeDeleted)
+  - `createUser` with auto-verified onboarding + welcome email behavior
+  - `getUser` detail payload for Overview tab
+  - `getUserActivity` and `getUserPerformance`
+  - `updateUser` with immutable field protection for Admin/Manager/User targets
+  - `updateUserPreferences` and `updateUserSecurity`
+  - `deleteUser` and `restoreUser`
+  - Detailed extraction to enforce in this task:
+    - User list filtering must support canonical query dimensions: search, department, role, joined date range, includeDeleted, and tenant-safe organization constraints.
+    - User create must enforce required profile fields, role constraints, department scope, canonical phone validation, and auto-verification/welcome flows for organization-created users.
+    - User create must generate employeeId under canonical format constraints and handle uniqueness within organization scope.
+    - User detail endpoint must return data required by Overview/Tasks/Activity/Performance tabs.
+    - User activity endpoint must provide chronological activity feed contract; performance endpoint must provide KPI/review/trend contract used by performance tab.
+    - User update must enforce immutable fields for Admin/Manager/User targets and return deterministic conflict behavior (CAN-016).
+    - Preferences update must support appearance/notification/date-time settings contract; security update must support security settings contract.
+    - User delete/restore must respect cascade side-effects and ownership detachment expectations (tasks/comments/mentions/watchers/assignees/notifications).
+    - Read scope rules by role must be enforced: platform superadmin cross-org (matrix-governed), superadmin/admin own-org, manager/user own-dept.
+  - _Requirements: 40, 43, 54, 63, 35 (CAN-011, CAN-016)_
+
+- [ ] 3.3 Finalize auth controllers for production behavior
+
+  - Register/verify-email/resend verification flow
+  - Login/refresh/logout cookie + token rotation semantics
+  - Forgot/reset/change password flows
+  - Block unverified/inactive access exactly per canonical behavior
+  - Detailed extraction to enforce in this task:
+    - Registration flow must support onboarding sequence creating organization, initial department, and initial superadmin user in deterministic order.
+    - Registration-created org/user verification state must remain unverified until email verification completes (CAN-008).
+    - Verification endpoint must atomically set user/org verified state, clear verification tokens, and ensure welcome email idempotency.
+    - Resend verification must regenerate and reissue verification token/email under guarded conditions.
+    - Login must enforce credential validity, verified status, active status, and issue secure cookie-based access/refresh token pair.
+    - Refresh must validate refresh token and apply rotation semantics without violating session continuity rules.
+    - Logout must clear auth cookies and terminate auth session context.
+    - Forgot/reset/change-password flows must enforce token validity and password policy contracts.
+  - _Requirements: 19, 62, 35 (CAN-008)_
+
+- [ ] 3.4 Finalize Dept/User/Auth route wiring with validation and authorization
+
+  - Attach validators to all payload and param routes
+  - Ensure organizationId query parameter restrictions for non-platform users
+  - Ensure standardized success/error response shapes
+  - Detailed extraction to enforce in this task:
+    - Every department/user/auth endpoint must run canonical validator sets before controller execution.
+    - Authorization middleware must be applied per action according to matrix requirements and resource ownership/scope.
+    - Organization query overrides must be blocked for non-platform users and matrix-governed for platform contexts.
+    - Response contracts must remain standardized across success and failure paths to preserve frontend handling compatibility.
+    - Route files must stay aligned with canonical Section 18 endpoint list and method/path contracts.
+  - _Requirements: 24, 43, 54_
+
+- [ ] 3.5 Implement Dept/User socket + notification events
+
+  - Emit user create/update/status events to scoped rooms
+  - Emit department update events where required
+  - Ensure event payloads contain only tenant-scoped data
+  - Detailed extraction to enforce in this task:
+    - User lifecycle changes must emit room-scoped events to authorized user/org/dept recipients only.
+    - Department updates relevant to list/detail/dashboard flows must emit scoped update events for live UI refresh.
+    - Notification records for user/department events must align with notification schema and unread/read behavior.
+    - Event payloads must not expose cross-tenant identifiers or unauthorized entity details.
+    - Socket event naming and payload shape must remain consistent with service-layer contracts used by frontend cache update handlers.
+  - _Requirements: 14, 15, 60_
+
+- [ ] 3.6 Tests (Backend)
+
+  - Manual API verification for Auth, Users, Departments
+  - Validate role matrix behavior across platform and customer org contexts
+  - Validate immutable fields, inactive department restrictions, includeDeleted behavior
+  - Validate department activity and dashboard payload contracts
+  - _No test frameworks; use manual/curl/Postman scripts_
+  - Detailed manual verification extraction:
+    - Execute role-by-role checks for platform and customer tenants across all department/user/auth routes.
+    - Verify auth flows: register, verify, resend, login, refresh, logout, forgot/reset/change-password with correct status/error contracts.
+    - Verify immutable field conflict behavior for prohibited user target updates.
+    - Verify inactive-department create-block enforcement for user/task/material creation attempts.
+    - Verify includeDeleted toggle behavior and restore pathways.
+    - Verify department dashboard/activity response completeness against tab-level data expectations.
+
+### Frontend
+
+- [ ] 3.7 Implement Users list page (grid/list) + filter dialog + create/edit dialog
+
+  - Align with `docs/ui/users_grid_view_screen.png`, `docs/ui/users_list_view_screen.png`, `docs/ui/users_filter_dialog_screen.png`, `docs/ui/create_update_user_dialog_screen.png`
+  - Keep view-toggle semantics consistent with CAN-023
+  - Support role-gated actions and includeDeleted toggle behavior
+  - Reusable components to validate/develop for this task:
+    - `MuiViewToggle`, `MuiDataGrid`, `MuiDataGridToolbar`, `MuiPagination`, `MuiActionColumn` for Grid/List parity and action handling.
+    - `MuiSearchField` + `MuiFilterButton` to drive list-level filtering UX and open `MuiDialog`-based filter modal.
+    - `MuiDialog` for create/update user form and filter dialog; `MuiDialogConfirm` for delete confirmation.
+    - `MuiChip` for role/status labels and canonical enum display mapping.
+    - `MuiAvatarStack` for assignee/member visual stacks in list/card variants.
+    - `MuiLoading`/`MuiEmptyState` for fetch/empty states.
+  - Endpoint contracts consumed by this task (PRD Section 18):
+    - `GET /api/users` (pagination/search/filter/includeDeleted)
+    - `POST /api/users`, `PUT /api/users/:userId`, `DELETE /api/users/:userId`, `PATCH /api/users/:userId/restore`
+  - Detailed extraction to enforce in this task:
+    - Users page must support both canonical display modes (Grid=`MuiDataGrid`, List=cards) with parity in filtering, sorting, pagination, and action availability (CAN-023).
+    - Users filter dialog must include canonical controls: department multi-select, role, joined-at range, and includeDeleted toggle, aligned with `docs/ui/users_filter_dialog_screen.png`.
+    - Users list/grid content must surface canonical identity and management attributes (name, contact, role, department, joined date, status/online indicators, actions) with responsive truncation/ellipsis behavior.
+    - Create/update user dialog must align with `docs/ui/create_update_user_dialog_screen.png` structure, including personal info, role/department assignment, HOD toggle semantics, and profile details sections.
+    - Role-gated action visibility must follow canonical permission matrix for view/edit/delete/restore and must preserve 403 toast-only UX on forbidden actions.
+    - IncludeDeleted handling must round-trip to API query params and remain consistent across both grid/list views and pagination state.
+  - _Requirements: 40, 61, 59_
+
+- [ ] 3.8 Implement User details page with canonical tabs
+
   - Tabs: Overview, Tasks, Activity, Performance
-  - Overview: profile header (avatar, name, contact info, role, department, employee ID, joined date), skills chart
-  - Actions: edit, delete, restore (if soft-deleted)
-  - _Requirements: Design: User Details_
-
-- [ ] 24.7 Create UserTasks component
-
-  - Create `client/src/components/user/UserTasks.jsx` with user tasks tab
-  - Display: tabs (Created, Assigned, Watching), task list with filters
-  - _Requirements: Design: User Tasks_
-
-- [ ] 24.8 Create UserActivity component
-
-  - Create `client/src/components/user/UserActivity.jsx` with user activity feed
-  - Display: chronological feed of user actions (newest first)
-  - _Requirements: Design: User Activity_
-
-- [ ] 24.9 Create UserPerformance component
-  - Create `client/src/components/user/UserPerformance.jsx` with user performance metrics
-  - Display: KPIs (completion rate, avg task time, throughput), comparison to dept averages, charts
-  - _Requirements: Design: User Performance_
-
-### 25. Department Feature Components
-
-- [ ] 25.1 Create DepartmentList component (List View)
-
-  - Create `client/src/components/department/DepartmentList.jsx` with list view (MUI Cards layout)
-  - Display: cards in responsive Grid (1 col xs, 2 cols sm, 3-4 cols md+)
-  - Card content: name, description, manager info, member count, task count, status badge
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: Department List View, Alignment Gap 2.2_
-
-- [ ] 25.2 Create DepartmentGrid component (Grid View)
-
-  - Create `client/src/components/department/DepartmentGrid.jsx` with grid view (MuiDataGrid wrapper)
-  - Display: tabular grid with columns from departmentColumns.js, action buttons
-  - Actions: search bar, filter button, create button, view toggle (list|grid), pagination
-  - _Requirements: Design: Department Grid View, Alignment Gap 2.2_
-
-- [ ] 25.3 Create DepartmentCard component
-
-  - Create `client/src/components/department/DepartmentCard.jsx` with department summary card for list view
-  - Display: name, description, manager info, member count, task count, status badge
-  - Click: navigate to department detail page
-  - _Requirements: Design: Department Card_
-
-- [ ] 25.4 Create DepartmentFilters component
-
-  - Create `client/src/components/department/DepartmentFilters.jsx` with filter dialog
-  - Filters: status (multi-select), manager (select), member count range, created date range, include deleted toggle (SuperAdmin only)
-  - Actions: apply, clear all, close
-  - Persist filters in URL query params
-  - _Requirements: Design: Department Filters, Alignment Gap 2.2_
-
-- [ ] 25.5 Create DepartmentForm component
-
-  - Create `client/src/components/department/DepartmentForm.jsx` with create/update dialog
-  - Fields: name, description, status, manager (SuperAdmin/Admin with isHod=true)
-  - Validation: aligned with backend validation rules
-  - Submit: call createDepartment or updateDepartment endpoint, close dialog, show success toast
-  - Error handling: display error toast, keep dialog open
-  - _Requirements: 5.1, Design: Department Form, Alignment Gap 2.2_
-
-- [ ] 25.6 Create DepartmentDetails component
-
-  - Create `client/src/components/department/DepartmentDetails.jsx` with department detail page
-  - Tabs: Overview, Users, Tasks, Activity
-  - Overview: department header (name, description, manager, creation date, stats - total users, total tasks, active tasks)
-  - Actions: edit, delete, restore (if soft-deleted)
-  - _Requirements: Design: Department Details, Alignment Gap 2.2_
-
-- [ ] 25.7 Create DepartmentOverview component
-
-  - Create `client/src/components/department/DepartmentOverview.jsx` with overview tab
-  - Display: department header, manager, stats, description
-  - _Requirements: Design: Department Overview_
-
-- [ ] 25.8 Create DepartmentUsers component
-
-  - Create `client/src/components/department/DepartmentUsers.jsx` with users tab
-  - Display: user list filtered by department
-  - _Requirements: Design: Department Users_
-
-- [ ] 25.9 Create DepartmentTasks component
-
-  - Create `client/src/components/department/DepartmentTasks.jsx` with tasks tab
-  - Display: task list filtered by department
-  - _Requirements: Design: Department Tasks_
-
-- [ ] 25.10 Create DepartmentActivity component
-  - Create `client/src/components/department/DepartmentActivity.jsx` with activity tab
-  - Display: chronological feed with filtering by entity type (Task, TaskActivity, TaskComment, Attachment)
-  - _Requirements: Design: Department Activity_
-
-### 26. Material Feature Components
-
-- [ ] 26.1 Create MaterialGrid component (Grid View Only)
-
-  - Create `client/src/components/material/MaterialGrid.jsx` with grid view (MuiDataGrid wrapper, NO list view)
-  - Display: tabular grid with columns from materialColumns.js (name + SKU, category, unit, unit price, inventory stock, low-stock indicators, actions)
-  - Actions: search bar, filter button, create button, pagination (NO view toggle)
-  - _Requirements: Design: Material Grid View, Alignment Gap 2.2_
-
-- [ ] 26.2 Create MaterialFilters component
-
-  - Create `client/src/components/material/MaterialFilters.jsx` with filter dialog
-  - Filters: category (multi-select), status (multi-select), low-stock toggle, date range, include deleted toggle (SuperAdmin only)
-  - Actions: apply, clear all, close
-  - Persist filters in URL query params
-  - _Requirements: Design: Material Filters, Alignment Gap 2.2_
-
-- [ ] 26.3 Create MaterialForm component
-
-  - Create `client/src/components/material/MaterialForm.jsx` with create/update dialog
-  - Fields: name, sku (uppercase), status, description, unit, category, price, inventory (stockOnHand, lowStockThreshold, reorderQuantity)
-  - Validation: aligned with backend validation rules
-  - Submit: call createMaterial or updateMaterial endpoint, close dialog, show success toast
-  - Error handling: display error toast, keep dialog open
-  - _Requirements: 12.1, Design: Material Form, Alignment Gap 2.2_
-
-- [ ] 26.4 Create MaterialDetails component
-
-  - Create `client/src/components/material/MaterialDetails.jsx` with material detail page
-  - Display: material header (name, SKU, category, unit, unit price, inventory stock, low-stock state), description, restock button, usage history
-  - Actions: edit, delete (with confirmation dialog, 409 handling), restore (if soft-deleted)
-  - _Requirements: Design: Material Details, Alignment Gap 2.2_
-
-- [ ] 26.5 Create RestockDialog component
-  - Create `client/src/components/material/RestockDialog.jsx` with restock dialog
-  - Fields: quantity (min 1)
-  - Submit: call restockMaterial endpoint, close dialog, show success toast
-  - _Requirements: 12.6, Design: Restock Dialog_
-
-### 27. Vendor Feature Components
-
-- [ ] 27.1 Create VendorGrid component (Grid View Only)
-
-  - Create `client/src/components/vendor/VendorGrid.jsx` with grid view (MuiDataGrid wrapper, NO list view)
-  - Display: tabular grid with columns from vendorColumns.js (name, contact info - email + phone, rating, projects - active/total, partner badge, actions)
-  - Actions: search bar, filter button, create button, pagination (NO view toggle)
-  - _Requirements: Design: Vendor Grid View, Alignment Gap 2.2_
-
-- [ ] 27.2 Create VendorFilters component
-
-  - Create `client/src/components/vendor/VendorFilters.jsx` with filter dialog
-  - Filters: status (multi-select), rating (range), include deleted toggle (SuperAdmin only)
-  - Actions: apply, clear all, close
-  - Persist filters in URL query params
-  - _Requirements: Design: Vendor Filters, Alignment Gap 2.2_
-
-- [ ] 27.3 Create VendorForm component
-
-  - Create `client/src/components/vendor/VendorForm.jsx` with create/update dialog
-  - Fields: name, email, phone, website, location, address, description, status, isVerifiedPartner, rating
-  - Validation: aligned with backend validation rules
-  - Submit: call createVendor or updateVendor endpoint, close dialog, show success toast
-  - Error handling: display error toast, keep dialog open
-  - _Requirements: 13.1, Design: Vendor Form, Alignment Gap 2.2_
-
-- [ ] 27.4 Create VendorDetails component
-  - Create `client/src/components/vendor/VendorDetails.jsx` with vendor detail page
-  - Display: vendor header (name, contact info, address, rating, verified partner badge), description, performance metrics (total projects, active projects, completed projects, on-time delivery rate, average project duration, total spend), linked projects
-  - Actions: edit, delete (with confirmation dialog, 409 handling), restore (if soft-deleted), contact vendor (opens email dialog, role-gated)
-  - _Requirements: 13.7, 13.8, Design: Vendor Details, Alignment Gap 2.2_
-
-### 28. Attachment Feature Components
-
-- [ ] 28.1 Create FileUpload component
-
-  - Create `client/src/components/attachment/FileUpload.jsx` with drag-and-drop upload
-  - Features: drag-and-drop zone, file picker, file validation (size, extension), Cloudinary upload, progress indicator
-  - Validation: max 10MB per file, allowed extensions (.svg, .jpg, .jpeg, .png, .gif, .pdf, .doc, .docx, .xls, .xlsx, .txt, .mp4, .mp3)
-  - Submit: upload to Cloudinary, call createAttachment endpoint with fileUrl
-  - _Requirements: 11.1-11.3, Design: File Upload_
-
-- [ ] 28.2 Create FilePreview component
-
-  - Create `client/src/components/attachment/FilePreview.jsx` with image preview
-  - Display: thumbnail for images, icon for other file types
-  - _Requirements: Design: File Preview_
-
-- [ ] 28.3 Create FileList component
-
-  - Create `client/src/components/attachment/FileList.jsx` with attachment list
-  - Display: list of attachments with filename, file type, file size, uploaded by, uploaded at, download button, delete button (own attachments only)
-  - _Requirements: Design: File List_
-
-- [ ] 28.4 Create Lightbox component
-  - Create `client/src/components/attachment/Lightbox.jsx` with image lightbox
-  - Features: full-screen image viewer, navigation (prev/next), zoom, close
-  - _Requirements: Design: Lightbox_
-
-### 29. Notification Feature Components
-
-- [ ] 29.1 Create NotificationBell component
-
-  - Create `client/src/components/notification/NotificationBell.jsx` with bell icon and badge
-  - Display: bell icon, unread count badge
-  - Click: toggle notification dropdown
-  - Real-time: pulse animation on new notification, update badge count
-  - _Requirements: 15.4, 15.10, Design: Notification Bell_
-
-- [ ] 29.2 Create NotificationDropdown component
-
-  - Create `client/src/components/notification/NotificationDropdown.jsx` with notification list
-  - Display: list of recent notifications (newest first), "Mark all as read" button, "View all" link
-  - _Requirements: 15.5, 15.8, Design: Notification Dropdown_
-
-- [ ] 29.3 Create NotificationItem component
-  - Create `client/src/components/notification/NotificationItem.jsx` with single notification
-  - Display: title, message, timestamp, entity link, read/unread indicator
-  - Click: navigate to related entity, mark as read
-  - _Requirements: 15.6, 15.7, Design: Notification Item_
-
-### 30. Dashboard Feature Components
-
-- [ ] 30.1 Create Dashboard page
-
-  - Create `client/src/pages/Dashboard.jsx` with dashboard overview
-  - Display: KPI cards, charts, activity feed, upcoming deadlines, team performance (Managers/Admins only)
-  - Filters: date range, departmentId (Managers/Admins only), status, priority, taskType
-  - Actions: refresh button (manual data reload), export button (PDF export with jspdf + jspdf-autotable)
-  - _Requirements: 16.1-16.12, Design: Dashboard Overview, Alignment Gap 2.2_
-
-- [ ] 30.2 Create StatCard component
-
-  - Create `client/src/components/dashboard/StatCard.jsx` with KPI card
-  - Display: title, value, icon, trend indicator, clickable
-  - Click: navigate to filtered view (e.g., My Tasks → /dashboard/tasks?assignment=me)
-  - _Requirements: 16.1, Design: Stat Card_
-
-- [ ] 30.3 Create StatusChart component
-
-  - Create `client/src/components/dashboard/StatusChart.jsx` with pie chart
-  - Display: status distribution (TODO, IN_PROGRESS, COMPLETED, PENDING) using MUI X Charts
-  - Click: navigate to filtered view (e.g., TODO slice → /dashboard/tasks?status=TODO)
-  - Use theme tokens for colors (no hardcoded palettes)
-  - _Requirements: 16.2, 16.7, 16.11, Design: Status Chart_
-
-- [ ] 30.4 Create PriorityChart component
-
-  - Create `client/src/components/dashboard/PriorityChart.jsx` with bar chart
-  - Display: priority breakdown (LOW, MEDIUM, HIGH, URGENT) using MUI X Charts
-  - Click: navigate to filtered view (e.g., HIGH bar → /dashboard/tasks?priority=HIGH)
-  - Use theme tokens for colors (no hardcoded palettes)
-  - _Requirements: 16.2, 16.8, 16.11, Design: Priority Chart_
-
-- [ ] 30.5 Create TimelineChart component
-
-  - Create `client/src/components/dashboard/TimelineChart.jsx` with line chart
-  - Display: timeline trends (tasks created, completed over time) using MUI X Charts
-  - Use theme tokens for colors (no hardcoded palettes)
-  - _Requirements: 16.2, 16.11, Design: Timeline Chart_
-
-- [ ] 30.6 Create ActivityFeed component
-
-  - Create `client/src/components/dashboard/ActivityFeed.jsx` with activity feed
-  - Display: real-time chronological feed (newest first) with avatars, timestamps, actions
-  - _Requirements: 16.3, 16.12, Design: Activity Feed, Alignment Gap 2.2_
-
-- [ ] 30.7 Create UpcomingDeadlines component
-
-  - Create `client/src/components/dashboard/UpcomingDeadlines.jsx` with deadlines table
-  - Display: MuiDataGrid table with tasks due in next 7 days
-  - _Requirements: 16.4, Design: Upcoming Deadlines_
-
-- [ ] 30.8 Create TeamPerformance component
-  - Create `client/src/components/dashboard/TeamPerformance.jsx` with performance widget
-  - Display: comparison charts (Managers/Admins only)
-  - _Requirements: 16.5, Design: Team Performance_
-
-### 31. Settings Page
-
-- [ ] 31.1 Create Settings page
-
-  - Create `client/src/pages/Settings.jsx` with settings tabs
-  - Tabs: Profile, Account, Security
-  - _Requirements: Design: Settings Page_
-
-- [ ] 31.2 Create Profile tab
-
-  - Display: personal info (firstName, lastName, position, phone, dateOfBirth), profile picture (Cloudinary upload), skills (array of skill + percentage), preferences (theme, date format, time format, timezone, notifications)
-  - Actions: update profile, update preferences
-  - _Requirements: 6.8, Design: Settings Profile Tab, Alignment Gap 3.4_
-
-- [ ] 31.3 Create Account tab
-
-  - Display: email, phone, password change form
-  - Actions: update email, update phone, change password
-  - _Requirements: Design: Settings Account Tab_
-
-- [ ] 31.4 Create Security tab
-  - Display: two-factor authentication toggle
-  - Actions: enable/disable 2FA
-  - _Requirements: Design: Settings Security Tab_
+  - Overview aligned to `docs/ui/user_details_overview_screen.png`
+  - Tasks aligned to `docs/ui/user_details_tasks_screen.png`
+  - Activity aligned to `docs/ui/user_details_activity_screen.png`
+  - Performance aligned to `docs/ui/user_details_performance_screen.png`
+  - Reusable components to validate/develop for this task:
+    - `MuiTimeline` for chronological activity feed rendering with avatar/timestamp/action text.
+    - `MuiDataGrid` for Tasks-tab tabular listing where applicable.
+    - `MuiStatCard`, `MuiProgress`, and chart containers for performance widgets and KPI summaries.
+    - `MuiChip` for role/status labels; `MuiAvatarStack` for assignees and collaborators.
+    - `MuiSearchField` + `MuiFilterButton` for tab-level task/activity filtering.
+    - `MuiDialog` for edit profile/user actions.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/users/:userId`
+    - `GET /api/users/:userId/activity`
+    - `GET /api/users/:userId/performance`
+    - `GET /api/tasks` (for user Tasks tab filters such as assigned/created/watching)
+  - Detailed extraction to enforce in this task:
+    - User details IA must be exactly `Overview`, `Tasks`, `Activity`, `Performance` (CAN-011) with tab content matching provided reference screens.
+    - Overview tab must include profile header context, personal info card, role/department metadata, task stats, skills/proficiency widgets, and recent activity summary as shown in user detail overview references.
+    - Tasks tab must support canonical scoped task views (assigned/created/watching) with list-level search/filter/pagination behavior.
+    - Activity tab must render chronological activity feed with timestamps, entity references, and action text formatting consistent with `MuiTimeline` usage and canonical date formatting rules.
+    - Performance tab must render KPI metrics, throughput/efficiency visualizations, and review history sections aligned with `docs/ui/user_details_performance_screen.png`.
+    - Detail page actions and editable fields must remain role-gated and tenant-safe, preserving immutable-target rules and toast-only forbidden feedback.
+  - _Requirements: 40, 35 (CAN-011), UI refs listed above_
+
+- [ ] 3.9 Implement Departments list page (grid/list) + filter + create/edit dialog
+
+  - Align with `docs/ui/departments_grid_view_screen.png`, `docs/ui/departments_list_view_screen.png`, `docs/ui/departments_filter_dialog_screen.png`, `docs/ui/create_update_department_dialog_screen.png`
+  - Enforce description max 500 and status chips
+  - Reusable components to validate/develop for this task:
+    - `MuiViewToggle`, `MuiDataGrid`, `MuiDataGridToolbar`, `MuiPagination`, `MuiActionColumn`.
+    - `MuiSearchField` + `MuiFilterButton` to open department filter dialog and support search.
+    - `MuiDialog` for create/update/filter flows with mobile full-height behavior (CAN-017).
+    - `MuiChip` for ACTIVE/INACTIVE status and task-count chips.
+    - `MuiAvatarStack` for manager/team preview stacks.
+    - `MuiLoading`/`MuiEmptyState` for load and no-result handling.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/departments`
+    - `POST /api/departments`, `PUT /api/departments/:departmentId`, `DELETE /api/departments/:departmentId`, `PATCH /api/departments/:departmentId/restore`
+  - Detailed extraction to enforce in this task:
+    - Departments page must support both canonical views (Grid/DataGrid and card-list mode) with consistent behaviors for search/filter/pagination/actions (CAN-023).
+    - Department list/grid fields must align with references: department identity (icon/name/id), description, manager, members/avatar stack, task counts/status, created date, and row/card actions.
+    - Filter dialog must include canonical controls from requirements: name search, status, head-of-department selector, member-count range, date-added range, includeDeleted, and organization filter (platform superadmin-only context).
+    - Create/update department dialog must align with `docs/ui/create_update_department_dialog_screen.png`, enforce max description length 500 (CAN-026), manager selection rules, and validation messaging.
+    - Status handling must implement ACTIVE/INACTIVE chip/display semantics and preserve downstream create-block awareness for inactive departments (CAN-022).
+    - Restore/delete flows must be role-gated and conflict-safe with consistent confirmation and toast messaging contracts.
+  - _Requirements: 41, 35 (CAN-022, CAN-026)_
+
+- [ ] 3.10 Implement Department details page with canonical IA
+
+  - Top-level tabs: Overview, Members, Tasks (no top-level Activity tab)
+  - Overview aligned to `docs/ui/dept_details_overview_tab_screen.png`
+  - Members aligned to `docs/ui/dept_details_users_tab_screen.png`
+  - Tasks aligned to `docs/ui/dept_details_tasks_tab_screen.png`
+  - Tasks sub-tabs include All Activity, Tasks, Comments, Files; activity feed aligned to `docs/ui/dept_details_activity_tab_screen.png`
+  - Enforce sidebar-only department selector (HOD only); none in detail header
+  - Reusable components to validate/develop for this task:
+    - `MuiStatCard`/`MuiProgress` for overview KPI blocks and progress strips.
+    - `MuiDataGrid` + `MuiDataGridToolbar` for Members and Tasks tabular sections.
+    - `MuiTimeline` for Tasks -> All Activity stream with task/comment/file variants.
+    - `MuiSearchField`, `MuiFilterButton`, `MuiChip`, and `MuiAvatarStack` for scoped filtering and visual metadata.
+    - `MuiDialog` for edit department and nested create actions from details context.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/departments/:departmentId`
+    - `GET /api/departments/:departmentId/dashboard`
+    - `GET /api/departments/:departmentId/activity`
+    - `GET /api/tasks` (department-scoped task lists/sub-tabs)
+  - Detailed extraction to enforce in this task:
+    - Department details top-level IA must remain exactly 3 tabs (`Overview`, `Members`, `Tasks`), with activity represented as Tasks sub-tab content (`All Activity`) and not as a top-level tab (CAN-018).
+    - Overview tab must render KPI/stat widgets, completion charts, active members section, and recent activity/task summaries aligned with `docs/ui/dept_details_overview_tab_screen.png`.
+    - Members tab must render department-scoped user management list with search/filter/sort/action affordances per role permissions.
+    - Tasks tab must render summary cards, task list/filter controls, and sub-tabs for `All Activity`, `Tasks`, `Comments`, `Files`, driven by department activity/task endpoints.
+    - Department selector behavior must follow CAN-009: selector exists in sidebar for HOD-only contexts and must not be shown in department detail header.
+    - Real-time and permission-gated interactions in this page must preserve tenant scoping and canonical toast handling for unauthorized operations.
+  - _Requirements: 41, 61, 35 (CAN-009, CAN-018)_
+
+- [ ] 3.11 Integrate Users/Departments with API and role gating
+
+  - Hook page-level data dependencies into RTK Query
+  - Implement optimistic updates only where safe
+  - Add toast-only handling for 403 responses
+  - Reusable component behavior checks:
+    - `MuiActionColumn` must hide/show actions using authorization results.
+    - `MuiDialog`, `MuiDialogConfirm`, and form wrappers must disable immutable target fields for Admin/Manager/User edit flows (CAN-016).
+    - `MuiDataGrid` and List cards must keep equivalent capabilities for search/filter/sort/pagination in authorized scope only.
+  - Detailed extraction to enforce in this task:
+    - API integration must wire all users/departments list/detail/dialog actions to canonical endpoint contracts with consistent query/payload normalization.
+    - Authorization gating must be applied at route, section, and control levels so only permitted actions render or execute for current role/scope.
+    - Immutable target-field rules (CAN-016) must be enforced in UI controls (disabled/read-only) and error pathways must surface deterministic conflict/forbidden messages.
+    - Optimistic updates must be limited to low-risk mutations and must reconcile correctly with server responses for delete/restore/status/profile updates.
+    - Error behavior must follow canonical frontend policy: 403 toast-only/no logout, 401 refresh-first flow, conflict toasts for business-rule violations.
+    - Grid/list parity must remain intact after integration, including includeDeleted toggles, pagination resets, and filter-chip state synchronization.
+  - _Requirements: 60, 59, 35 (CAN-012)_
+
+- [ ] 3.12 Tests (Frontend)
+
+  - No frontend test implementation
+  - Manual validation only: users/departments flows in xs/sm/md and role-based action visibility
+  - Detailed manual verification extraction:
+    - Validate users and departments list/detail/create/update/delete/restore flows in both supported views and across breakpoints.
+    - Validate filter dialog behavior and query synchronization (including includeDeleted toggles, date ranges, role/department/status filters).
+    - Validate user details and department details tab IA against canonical tab structures and endpoint-driven data sections.
+    - Validate role-based control visibility, immutable-field disablement, and forbidden-action handling with toast-only 403 behavior.
+    - Validate responsive behavior for dialogs, list cards, DataGrid layouts, avatar stacks, and ellipsis handling in constrained widths.
 
 ---
 
-## Phase 5: Integration and Testing
+## Phase 4: Tasks + Activities + Comments + Files Vertical Slice (Backend -> Frontend)
 
-### 32. Real-Time Integration
+**Phase Gate**:
 
-- [ ] 32.1 Integrate Socket.IO with RTK Query
+- Phase 3 complete (user/department identity and authorization contexts stable).
+- Task workflows depend on Department/User data and permissions.
 
-  - Connect socketService event listeners to RTK Query cache updates
-  - task:created → invalidate listTasks cache tag
-  - task:updated → update getTask cache entry, invalidate listTasks cache tag
-  - task:deleted → invalidate listTasks and getTask cache tags
-  - task:activity:added → invalidate getTaskActivities cache tag
-  - task:comment:added → invalidate getTaskComments cache tag
-  - notification → invalidate listNotifications cache tag, update unread count
-  - user:status:changed → invalidate listUsers cache tag
-  - _Requirements: 14.10, Design: Socket.IO Integration_
+**Task Execution Protocol (Mandatory 7 Steps)**:
 
-- [ ] 32.2 Implement connection status indicator
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
 
-  - Display connection status (connected, disconnected, reconnecting) in header or footer
-  - Show warning when disconnected
-  - _Requirements: 14.11, Design: Connection Status, Alignment Gap 2.2_
+### Backend
 
-- [ ] 32.3 Implement optimistic updates
-  - Create task: add to cache immediately, rollback on error
-  - Update task: update cache immediately, rollback on error
-  - Delete task: remove from cache immediately, rollback on error
-  - Mark notification as read: update cache immediately, rollback on error
-  - _Requirements: Design: Optimistic Updates_
+- [ ] 4.1 Implement Task controller logic for all task types
 
-### 33. End-to-End User Flows
+  - `listTasks` with full union-filter support
+  - `createTask` with type-specific validation:
+    - ProjectTask (vendor/startDate/dueDate)
+    - AssignedTask (assignees/startDate/dueDate)
+    - RoutineTask (date/materials)
+  - `getTask`, `updateTask`, `deleteTask`, `restoreTask`
+  - Auto-add creator watcher for ProjectTask
+  - Enforce enum mapping and tag constraints
+  - Detailed extraction to enforce in this task:
+    - Task list endpoint must support canonical union-filter behavior (status, priority, type, created ranges, due ranges, department, assignment modes, tags, includeDeleted, search) per CAN-004.
+    - Task create must enforce shared rules (title/description/priority/status defaults/tags constraints) and type-specific required fields for ProjectTask, AssignedTask, and RoutineTask.
+    - ProjectTask creation must enforce active-vendor constraint, start/due date ordering, and creator watcher auto-inclusion.
+    - AssignedTask creation must enforce assignee validity and tenant-scope constraints.
+    - RoutineTask creation must enforce date and embedded material usage rules, including inventory-safe behavior coordinated with material logic.
+    - Status/priority validation must remain canonical enum-based (CAN-013), and serializer mapping to display labels must not mutate stored enum values.
+    - Task update must preserve discriminator invariants, ownership/scope permissions, and date/relationship validity.
+    - Task delete/restore must enforce soft-delete cascade and restore behavior for child entities and inventory side-effects.
+    - Task detail payload must supply data contract for Overview/Activities/Comments/Files tabs.
+  - _Requirements: 42, 43, 54, 35 (CAN-004, CAN-013)_
 
-- [ ] 33.1 Test registration flow
+- [ ] 4.2 Implement TaskActivity controllers
 
-  - Complete 4-step wizard with valid data
-  - Verify email sent
-  - Click verification link
-  - Verify redirect to login
-  - Login with verified account
-  - Verify redirect to dashboard
-  - _Requirements: 2.1-2.9, Manual Testing_
+  - `GET /api/tasks/:taskId/activities`
+  - `POST /api/tasks/:taskId/activities`
+  - Block activity creation for RoutineTask parents (409)
+  - Enforce material usage stock updates atomically
+  - Detailed extraction to enforce in this task:
+    - Activity creation must be allowed only for ProjectTask and AssignedTask; RoutineTask parent attempts must return canonical conflict behavior.
+    - Activity payload must enforce description constraints and optional materials/attachments constraints from canonical validators.
+    - Material consumption inside activity create/update/delete/restore flows must execute in DB session-safe atomic operations with delta handling.
+    - Activity list endpoint must return chronological data with createdBy metadata, material usage summaries, and attachment summaries.
+    - Activity mutations must integrate with task event/notification emission contracts where applicable.
+  - _Requirements: 8, 42, 46, 35 (CAN-019)_
 
-- [ ] 33.2 Test task creation flow
+- [ ] 4.3 Implement TaskComment controllers
 
-  - Create ProjectTask with vendor, watchers, dates
-  - Verify initial TaskActivity created
-  - Verify notification sent to watchers
-  - Verify Socket.IO event emitted
-  - Verify task appears in list without refresh
-  - _Requirements: 7.1-7.10, Manual Testing_
+  - `GET /api/tasks/:taskId/comments`
+  - `POST /api/tasks/:taskId/comments`
+  - Enforce depth max 5 and mention parsing
+  - Emit mention notifications
+  - Detailed extraction to enforce in this task:
+    - Comment creation must enforce canonical text length constraints and parent polymorphism rules.
+    - Reply depth must be validated against max depth 5 (CAN-003); attempts beyond depth limit must return validation error contract.
+    - Mention parsing must support canonical mention limits and tenant-safe user resolution behavior.
+    - Mention notifications must be created and emitted to eligible recipients through notification/socket services.
+    - Comment list endpoint must return thread-ready structure for nested rendering and ownership checks.
+    - Comment delete/restore behavior must follow soft-delete cascade semantics for nested replies.
+  - _Requirements: 10, 42, 35 (CAN-003)_
 
-- [ ] 33.3 Test task activity flow
+- [ ] 4.4 Implement Attachment controllers for task contexts
 
-  - Add TaskActivity to ProjectTask with materials
-  - Verify material stock decremented
-  - Verify Socket.IO event emitted
-  - Verify activity appears in timeline without refresh
-  - _Requirements: 7.7, 7.8, Manual Testing_
+  - `POST /api/attachments`
+  - `DELETE /api/attachments/:attachmentId`
+  - `PATCH /api/attachments/:attachmentId/restore`
+  - Validate extension allowlist + Cloudinary URL pattern
+  - Enforce parent model allowlist (Task/TaskActivity/TaskComment only)
+  - Detailed extraction to enforce in this task:
+    - Attachment create must validate canonical file extension allowlist and max file size constraints.
+    - Attachment create must validate cloudinary URL pattern supporting `image|video|raw` with version segment (CAN-027).
+    - Parent model allowlist must enforce only Task/TaskActivity/TaskComment and reject Material parent usage (CAN-021).
+    - Attachment delete and restore must remain soft-delete operations and preserve auditable metadata.
+    - Attachment response payload must contain metadata needed for preview/download behavior in task detail files UX.
+  - _Requirements: 11, 54, 35 (CAN-021, CAN-027)_
 
-- [ ] 33.4 Test task comment flow
+- [ ] 4.5 Implement task-triggered notification/event orchestration
 
-  - Add TaskComment with @mentions
-  - Verify mentioned users receive notifications
-  - Verify Socket.IO event emitted
-  - Verify comment appears without refresh
-  - Reply to comment (nested)
-  - Verify depth calculated correctly
-  - _Requirements: 10.1-10.10, Manual Testing_
+  - On assignment, mention, status change, activity/comment/file add
+  - Emit scoped socket events for list and detail updates
+  - Detailed extraction to enforce in this task:
+    - Notification generation must cover task create/update/delete effects, assignment transitions, mention events, and activity/comment/file additions.
+    - Socket events must be emitted to canonical scoped rooms (task/user/dept/org) without cross-tenant leakage.
+    - Notification entities must include title/message/entity reference and unread/read defaults with expiry compatibility.
+    - Optional email notification paths must remain service-orchestrated and role/event-gated.
+    - Event naming/payload shape must remain stable for frontend cache update handling.
+  - _Requirements: 14, 15, 42_
 
-- [ ] 33.5 Test material stock flow
+- [ ] 4.6 Tests (Backend)
 
-  - Create RoutineTask with materials
-  - Verify material stock decremented atomically
-  - Verify 409 error if stock insufficient
-  - Restock material
-  - Verify stock incremented
-  - _Requirements: 9.2, 9.3, 12.3, 12.4, 12.6, Manual Testing_
+  - Manual API verification for Task CRUD, Activity, Comments, Attachments
+  - Validate RoutineTask activity block (409)
+  - Validate comment depth guard and mention notifications
+  - Validate files endpoints, size/extension/url guards, restore behavior
+  - Validate includeDeleted and tenant-scope enforcement
+  - Detailed manual verification extraction:
+    - Verify all task types create/update/delete/restore with valid and invalid payload paths.
+    - Verify union-filter combinations and assignment filter semantics on list endpoint.
+    - Verify activity constraints, especially RoutineTask activity block behavior.
+    - Verify comment threading depth limit and mention notification behavior.
+    - Verify attachment guards (extension, size, URL pattern, parent model allowlist) and restore semantics.
+    - Verify inventory side-effects on routine/activity material usage mutations.
+    - Verify matrix + tenant scope behavior across all task nested routes.
 
-- [ ] 33.6 Test soft delete and restore flow
+### Frontend
 
-  - Soft delete department
-  - Verify cascade to users, tasks, activities, comments, attachments, notifications
-  - Restore department
-  - Verify cascaded resources restored
-  - _Requirements: 5.4, 5.5, Manual Testing_
+- [ ] 4.7 Implement Tasks listing module (grid/list/tabs/filter/create CTA)
 
-- [ ] 33.7 Test authorization flow
+  - Align with `docs/ui/tasks_grid_view_screen.png` and `docs/ui/tasks_list_view_screen.png`
+  - Tabs: All Tasks, Assigned to Me, Completed
+  - Enforce grid/list toggle and DataGrid row selection behavior
+  - Reusable components to validate/develop for this task:
+    - `MuiViewToggle`, `MuiDataGrid`, `MuiDataGridToolbar`, `MuiPagination`, `MuiActionColumn`.
+    - `MuiSearchField`, `MuiFilterButton`, and active-filter `MuiChip` rows.
+    - `MuiAvatarStack` for assignee/watcher summaries and list-card variants.
+    - `MuiDialog` for create/edit entrypoints and `MuiDialogConfirm` for soft delete.
+    - `MuiLoading`/`MuiEmptyState` for skeleton/no-data behavior.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/tasks` (union filters, sort, includeDeleted, assignment filters)
+    - `POST /api/tasks`, `PUT /api/tasks/:taskId`, `DELETE /api/tasks/:taskId`, `PATCH /api/tasks/:taskId/restore`
+  - Detailed extraction to enforce in this task:
+    - Tasks page must render canonical tabs exactly: `All Tasks`, `Assigned to Me`, `Completed`, with each tab applying its scoped query behavior on top of base filters.
+    - Tasks page must support both canonical views (Grid/DataGrid and card-list mode) with parity for selection, actions, pagination, sorting, search, and filter state (CAN-023).
+    - Grid view must expose row-selection behavior and action controls consistent with reference screens and role-based permissions.
+    - Filter-chip row must reflect active canonical filter union values and support chip removal/reset interactions that immediately update the dataset.
+    - Task list items/cards must consistently surface canonical metadata: title, type/status/priority chips, assignees/watchers, due timeline cues, and action affordances.
+    - IncludeDeleted behavior must remain explicit and reversible without losing current search/sort/pagination context.
+  - _Requirements: 42, 61, 59, 35 (CAN-023)_
 
-  - Login as User
-  - Verify cannot create department (403)
-  - Verify cannot access other departments (403)
-  - Login as Manager
-  - Verify can create tasks in own department
-  - Verify cannot access other departments (403)
-  - Login as Admin
-  - Verify can read across departments
-  - Verify can create users in own organization
-  - Login as Platform SuperAdmin
-  - Verify can access customer organizations
-  - _Requirements: 4.1-4.10, Manual Testing_
+- [ ] 4.8 Implement Task filter dialog and dynamic create/update dialog
 
-- [ ] 33.8 Test immutability flow
+  - Filter dialog aligned to `docs/ui/tasks_filter_dialog_screen.png`
+  - Create/update dialog aligned to `docs/ui/create_update_task_dialog_screen.png`
+  - Include type-specific fields and validation mapping
+  - Show stock/cost preview for RoutineTask materials
+  - Reusable components to validate/develop for this task:
+    - `MuiDialog` (filter + create/update) with canonical mobile full-height behavior (CAN-017).
+    - Form wrappers: `MuiTextField`, `MuiSelectAutocomplete`, `MuiMultiSelect`, `MuiNumberField`, `MuiCheckbox`, `MuiChip`.
+    - `MuiFilterButton` trigger and `MuiSearchField` within filter panel where required.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/tasks` (all union filters from CAN-004)
+    - `POST /api/tasks` and `PUT /api/tasks/:taskId` for dynamic type-specific payloads
+    - `GET /api/materials` (active materials for RoutineTask stock/cost preview)
+    - `GET /api/vendors` (active vendors for ProjectTask selection)
+  - Detailed extraction to enforce in this task:
+    - Task filter dialog must implement full canonical union filters (status, priority, type, created/due ranges, department, assignment, tags, includeDeleted) per CAN-004.
+    - Filter dialog UX must mirror `docs/ui/tasks_filter_dialog_screen.png` controls and preserve applied state across reopen/reset/apply actions.
+    - Create/update task dialog must dynamically render type-specific sections for ProjectTask, AssignedTask, and RoutineTask while preserving shared base fields.
+    - ProjectTask form behavior must enforce active-vendor selection; AssignedTask form must enforce assignee selection constraints; RoutineTask form must include material selectors and quantity-aware stock/cost preview.
+    - Task status/priority inputs and chips must preserve canonical enum mappings (CAN-013) and avoid local display-value drift from backend contracts.
+    - Dialog behavior must follow mobile full-height/accessibility requirements (CAN-017) and canonical form validation messaging flow.
+  - _Requirements: 42, 35 (CAN-004, CAN-019)_
 
-  - Login as Admin
-  - Create User
-  - Attempt to update User's department (409)
-  - Attempt to update User's role (409)
-  - Attempt to update User's employeeId (409)
-  - Verify error messages clear
-  - _Requirements: 6.7, Manual Testing_
+- [ ] 4.9 Implement Task details page with canonical tab naming
 
-- [ ] 33.9 Test responsive layout flow
+  - Tabs: Overview, Activities, Comments, Files
+  - Overview aligned to `docs/ui/task_details_overview_screen.png`
+  - Activities aligned to `docs/ui/task_details_activities_screen.png`
+  - Comments aligned to `docs/ui/task_details_comments_screen.png`
+  - Files aligned to `docs/ui/task_details_attachments_screen.png`
+  - Reusable components to validate/develop for this task:
+    - `MuiTimeline` for Activities/Comments chronology.
+    - `MuiSearchField` + `MuiFilterButton` for tab-level searching/filtering in activity/files.
+    - `MuiChip` for task type/status/priority badges with canonical display mapping.
+    - `MuiAvatarStack` for collaborators/watchers in task header.
+    - `MuiDataGrid` for required materials/history tables in overview blocks.
+    - `MuiDialog` + `MuiDialogConfirm` for edit/delete flows.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/tasks/:taskId`
+    - `GET /api/tasks/:taskId/activities`, `POST /api/tasks/:taskId/activities`
+    - `GET /api/tasks/:taskId/comments`, `POST /api/tasks/:taskId/comments`
+    - `POST /api/attachments`, `DELETE /api/attachments/:attachmentId`, `PATCH /api/attachments/:attachmentId/restore`
+  - Detailed extraction to enforce in this task:
+    - Task detail IA must be exactly `Overview`, `Activities`, `Comments`, `Files` and match each provided UI reference panel layout.
+    - Header region must expose task identity, canonical type/status/priority chips, due/estimate metadata, assignee/watcher visuals, and share/edit actions.
+    - Overview tab must include full description, requirements/tags, assignee/date/status details, and material/status-history blocks where applicable.
+    - Activities tab must render chronological activity items with search/add-note controls and event metadata suitable for timeline consumption.
+    - Comments tab must support threaded discussions with mention-rich content and role/action affordances tied to canonical comment behavior.
+    - Files tab must provide upload/dropzone, preview cards, metadata, and soft-delete/restore file actions using attachment endpoint contracts.
+  - _Requirements: 32, 42, 35 (CAN-003)_
 
-  - Open on mobile (xs breakpoint)
-  - Verify bottom navigation visible
-  - Verify sidebar hidden
-  - Verify FAB centered
-  - Click FAB, verify dialog opens
-  - Open on tablet (sm breakpoint)
-  - Verify bottom navigation hidden
-  - Verify sidebar collapsible
-  - Open on desktop (md+ breakpoint)
-  - Verify sidebar permanent
-  - _Requirements: 18.1-18.12, Manual Testing_
+- [ ] 4.10 Implement task detail subcomponents
 
-- [ ] 33.10 Test filter and search flow
-  - Apply multiple filters (status, priority, type)
-  - Verify union filters work (status=TODO,IN_PROGRESS)
-  - Verify URL query params updated
-  - Refresh page, verify filters persisted
-  - Clear filters, verify all tasks shown
-  - Search with min 3 chars, verify debounce (300ms)
-  - _Requirements: 17.1-17.12, Manual Testing_
+  - Activity log with search and add-note actions
+  - Threaded comment editor/replies/mentions (depth-aware UX)
+  - File dropzone/gallery/preview/download/remove actions
+  - Required materials table and status history panel
+  - Reusable components to validate/develop for this task:
+    - `MuiTimeline` for activity/comment stream groupings.
+    - `MuiSearchField` for activity/file search controls.
+    - `MuiDialog` for add-note/upload/reply flows, plus `MuiDialogConfirm` for delete/remove actions.
+    - `MuiChip` for status and type metadata; `MuiAvatarStack` for participant context.
+    - `MuiDataGrid` where structured materials/history tables are needed in detail views.
+  - Detailed extraction to enforce in this task:
+    - Activity log module must support canonical event rendering for create/update/status/comment/file changes with timestamp, actor, and entity references.
+    - Threaded comment module must enforce UI depth guard at max 5 replies (CAN-003), mention entry patterns, and reply/edit/delete affordances consistent with authorization.
+    - File module must enforce canonical upload constraints (size/extension helper messaging), preview/download affordances, and attachment lifecycle actions.
+    - Required materials and status-history subviews must present structured, scannable tables/cards aligned with task type semantics and API payload contracts.
+    - Search controls inside activities/files must debounce and filter in-place without resetting unrelated task-detail tab state.
+    - All subcomponents must preserve accessibility and responsive behavior, especially dialog/focus flows and overflow handling in dense content blocks.
+  - _Requirements: 32, 42, 11_
 
-### 34. Manual Testing Checklist
+- [ ] 4.11 Integrate task pages with real-time updates
 
-- [ ] 34.1 Authentication testing
+  - Subscribe/unsubscribe task rooms on detail mount/unmount
+  - Update list/detail cache on task/activity/comment/file events
+  - Keep unread notification count synchronized
+  - Reusable component synchronization checks:
+    - `MuiDataGrid`, list cards, `MuiTimeline`, and badge/chip components must update from socket-driven cache changes without full page reload.
+    - `MuiLoading` should only appear for initial fetch/loading transitions, not for every socket event.
+  - Detailed extraction to enforce in this task:
+    - Task list and task detail pages must subscribe to scoped realtime channels and unsubscribe cleanly on navigation/unmount to prevent duplicate event handling.
+    - Incoming task/activity/comment/file events must reconcile RTK Query caches for both collection and detail views without destructive refetch loops.
+    - Notification badge/unread counters must stay synchronized with task-related realtime events and notification read-state updates.
+    - Realtime updates must preserve current local UI context (active tab, filter selection, pagination position) while reflecting latest data.
+    - Permission-sensitive events must only update data already authorized for the current user’s tenant/scope context.
+    - Loading indicators must remain transition-only and not flash on each realtime delta.
+  - _Requirements: 14, 15_
 
-  - Register with valid data (4-step wizard)
-  - Register with invalid data (validation errors)
-  - Verify email with valid token
-  - Verify email with invalid token (error)
-  - Login with valid credentials
-  - Login with invalid credentials (error)
-  - Login with unverified account (403)
-  - Login with INACTIVE user (403)
-  - Refresh token rotation
-  - Logout (clear cookies)
-  - Forgot password flow
-  - Reset password with valid token
-  - Reset password with invalid token (error)
-  - Change password (authenticated)
-  - _Requirements: 19.1-19.10, 46.1-46.10_
+- [ ] 4.12 Tests (Frontend)
 
-- [ ] 34.2 Authorization testing
-
-  - Test all CRUD operations for all roles (Platform SuperAdmin, Org SuperAdmin, Admin, Manager, User)
-  - Test cross-organization access (Platform SuperAdmin only)
-  - Test cross-department access (Admins can read, Managers/Users cannot)
-  - Test ownership checks (createdBy, assignees, watchers, uploadedBy)
-  - Test immutability rules (department, role, employeeId, joinedAt, isHod for Admin/Manager/User targets)
-  - Test INACTIVE department restrictions (cannot create users/tasks/materials)
-  - Test INACTIVE user restrictions (cannot login/refresh)
-  - _Requirements: 4.1-4.10, 43.1-43.10, 46.1-46.10_
-
-- [ ] 34.3 Validation testing
-
-  - Test all field validations (length, pattern, enum, required)
-  - Test unique constraints (email, phone, sku, employeeId)
-  - Test date validations (dueDate > startDate, joinedAt not future)
-  - Test array validations (max items, unique items)
-  - Test nested validations (materials, skills, preferences)
-  - Test existence checks with .withDeleted() for create/restore
-  - Test scoping (organization, department)
-  - _Requirements: 23.1-23.12, 46.1-46.10_
-
-- [ ] 34.4 Multi-tenant isolation testing
-
-  - Create multiple customer organizations
-  - Verify data isolation (users cannot access other orgs)
-  - Verify Platform SuperAdmin can access customer orgs per authorization matrix
-  - Verify department-level isolation (users cannot access other depts)
-  - _Requirements: 3.1-3.5, 46.1-46.10_
-
-- [ ] 34.5 Task type testing
-
-  - Create ProjectTask with vendor, watchers, dates
-  - Verify TaskActivity allowed
-  - Create AssignedTask with assignees, dates
-  - Verify TaskActivity allowed
-  - Create RoutineTask with date, materials
-  - Verify TaskActivity FORBIDDEN (409)
-  - Verify materials embedded
-  - Verify material stock decremented
-  - _Requirements: 7.1-7.10, 8.1-8.10, 9.1-9.10, 46.1-46.10_
-
-- [ ] 34.6 Soft delete and cascade testing
-
-  - Soft delete organization (Platform SuperAdmin only, NOT platform org)
-  - Verify cascade to departments, users, tasks, activities, comments, attachments, notifications
-  - Restore organization
-  - Verify cascaded resources restored
-  - Soft delete department
-  - Verify cascade to users, tasks, materials, activities, comments, attachments, notifications
-  - Restore department
-  - Verify cascaded resources restored
-  - Soft delete user
-  - Verify cascade to tasks, activities, comments, attachments, notifications
-  - Verify removal from watchers/assignees/mentions
-  - Restore user
-  - Verify cascaded resources restored
-  - _Requirements: 5.4, 5.5, 6.6, 46.1-46.10_
-
-- [ ] 34.7 Material and vendor deletion testing
-
-  - Create material, associate with RoutineTask
-  - Attempt to delete material (409 CONFLICT_ERROR)
-  - Verify error message suggests status=INACTIVE
-  - Set material status=INACTIVE
-  - Verify excluded from selection dropdowns
-  - Create vendor, associate with ProjectTask
-  - Attempt to delete vendor (409 CONFLICT_ERROR)
-  - Verify error message suggests status=INACTIVE
-  - Set vendor status=INACTIVE
-  - Verify excluded from selection dropdowns
-  - _Requirements: 12.8, 12.9, 13.4, 13.5, 46.1-46.10_
-
-- [ ] 34.8 Real-time testing
-
-  - Open two browser windows (User A, User B)
-  - User A creates task
-  - Verify User B sees task without refresh
-  - User A adds activity
-  - Verify User B sees activity without refresh
-  - User A adds comment with @mention of User B
-  - Verify User B receives notification without refresh
-  - User A updates task status
-  - Verify User B sees updated status without refresh
-  - Disconnect network
-  - Verify connection status indicator shows disconnected
-  - Reconnect network
-  - Verify automatic reconnection
-  - _Requirements: 14.1-14.12, 46.1-46.10_
-
-- [ ] 34.9 Notification testing
-
-  - Create task with assignees
-  - Verify assignees receive notifications
-  - Add comment with @mentions
-  - Verify mentioned users receive notifications
-  - Mark notification as read
-  - Verify badge count decreases
-  - Mark all as read
-  - Verify badge cleared
-  - Wait 30 days
-  - Verify notifications auto-expired via TTL index
-  - _Requirements: 15.1-15.11, 46.1-46.10_
-
-- [ ] 34.10 Dashboard testing
-
-  - View dashboard as User
-  - Verify KPI cards (My Tasks, Department Tasks, Overdue, Completed This Week)
-  - Verify charts (status, priority, timeline)
-  - Verify activity feed (real-time updates)
-  - Verify upcoming deadlines (next 7 days)
-  - Apply filters (date range, status, priority)
-  - Verify all widgets update
-  - Click status slice in pie chart
-  - Verify navigate to filtered tasks page
-  - Click refresh button
-  - Verify manual data reload
-  - Click export button
-  - Verify PDF export with jspdf + jspdf-autotable
-  - View dashboard as Manager/Admin
-  - Verify team performance widget visible
-  - _Requirements: 16.1-16.12, 46.1-46.10_
-
-- [ ] 34.11 Responsive testing
-
-  - Test on mobile (xs: 0-599px)
-  - Verify bottom navigation visible
-  - Verify sidebar hidden (temporary drawer)
-  - Verify FAB centered
-  - Verify single-column layout
-  - Verify dialogs full-height
-  - Test on tablet (sm: 600-899px)
-  - Verify bottom navigation hidden
-  - Verify sidebar collapsible
-  - Verify 2-column layout
-  - Test on desktop (md: 900-1199px)
-  - Verify sidebar permanent
-  - Verify 3-4 column layout
-  - Test on large desktop (lg: 1200-1535px, xl: 1536+)
-  - Verify expanded content
-  - _Requirements: 18.1-18.12, 46.1-46.10_
-
-- [ ] 34.12 File upload testing
-  - Upload file within size limit (10MB)
-  - Verify Cloudinary upload
-  - Verify attachment created
-  - Upload file exceeding size limit
-  - Verify error message
-  - Upload file with invalid extension
-  - Verify error message
-  - Upload image
-  - Verify preview shown
-  - Click image
-  - Verify lightbox opens
-  - Delete own attachment
-  - Verify soft delete
-  - Attempt to delete other user's attachment
-  - Verify 403 error
-  - _Requirements: 11.1-11.10, 46.1-46.10_
+  - No frontend test implementation
+  - Manual validation only: task creation/edit/delete/restore, filters, tabs, activity/comments/files UX across breakpoints
+  - Detailed manual verification extraction:
+    - Validate task list tabs, view toggle, union filters, includeDeleted behavior, and action controls in both grid and list views.
+    - Validate create/update dialogs for all task types, including type-specific field validation and routine material stock/cost previews.
+    - Validate task details tab IA and end-to-end activity/comment/file interactions, including mention flows and attachment lifecycle actions.
+    - Validate realtime updates across task list/detail pages and unread notification synchronization behavior.
+    - Validate responsive behavior for dialogs, detail headers, timelines, and DataGrid/card presentations on xs/sm/md breakpoints.
 
 ---
 
-## Phase 6: Alignment Corrections
+## Phase 5: Materials and Vendors Vertical Slice (Backend -> Frontend)
 
-### 35. Requirements Document Updates
+**Phase Gate**:
 
-- [ ] 35.1 Add technology stack section to requirements.md
+- Phase 4 complete (task and attachment systems stable).
+- Material/Vendor deletion constraints rely on task associations from previous phase.
 
-  - Add new section "Technology Stack" after Introduction
-  - List backend dependencies with exact versions (Node.js, Express, MongoDB, Mongoose, JWT, bcrypt, Socket.IO, Nodemailer, etc.)
-  - List frontend dependencies with exact versions (React, Vite, Redux Toolkit, Material UI, axios, socket.io-client, etc.)
-  - List development scripts (npm run dev, npm run seed, npm run wipe, npm run build, etc.)
-  - _Alignment Gap: 2.1_
+**Task Execution Protocol (Mandatory 7 Steps)**:
 
-- [ ] 35.2 Add missing SHALL statements for UI/UX requirements
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
 
-  - Add SHALL statements for DashboardLayout structure (header, sidebar, content area)
-  - Add SHALL statements for Header components (page title, organization switcher, theme toggle, search, user menu, logo in sidebar only)
-  - Add SHALL statements for mobile menu icon toggle
-  - Add SHALL statements for FAB (Add icon, primary color, opens dialog/menu)
-  - Add SHALL statements for active navigation item highlighting (primary color)
-  - Add SHALL statements for edit task dialog
-  - Add SHALL statements for create/edit vendor dialog
-  - Add SHALL statements for delete material/vendor confirmation dialog with 409 handling
-  - Add SHALL statements for material detail header (inventory stock, low-stock state)
-  - Add SHALL statements for department header (creation date, summary stats)
-  - Add SHALL statements for dashboard real-time updates
-  - Add SHALL statements for Socket.IO connection status indicator
-  - _Alignment Gap: 2.2_
+### Backend
 
-- [ ] 35.3 Add validation middleware scoping requirements
+- [ ] 5.1 Implement Material controller logic
 
-  - Add new requirement "Validation Middleware Scoping"
-  - Add SHALL statement: validators MUST use .run(req) and validationResult(req)
-  - Add SHALL statement: existence checks for create/restore MUST use .withDeleted()
-  - Add SHALL statement: department/vendor validators MUST scope by req.user.organization
-  - Add SHALL statement: user/task/material validators MUST scope by req.user.organization AND req.user.department
-  - _Alignment Gap: 2.3_
+  - `listMaterials` with canonical filters
+  - `createMaterial`, `getMaterial`, `updateMaterial`
+  - `POST /api/materials/:materialId/restock`
+  - `GET /api/materials/:materialId/usage`
+  - `deleteMaterial`/`restoreMaterial`
+  - Enforce association delete block with `.withDeleted()` checks and 409 fallback guidance (set INACTIVE)
+  - Detailed extraction to enforce in this task:
+    - Material list endpoint must support canonical filters: search, category, status, sku, lowStockOnly, created date ranges, includeDeleted, and role-permitted department scoping.
+    - Material create/update must enforce canonical schema constraints for name, SKU uniqueness per department, category, unit, price, status, and inventory fields.
+    - Material detail endpoint must return header/meta contract used by materials detail screen and dependent widgets.
+    - Restock endpoint must increment stock atomically and update `inventory.lastRestockedAt` in the same transactional flow (CAN-019).
+    - Usage endpoint must return routine-task and task-activity derived consumption history with quantity/cost/date/status context.
+    - Material status `INACTIVE` must block new selection in task creation/update while preserving read access.
+    - Material delete must enforce `.withDeleted()` association checks against RoutineTask.materials and TaskActivity.materials and return canonical 409 conflict guidance when associated (CAN-015).
+    - Material restore must preserve soft-delete semantics and compatibility with list/includeDeleted behavior.
+  - _Requirements: 39, 54, 35 (CAN-015, CAN-019)_
 
-- [ ] 35.4 Add TTL expiry policy requirements
+- [ ] 5.2 Implement Vendor controller logic
 
-  - Add new requirement "TTL Expiry Policies"
-  - Add SHALL statement: Organization TTL = never/manual only (immutable if isPlatformOrg=true)
-  - Add SHALL statement: Department TTL = 365 days
-  - Add SHALL statement: User TTL = 365 days
-  - Add SHALL statement: Task TTL = 180 days
-  - Add SHALL statement: TaskActivity TTL = 90 days
-  - Add SHALL statement: TaskComment TTL = 180 days
-  - Add SHALL statement: Material TTL = 90 days
-  - Add SHALL statement: Vendor TTL = 90 days
-  - Add SHALL statement: Attachment TTL = 30 days
-  - Add SHALL statement: Notification TTL = 30 days (auto-delete via TTL index)
-  - _Alignment Gap: 2.4_
+  - `listVendors`, `createVendor`, `getVendor`, `updateVendor`
+  - `POST /api/vendors/:vendorId/contact`
+  - `deleteVendor`/`restoreVendor`
+  - Enforce association delete block with `.withDeleted()` checks and 409 fallback guidance
+  - Compute and return vendor metrics for details page
+  - Detailed extraction to enforce in this task:
+    - Vendor list endpoint must support canonical filters: search, status, rating ranges, verified-partner flag, date ranges, includeDeleted.
+    - Vendor create/update must enforce canonical constraints for name, email, phone regex, optional website/location/address/description, status, partner flag, and rating precision/range.
+    - Vendor detail endpoint must return metrics required by UI contract (project counts, delivery performance, duration/spend indicators).
+    - Contact vendor endpoint must support role-gated email composition flow with backend email service integration.
+    - Vendor status `INACTIVE` must block new project-task selection while preserving read access.
+    - Vendor delete must enforce `.withDeleted()` association checks against ProjectTask links and return canonical 409 conflict guidance when associated (CAN-015).
+    - Vendor restore must preserve soft-delete lifecycle and includeDeleted compatibility.
+  - _Requirements: 13, 54, 35 (CAN-015, CAN-020)_
 
-- [ ] 35.5 Add user preferences notifications object
-  - Update Requirement 33 (User Preferences)
-  - Add SHALL statement: User.preferences MUST include notifications object
-  - Add SHALL statement: notifications.emailEnabled (boolean, default: true)
-  - Add SHALL statement: notifications.inAppEnabled (boolean, default: true)
-  - Add SHALL statement: notifications.emailEvents (object with event-level toggles: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - Add SHALL statement: notifications.inAppEvents (object with event-level toggles: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - _Alignment Gap: 2.5_
+- [ ] 5.3 Finalize material/vendor routes, validators, and service hooks
 
-### 36. Design Document Updates
+  - Attach role and tenant scoping middleware
+  - Integrate notification/email hooks for vendor contact action
+  - Ensure standard paginated response format
+  - Detailed extraction to enforce in this task:
+    - Route contracts must remain aligned with Section 18 method/path definitions for materials and vendors.
+    - Validators must enforce canonical field, filter, delete-conflict, and restore-collision rules with clear status/error payload behavior.
+    - Authorization must enforce tenant and role boundaries consistently (org-level vendor scope, dept-level material scope where required).
+    - Paginated response schema must remain uniform with metadata for list pages and reusable grid components.
+    - Vendor contact route must orchestrate notification/email side-effects without bypassing authorization and validation gates.
+  - _Requirements: 24, 43, 54_
 
-- [ ] 36.1 Add platform/customer organization setup details
+- [ ] 5.4 Tests (Backend)
 
-  - Add new section "Organization Creation Process" after Overview
-  - Document platform organization creation via backend seeding only
-  - Document customer organization creation via 4-step registration wizard only
-  - Document circular dependency resolution (org → dept → user → update manager/createdBy)
-  - Document backend handling of 4-step wizard (single transaction, rollback on error)
-  - _Alignment Gap: 3.1_
+  - Manual API verification for Materials and Vendors
+  - Validate low-stock/restock behavior and usage endpoint payloads
+  - Validate delete conflict (409) for associated resources
+  - Validate vendor contact endpoint role gating
+  - Detailed manual verification extraction:
+    - Verify list filtering combinations and includeDeleted behavior for both materials and vendors.
+    - Verify create/update validation failures and success paths for canonical field constraints.
+    - Verify atomic restock and usage-related inventory math under valid and invalid scenarios.
+    - Verify delete conflict behavior with associated and non-associated materials/vendors.
+    - Verify vendor contact endpoint authorization and side-effect behavior.
+    - Verify cross-tenant access denial and org/dept scoping consistency.
 
-- [ ] 36.2 Add TTL expiry implementation
+### Frontend
 
-  - Update all model schemas with TTL index configuration
-  - Add TTL index to Notification schema: { expiresAt: 1 } with expireAfterSeconds: 0
-  - Document TTL periods for each model (Organization: never/manual only, Department: 365d, User: 365d, Task: 180d, TaskActivity: 90d, TaskComment: 180d, Material: 90d, Vendor: 90d, Attachment: 30d, Notification: 30d)
-  - Document automatic deletion behavior via MongoDB TTL indexes
-  - _Alignment Gap: 3.2_
+- [ ] 5.5 Implement Materials list and details flows
 
-- [ ] 36.3 Add validation middleware scoping rules
+  - Align list with `docs/ui/materials_list_view_screen.png`
+  - Align details with `docs/ui/material_details_screen.png`
+  - Implement search/filter/create/edit/delete/restore and restock dialog
+  - Exclude material attachments section per CAN-021
+  - Reusable components to validate/develop for this task:
+    - `MuiDataGrid`, `MuiDataGridToolbar`, `MuiPagination`, `MuiActionColumn` for materials list.
+    - `MuiSearchField` + `MuiFilterButton` for list/detail filters.
+    - `MuiDialog` for create/edit/restock/filter flows; `MuiDialogConfirm` for delete/restore confirmation.
+    - `MuiChip` for category/status chips and low-stock indication labels.
+    - `MuiStatCard` + `MuiProgress` for detail KPI cards (usage, associated tasks, usage rate).
+    - `MuiLoading`/`MuiEmptyState` for loading and empty-result states.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/materials`, `POST /api/materials`, `PUT /api/materials/:materialId`, `DELETE /api/materials/:materialId`, `PATCH /api/materials/:materialId/restore`
+    - `GET /api/materials/:materialId`, `GET /api/materials/:materialId/usage`, `POST /api/materials/:materialId/restock`
+  - Detailed extraction to enforce in this task:
+    - Materials page must use canonical Grid/DataGrid presentation only (no list-card mode) and align with `docs/ui/materials_list_view_screen.png` layout and controls.
+    - Materials list columns and metadata must cover canonical contract: name+SKU, category chip, unit, unit price, created-by context, and action controls, with optional inventory/low-stock columns.
+    - Materials filter behavior must support canonical dimensions (category, status, low-stock toggle, date range, includeDeleted, search) and keep filter state synchronized with query params.
+    - Material details page must align with `docs/ui/material_details_screen.png` including header metadata (icon/name/status/SKU/unit/unit price), edit/restock actions, KPI cards, and usage-history table.
+    - Restock dialog flow must support quantity entry and successful refresh of stock-dependent widgets and usage aggregates after mutation.
+    - Material attachment UI must remain excluded from this feature set (CAN-021), and conflict/deletion messaging must align with canonical 409 guidance.
+  - _Requirements: 39, 35 (CAN-019, CAN-021)_
 
-  - Add new section "Validation Middleware Implementation" after Authorization Matrix
-  - Document validator execution using .run(req) and validationResult(req)
-  - Document existence checks using .withDeleted() for create/restore operations
-  - Document scoping by req.user.organization for org-level resources (Vendor)
-  - Document scoping by req.user.organization AND req.user.department for dept-level resources (User, Task, Material)
-  - Provide code examples for each scoping pattern
-  - _Alignment Gap: 3.3_
+- [ ] 5.6 Implement Vendors list and details flows
 
-- [ ] 36.4 Update User schema with notification preferences
+  - Align list with `docs/ui/vendors_list_view_screen.png`
+  - Align details with `docs/ui/vendor_details_screen.png`
+  - Implement search/filter/create/edit/delete/restore and contact vendor action
+  - Render partner/status/rating/metrics exactly from API payloads
+  - Reusable components to validate/develop for this task:
+    - `MuiDataGrid`, `MuiDataGridToolbar`, `MuiPagination`, `MuiActionColumn` for vendor list.
+    - `MuiSearchField` + `MuiFilterButton` for query and filter controls.
+    - `MuiDialog` for create/edit/filter/contact-vendor email flows; `MuiDialogConfirm` for delete/restore confirmation.
+    - `MuiChip` and `MuiRating` for status/partner/rating visualization.
+    - `MuiStatCard` + `MuiProgress` for vendor metrics cards (active projects, avg duration, spend, delivery).
+    - `MuiLoading`/`MuiEmptyState` for loading and no-result states.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/vendors`, `POST /api/vendors`, `PUT /api/vendors/:vendorId`, `DELETE /api/vendors/:vendorId`, `PATCH /api/vendors/:vendorId/restore`
+    - `GET /api/vendors/:vendorId`, `POST /api/vendors/:vendorId/contact`
+  - Detailed extraction to enforce in this task:
+    - Vendors page must use canonical Grid/DataGrid presentation only (no list-card mode) and align with `docs/ui/vendors_list_view_screen.png`.
+    - Vendor list columns must include canonical details: vendor identity, contact info, rating visualization, project counts/status, and row actions.
+    - Vendor filter behavior must support canonical controls (status, rating range, verified partner, includeDeleted, search) with query-state consistency.
+    - Vendor detail page must align with `docs/ui/vendor_details_screen.png`, including partner/status/rating presentation, contact metadata, top metrics, and associated projects table.
+    - Contact vendor action must open a canonical dialog workflow and map cleanly to role-gated backend contact endpoint behavior.
+    - Delete/restore flows must preserve soft-delete semantics, with conflict toasts for associated vendor constraints following canonical 409 messaging.
+  - _Requirements: 13, 35 (CAN-020)_
 
-  - Update User.preferences schema to include notifications object
-  - Add notifications.emailEnabled (boolean, default: true)
-  - Add notifications.inAppEnabled (boolean, default: true)
-  - Add notifications.emailEvents (object: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - Add notifications.inAppEvents (object: taskAssigned, taskDueSoon, mentioned, commentReply)
-  - _Alignment Gap: 3.4_
+- [ ] 5.7 Integrate Materials/Vendors with task workflows
 
-- [ ] 36.5 Document TaskActivity creation restriction
+  - Ensure task dialogs use active-only material/vendor selectors
+  - Display conflict toasts from blocked deletes
+  - Maintain consistent status chip and enum label mapping
+  - Reusable components to validate/develop for this task:
+    - `MuiSelectAutocomplete` and `MuiMultiSelect` for active-only vendor/material selectors in task dialogs.
+    - `MuiChip` for enum/status mapping consistency across Tasks/Materials/Vendors.
+    - `MuiDialogConfirm` conflict copy for 409 association-block responses (CAN-015 guidance to set INACTIVE).
+  - Detailed extraction to enforce in this task:
+    - Task creation/update dialogs must consume active-only vendor/material option sets so inactive resources cannot be newly assigned.
+    - Selector components must display canonical labels/metadata (status, unit/category, rating/partner where applicable) while submitting canonical identifiers.
+    - Association-block conflict responses for materials/vendors must surface deterministic toast messaging and guidance to set status `INACTIVE` rather than delete (CAN-015).
+    - Cross-module status and priority chip mappings must remain consistent with canonical enum-label/color conventions (CAN-013).
+    - Task/material/vendor pages must remain contract-aligned when resources are deleted/restored/inactivated, including stale-selection and validation edge cases.
+  - _Requirements: 42, 13, 39, 35 (CAN-013, CAN-015)_
 
-  - Update TaskActivity schema section with business rule
-  - Add SHALL statement: TaskActivity can ONLY be created for ProjectTask and AssignedTask
-  - Add SHALL statement: TaskActivity creation for RoutineTask MUST return 409 CONFLICT_ERROR
-  - Add SHALL statement: parentModel=Task requires parent to be ProjectTask or AssignedTask (NOT RoutineTask)
-  - Add code example for validation logic
-  - _Alignment Gap: 3.5_
+- [ ] 5.8 Tests (Frontend)
 
-- [ ] 36.6 Complete authorization matrix with JSON rule-set
-
-  - Replace simplified table with complete JSON-based rule-set
-  - Add requires predicates (isPlatformOrgUser, !isPlatformOrgUser)
-  - Add resourceType for task subtypes (ProjectTask, AssignedTask, RoutineTask)
-  - Add complex ownership combinations (createdBy, assignees, watchers, uploadedBy)
-  - Document evaluation logic: ANY rule passes → ALLOW
-  - Provide code examples for rule evaluation
-  - _Alignment Gap: 3.6_
-
-- [ ] 36.7 Add API query convention details
-
-  - Update API Endpoints section with canonical list query conventions
-  - Document query parameters: page, limit, sortBy, sortOrder, search, includeDeleted
-  - Document multi-select filters as comma-separated values (e.g., status=TODO,IN_PROGRESS)
-  - Document Platform SuperAdmin organizationId parameter
-  - Document 400 VALIDATION_ERROR for non-platform users providing organizationId
-  - Document exact pagination response shape: { data: [], pagination: { page, limit, total, totalPages } }
-  - _Alignment Gap: 3.7_
-
-- [ ] 36.8 Add detailed API error response format
-
-  - Update Error Handling section with canonical error response format
-  - Document success response: { success: true, data: {...}, message: "..." }
-  - Document error response: { success: false, message: "...", error: { code: "ERROR_CODE", details: {...} } }
-  - Document all error codes: VALIDATION_ERROR, UNAUTHENTICATED_ERROR, UNAUTHORIZED_ERROR, NOT_FOUND_ERROR, CONFLICT_ERROR, RATE_LIMITED_ERROR, INTERNAL_ERROR
-  - Provide examples for each error code
-  - _Alignment Gap: 3.8_
-
-- [ ] 36.9 Update testing strategy
-  - Replace "No test frameworks" note with comprehensive manual testing strategy
-  - Document manual testing checklist (authentication, authorization, validation, multi-tenant isolation, task types, soft delete, material/vendor deletion, real-time, notifications, dashboard, responsive, file upload)
-  - Document test data requirements (platform org, multiple customer orgs, multiple depts, multiple users per role, all task types, materials with low stock, vendors with ratings, soft-deleted resources)
-  - Document test scenarios from prd-test-cases.md (15,280 lines)
-  - _Alignment Gap: 3.9_
+  - No frontend test implementation
+  - Manual validation only: list/detail/filter/pagination/restock/contact flows and error handling
+  - Detailed manual verification extraction:
+    - Validate materials and vendors list/detail pages for search/filter/pagination/action behavior against UI references.
+    - Validate create/update/delete/restore flows, including includeDeleted toggles and post-mutation state consistency.
+    - Validate material restock interactions and usage-history rendering, including low-stock indicators and KPI refresh behavior.
+    - Validate vendor contact dialog flow and role-gated access behavior.
+    - Validate 409 conflict handling for associated materials/vendors and confirm canonical toast guidance appears without breaking session continuity.
 
 ---
 
-## Phase 7: Final Integration and Deployment Preparation
+## Phase 6: Dashboard, Notifications, and Settings (Backend -> Frontend)
 
-### 37. Backend Integration
+**Phase Gate**:
 
-- [ ] 37.1 Create Express app configuration
+- Phase 5 complete (resource metrics available for dashboard cards and detail widgets).
+- Settings preferences require stable user endpoints from Phase 3.
 
-  - Create `backend/app.js` with Express app setup
-  - Configure middleware: helmet, cors, compression, cookie-parser, express-mongo-sanitize, morgan (dev only)
-  - Configure body parser (JSON, URL-encoded)
-  - Mount routes: /api/auth, /api/organizations, /api/departments, /api/users, /api/tasks, /api/materials, /api/vendors, /api/attachments, /api/notifications, /api/dashboard
-  - Configure error handling middleware (last)
-  - _Requirements: Design: Express App_
+**Task Execution Protocol (Mandatory 7 Steps)**:
 
-- [ ] 37.2 Create HTTP server entry point
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
 
-  - Create `backend/server.js` with HTTP server
-  - Import app from app.js
-  - Import database connection from config/database.js
-  - Import Socket.IO service from services/socketService.js
-  - Start HTTP server on PORT
-  - Attach Socket.IO to HTTP server
-  - Handle graceful shutdown (SIGINT, SIGTERM)
-  - _Requirements: Design: Server Entry Point_
+### Backend
 
-- [ ] 37.3 Configure package.json scripts
-  - Add scripts: "dev" (nodemon server.js), "start" (node server.js), "seed" (node mock/seed.js), "wipe" (node mock/wipe.js)
-  - _Requirements: Design: Package Scripts_
+- [ ] 6.1 Implement dashboard endpoints and aggregations
 
-### 38. Frontend Integration
+  - `GET /api/dashboard/overview`
+  - `GET /api/departments/:departmentId/dashboard`
+  - Return KPI cards, chart series, upcoming deadlines, recent activity, and scoped filters
+  - Support role-based visibility (org-wide widgets for privileged roles)
+  - Detailed extraction to enforce in this task:
+    - Dashboard overview endpoint must provide role-aware payloads:
+      - Org-wide roles: organization task/user KPIs, department performance, projects overview, materials usage, vendor performance, activity feed, upcoming deadlines.
+      - Department/personal roles: my/dept tasks, overdue, completed-this-week, scoped charts/activity/deadlines.
+    - Aggregation payload must include chart-ready distributions and trend series aligned with status, priority, and timeline requirements.
+    - Upcoming deadlines contract must provide data needed for tabular rendering of next-7-day due tasks.
+    - Filters must support canonical dimensions (`date range`, optional permitted `departmentId`, status, priority, taskType) and apply consistently across all widgets.
+    - Department dashboard endpoint must provide overview analytics payload for department detail overview tab contract.
+    - Endpoint behavior must be tenant-safe and role-authorized for org vs dept visibility boundaries.
+  - _Requirements: 16, 41, 54_
 
-- [ ] 38.1 Create main entry point
+- [ ] 6.2 Implement notifications endpoint logic
 
-  - Create `client/src/main.jsx` with React root
-  - Import AppTheme provider
-  - Import Redux store provider with redux-persist
-  - Import React Router
-  - Import react-toastify ToastContainer
-  - Render app
-  - _Requirements: Design: Main Entry Point_
+  - `GET /api/notifications`
+  - `PATCH /api/notifications/:notificationId/read`
+  - `PATCH /api/notifications/mark-all-read`
+  - `DELETE /api/notifications/:notificationId` (optional)
+  - Maintain TTL semantics and unread-count consistency
+  - Detailed extraction to enforce in this task:
+    - Notification list endpoint must return current-user notifications with canonical ordering and optional filter support (read state, entity model, date range where applicable).
+    - Read-one endpoint must update `isRead` deterministically and preserve ownership/tenant constraints.
+    - Mark-all-read endpoint must perform bulk read transition for current user only (`PATCH /api/notifications/mark-all-read` canonical path).
+    - Optional delete endpoint must remain soft-delete behavior when enabled by UI contract.
+    - Notification expiry behavior must remain TTL-index driven with `expiresAt` semantics (default 30-day lifecycle).
+    - Unread count behavior must remain consistent across read/mark-all/delete actions and real-time pushes.
+  - _Requirements: 15, 54_
 
-- [ ] 38.2 Create Home page
+- [ ] 6.3 Complete settings-related update endpoints
 
-  - Create `client/src/pages/Home.jsx` with landing page
-  - Display: hero section, features, pricing, testimonials, CTA buttons
-  - _Requirements: Design: Home Page_
+  - Ensure `PUT /api/users/:userId/preferences` supports notifications + appearance payloads
+  - Ensure `PUT /api/users/:userId/security` supports two-factor persistence
+  - Ensure `POST /api/auth/change-password` behavior aligns with Account tab UX
+  - Detailed extraction to enforce in this task:
+    - Preferences endpoint must support canonical appearance and notification preference payload fields expected by Settings tabs.
+    - Security endpoint must support two-factor setting persistence and validation rules.
+    - Change-password endpoint must enforce current-password verification and new-password policy semantics.
+    - Settings endpoints must maintain ownership and role constraints, and preserve standardized success/error response contracts.
+    - Date/time preference fields must remain compatible with frontend `Intl.DateTimeFormat` rendering policy.
+  - _Requirements: 33, 63, 54_
 
-- [ ] 38.3 Create NotFound page
+- [ ] 6.4 Complete real-time delivery integration
 
-  - Create `client/src/pages/NotFound.jsx` with 404 page
-  - Display: 404 message, back to home button
-  - _Requirements: Design: NotFound Page_
+  - Notification push to user rooms
+  - Entity change events needed by dashboard/activity widgets
+  - Ensure cross-tenant event isolation
+  - Detailed extraction to enforce in this task:
+    - Socket auth must ensure only authenticated users join rooms tied to their tenant scope.
+    - Notification events must be emitted to user rooms for new notifications and read-state-affecting updates where needed.
+    - Entity-change events required by dashboard and activity widgets must be emitted with stable event names and payload structures.
+    - Realtime layer must preserve cross-tenant isolation; no room joins or event payloads may expose other-tenant entities.
+    - Disconnect/reconnect behavior must remain compatible with frontend event subscription lifecycle expectations.
+  - _Requirements: 14, 15, 60_
 
-- [ ] 38.4 Configure index.html
-  - Update `client/index.html` with meta tags, title, favicon
-  - _Requirements: Design: HTML Entry Point_
+- [ ] 6.5 Tests (Backend)
 
-### 39. Documentation
+  - Manual API verification for dashboard, notifications, settings endpoints
+  - Validate filter combinations and payload consistency
+  - Validate mark-all-read route path and behavior
+  - Validate 401 refresh and 403 toast-only contract compatibility
+  - Detailed manual verification extraction:
+    - Verify dashboard endpoint payload completeness for both org-wide and department/personal role contexts.
+    - Verify dashboard filter combinations produce consistent aggregate changes across KPI/chart/table sections.
+    - Verify notification read-one and mark-all-read behaviors maintain unread counts and ownership boundaries.
+    - Verify settings preference/security/change-password update paths for valid and invalid payloads.
+    - Verify auth failure vs authorization failure status semantics (401 vs 403) remain contract-correct for frontend behavior.
 
-- [ ] 39.1 Update README.md
+### Frontend
 
-  - Document project overview
-  - Document technology stack
-  - Document setup instructions (backend, frontend)
-  - Document environment variables
-  - Document database seeding
-  - Document common commands
-  - Document project structure
-  - Document API endpoints
-  - Document manual testing checklist
-  - _Requirements: Design: Documentation_
+- [ ] 6.6 Implement Dashboard overview page from UI specs
 
-- [ ] 39.2 Create API documentation
-  - Document all API endpoints with request/response examples
-  - Document authentication flow
-  - Document authorization matrix
-  - Document error codes
-  - Document query conventions
-  - _Requirements: Design: API Documentation_
+  - Align with `docs/ui/desktop_dashboard_overview_screen.png`
+  - Implement filters row, chips, refresh, export, and chart interactions
+  - Keep header/left-nav behavior aligned with layout canonical rules
+  - Reusable components to validate/develop for this task:
+    - `MuiStatCard` and `MuiProgress` for KPI and health widgets.
+    - `MuiDataGrid` + `MuiDataGridToolbar` for upcoming deadlines and table widgets.
+    - `MuiSearchField`, `MuiFilterButton`, `MuiChip` for dashboard filters and active-filter chips.
+    - `MuiTimeline`/activity list primitives for recent activity stream.
+    - `MuiLoading`/`MuiEmptyState` for widget-level loading/empty states.
+    - `MuiThemeDropDown` and `MuiAppIconLogo` placement compliance in header/sidebar (CAN-024).
+  - Endpoint contracts consumed by this task:
+    - `GET /api/dashboard/overview`
+    - `GET /api/departments/:departmentId/dashboard` (role-permitted scoped views)
+  - Detailed extraction to enforce in this task:
+    - Dashboard page must align with `docs/ui/desktop_dashboard_overview_screen.png` and render role-scoped widgets per canonical contracts (org-wide vs department/personal contexts).
+    - KPI cards, chart widgets, activity feed, and upcoming-deadlines table must use canonical data contracts and update coherently when filters change.
+    - Filter row must support canonical dimensions (date range, departmentId where permitted, status, priority, task type) and show active filter chips with clear/remove behavior.
+    - Chart interactions and KPI clicks must preserve canonical drill/navigation expectations to filtered list pages where specified.
+    - Export and refresh controls must align with requirements: export filtered snapshot semantics and manual reload/cache-bust behavior for dashboard data.
+    - Layout composition must preserve header/sidebar rules, including no dashboard header logo and sidebar-owned branding placement (CAN-024).
+  - _Requirements: 16, 61, 35 (CAN-024)_
+
+- [ ] 6.7 Implement notification UI module
+
+  - Notification bell + badge + dropdown
+  - Read single, mark all read, optional delete
+  - Route navigation from notification entity links
+  - Reusable components to validate/develop for this task:
+    - `MuiBadge` for unread count indicator.
+    - `MuiTimeline`/list feed presentation for dropdown items.
+    - `MuiDialogConfirm` for optional delete confirmation.
+    - `MuiLoading`/`MuiEmptyState` for notification dropdown loading and empty states.
+  - Endpoint contracts consumed by this task:
+    - `GET /api/notifications`
+    - `PATCH /api/notifications/:notificationId/read`
+    - `PATCH /api/notifications/mark-all-read`
+    - `DELETE /api/notifications/:notificationId` (if enabled)
+  - Detailed extraction to enforce in this task:
+    - Notification bell must display unread badge count and open dropdown/list with newest-first ordering and canonical notification metadata.
+    - Notification item interactions must support read-single behavior, entity-link navigation, and optional delete flow where enabled by contract.
+    - `Mark all as read` interaction must clear unread state consistently in UI and synchronize with backend unread counts.
+    - Notification rendering must support mixed event types (task/activity/comment/mention/system) with consistent labels, timestamps, and icons.
+    - Empty/loading states in dropdown/list must use reusable primitives and preserve non-blocking UX.
+    - Notification UX must remain compatible with realtime push updates and session-safe error handling.
+  - _Requirements: 15_
+
+- [ ] 6.8 Implement Settings page with canonical tabs
+
+  - Tabs: Profile, Account, Notifications, Appearance
+  - Profile aligned to `docs/ui/settings_profile_tab_screen.png`
+  - Account aligned to `docs/ui/settings_account_tab_screen.png`
+  - Add Notifications and Appearance tab UIs per PRD section 10/18 contracts
+  - Reusable components to validate/develop for this task:
+    - Form wrappers: `MuiTextField`, `MuiNumberField`, `MuiSwitch`, `MuiCheckbox`, `MuiSelectAutocomplete`, `MuiMultiSelect`.
+    - `MuiDialog` for nested edit actions from settings sections.
+    - `MuiChip` and `MuiProgress` for profile completeness/skills visualization where shown.
+    - `MuiThemeDropDown` integration consistency with appearance settings.
+  - Endpoint contracts consumed by this task:
+    - `PUT /api/users/:userId/preferences`
+    - `PUT /api/users/:userId/security`
+    - `POST /api/auth/change-password`
+  - Detailed extraction to enforce in this task:
+    - Settings IA must include exactly four tabs (`Profile`, `Account`, `Notifications`, `Appearance`) and align profile/account screens with provided references.
+    - Profile tab must support personal-information editing and profile context display sections as specified in settings profile UI references.
+    - Account tab must support email update and password change workflows with canonical validation and messaging expectations.
+    - Notifications tab must expose preference controls mapped to preferences payload fields (in-app/email/reminders and related toggles).
+    - Appearance tab must expose theme/presentation preferences compatible with global theme behavior and preference persistence contracts.
+    - All settings forms must use canonical reusable form wrappers and preserve consistent validation, helper text, and save/cancel interaction patterns.
+  - _Requirements: 33, 63_
+
+- [ ] 6.9 Integrate settings persistence and app-wide theme behavior
+
+  - Persist profile/account/security/preferences changes through proper endpoints
+  - Keep theme persistence via Redux and backend preference sync
+  - Enforce toast-only 403 handling in settings actions
+  - Reusable component behavior checks:
+    - All settings forms use reusable `Mui*` form inputs and keep unified validation/error display.
+    - Theme toggles (`MuiThemeDropDown`) and preference forms stay synchronized without duplicate state divergence.
+  - Detailed extraction to enforce in this task:
+    - Settings mutations must map exactly to canonical endpoints (`preferences`, `security`, `change-password`) with payload shaping that matches backend contracts.
+    - Theme preference updates must synchronize Redux UI state and persisted backend preference state without race conditions or stale overrides.
+    - Date/time and locale-related preference fields must remain compatible with `Intl.DateTimeFormat`-based rendering policy (CAN-014).
+    - Form-level success/error feedback must use canonical toast behavior and preserve session continuity for forbidden responses (CAN-012).
+    - Settings route behavior must remain ownership-safe and role-safe, preventing unauthorized edits while keeping current UI context stable.
+  - _Requirements: 60, 63, 35 (CAN-012, CAN-014)_
+
+- [ ] 6.10 Tests (Frontend)
+
+  - No frontend test implementation
+  - Manual validation only: dashboard widgets, notification interactions, settings tabs and persistence behavior
+  - Detailed manual verification extraction:
+    - Validate dashboard role-scoped widget payload rendering, filter application, and cross-widget consistency.
+    - Validate dashboard refresh/export controls and resulting UI state updates.
+    - Validate notification dropdown/list behavior (read one, mark all read, optional delete, entity-link navigation, unread badge updates).
+    - Validate settings tab forms for profile/account/notifications/appearance update flows and persisted state after reload.
+    - Validate canonical error-handling behavior in dashboard/notification/settings interactions (401 refresh flow, 403 toast-only, conflict/rate-limit messaging).
+
+---
+
+## Phase 7: Cross-Phase Hardening, Canonical Compliance, and Release Preparation (Backend -> Frontend)
+
+**Phase Gate**:
+
+- Phases 1-6 complete and manually validated.
+- This phase closes quality, consistency, and release-readiness gaps.
+
+**Task Execution Protocol (Mandatory 7 Steps)**:
+
+- Apply `.kiro/steering/task-execution-protocol.md` to every Backend and Frontend task in this phase before marking it complete.
+- Step 1: Pre-Git Requirement (Before Task Execution)
+- Step 2: Comprehensive and Extremely Deep Codebase Analysis
+- Step 3: Comprehensive Analysis of Previously Implemented Tasks (N - 1)
+- Step 4: Task Execution Without Deviation
+- Step 5: Backend Testing (MANDATORY FOR BACKEND TASKS ONLY)
+- Step 6: User Review and Feedback Integration
+- Step 7: Post-Git Requirement (After Task Completion)
+
+### Backend
+
+- [ ] 7.1 Run full backend manual regression by role and tenant
+
+  - Role matrix: Platform SuperAdmin, SuperAdmin, Admin, Manager, User
+  - Scope checks: ownOrg, crossOrg, ownDept, crossDept, ownership predicates
+  - Resource lifecycle checks: create/read/update/delete/restore for all resources
+  - Detailed regression extraction to enforce in this task:
+    - Validate role-matrix outcomes for each resource family (auth/users/departments/tasks/activities/comments/attachments/materials/vendors/notifications/dashboard/settings).
+    - Validate tenant isolation for non-platform users and matrix-governed cross-org access for platform superadmin only.
+    - Validate ownership predicates (`self`, `createdBy`, `assignees`, `watchers`, `mentioned`, `uploadedBy`, `manager`) across protected operations.
+    - Validate full soft-delete lifecycle and restore pathways with includeDeleted behavior on all relevant list endpoints.
+    - Validate inactive/verified/account-status edge behavior across auth and protected routes.
+    - Validate side-effect consistency for notifications, socket events, and inventory updates under mutation flows.
+  - _Requirements: 43, 60, 62_
+
+- [ ] 7.2 Complete backend canonical decision compliance pass (CAN-001 to CAN-027)
+
+  - Verify enum mappings, filters, immutable fields, association delete blocks, regex, TTL, attachment guards
+  - Verify no forbidden `/api/organizations` dependency in canonical MVP flow
+  - Verify log/error response consistency and endpoint contracts
+  - Detailed canonical extraction to enforce in this task:
+    - Validate backend-relevant canonical decisions end-to-end: CAN-005, CAN-006, CAN-008, CAN-013, CAN-015, CAN-016, CAN-019, CAN-020, CAN-021, CAN-022, CAN-026, CAN-027.
+    - Validate canonical enums and serializer mappings remain consistent between model validators, controllers, and response payloads.
+    - Validate union-filter support and filter normalization across list endpoints per CAN-004.
+    - Validate delete-block conflict behavior for associated Materials/Vendors using `.withDeleted()` checks (CAN-015).
+    - Validate immutable field conflict behavior for user update targets (CAN-016).
+    - Validate attachment allowlist and cloudinary URL guards in upload/create flows (CAN-021/CAN-027).
+    - Validate inventory/restock atomicity and no-negative-stock enforcement for material-affecting flows (CAN-019).
+    - Validate department inactive-state restrictions and description length constraints (CAN-022/CAN-026).
+    - Validate endpoint inventory aligns with canonical Section 18 contracts and excludes forbidden organization CRUD route dependency.
+  - _Requirements: 35, 54, 58_
+
+- [ ] 7.3 Performance and security hardening
+
+  - Validate and optimize indexes for common list/query paths
+  - Confirm rate limit profiles and CORS correctness
+  - Confirm no tenant data leaks in response serializers
+  - Detailed hardening extraction to enforce in this task:
+    - Re-check index strategy against high-frequency filters (org/dept/status/priority/type/date/includeDeleted and relation lookups).
+    - Validate bcrypt strength and token/cookie handling policies remain compliant with auth security requirements.
+    - Validate CORS policy, cookie credentials settings, and origin restrictions in production-like configuration.
+    - Validate rate-limiter behavior and error contract for auth-sensitive and general endpoints.
+    - Validate response serializers prevent tenant leakage and avoid exposing internal-only fields.
+    - Validate socket room join/emit paths maintain tenant-bound event isolation.
+    - Validate logging/error output avoids sensitive payload leakage while preserving audit/debug traceability.
+  - _Requirements: 19, 24, 43, 44_
+
+- [ ] 7.4 Tests (Backend)
+
+  - Execute final manual backend checklist and capture evidence
+  - Focus on high-risk flows: auth refresh, cross-tenant access, task/file/comment workflows, dashboard aggregations
+  - Document all defects and retest closures
+  - Detailed final verification extraction:
+    - Produce manual verification evidence per resource and per role, including request/response snapshots and expected status assertions.
+    - Prioritize high-risk sequences: token refresh rotation, cross-tenant authorization denials, attachment guards, comment depth/mention handling, material inventory atomicity, and association-delete conflicts.
+    - Verify dashboard/notification/settings contracts against current backend outputs and canonical endpoint shapes.
+    - Re-run failed scenarios after fixes and record closure evidence for each defect.
+    - Confirm release readiness only after all canonical compliance and regression checks are fully green.
+
+### Frontend
+
+- [ ] 7.5 Run UI parity pass against all provided reference screens
+
+  - Landing/public: `landing-page.png`, `public_layout_screen.png`
+  - Layout: `desktop-dashboard-layout.png`, `mobile-dashboard-layout.png`
+  - Dashboard: `desktop_dashboard_overview_screen.png`
+  - Departments: grid/list/filter/create/details screens
+  - Users: grid/list/filter/create/details screens
+  - Tasks: list/grid/filter/create/details screens
+  - Materials/Vendors: list/details screens
+  - Settings: profile/account screens + PRD-defined notifications/appearance tabs
+  - Reusable component parity checklist:
+    - Validate every list/grid screen uses `MuiDataGrid` for Grid view and card layout for List view (CAN-023).
+    - Validate all filter/create/edit/contact/restock flows use canonical `MuiDialog` pattern (CAN-017).
+    - Validate consistent usage of `MuiDataGridToolbar`, `MuiSearchField`, `MuiFilterButton`, `MuiPagination`, `MuiActionColumn`.
+    - Validate `MuiChip` enum mapping, `MuiAvatarStack` rendering, `MuiStatCard`/`MuiProgress` KPI visuals, and `MuiTimeline` activity streams against each UI reference.
+  - Detailed extraction to enforce in this task:
+    - Every referenced `docs/ui/*` screen must be validated for layout structure, information architecture, action placement, and key component composition, not only visual similarity.
+    - Parity pass must confirm canonical decisions impacting UI are fully satisfied, especially CAN-002/009/011/018/023/024/025 and resource-specific CAN rules reflected in each screen family.
+    - Each screen’s data dependencies must map to existing Section 18 endpoint contracts with no missing API wiring or placeholder-only sections remaining.
+    - Dialog-driven flows (create/edit/filter/contact/restock/delete/restore) must match canonical behavior, copy intent, and responsive presentation across all screen families.
+    - Status/priority/role/category label consistency must be verified across tasks/users/departments/materials/vendors/details/dashboard/settings views.
+    - Screen parity verification must include mobile/tablet behavior required by PRD sections, not only desktop reference compositions.
+  - _Requirements: 61, 63, 35_
+
+- [ ] 7.6 Responsive/accessibility/usability hardening
+
+  - Validate xs/sm/md/lg/xl behavior and mobile full-height dialogs
+  - Validate keyboard focus order, contrast, and label semantics
+  - Validate overflow ellipsis behavior in lists/cards/tables
+  - Reusable component hardening scope:
+    - `MuiBottomNavigation` visibility and centered `MuiFAB` on xs only (CAN-002).
+    - `MuiDialog` focus/aria/full-height behavior on xs (CAN-017).
+    - `MuiDataGrid` responsive column visibility and keyboard navigation behavior on xs/sm.
+    - `MuiEmptyState`, `MuiLoading`, and notification badges for accessible aria semantics.
+  - Detailed extraction to enforce in this task:
+    - Breakpoint behavior must be validated against canonical ranges (CAN-001) for layout, navigation, cards, DataGrid columns, dialogs, and action visibility.
+    - Mobile navigation must satisfy bottom-nav item set, centered FAB, profile-menu “More” behavior, and touch-target minimums for interactive controls.
+    - Dialog accessibility must enforce focus trap/restore, required aria attributes, keyboard escape handling, and xs full-height viewport styling (CAN-017).
+    - Data-dense UI elements (tables/cards/timeline rows/chips) must preserve readability with ellipsis/truncation rules, accessible labels, and predictable keyboard traversal.
+    - Color/contrast and semantic indicators for statuses/priorities/errors must remain perceivable and consistent across all modules.
+    - Usability hardening must confirm loading/empty/error states are non-blocking, understandable, and consistent with global UX rules.
+  - _Requirements: 59, 61, 35 (CAN-001, CAN-017, CAN-023)_
+
+- [ ] 7.7 Final frontend integration and bug-fix sweep
+
+  - Resolve API mismatch issues immediately with backend contract owners
+  - Ensure route guards, toasts, optimistic updates, and cache invalidation are stable
+  - Validate no forbidden page on 403; session continuity preserved
+  - Reusable component regression scope:
+    - Verify all reusable component props and event contracts remain backward-compatible across Tasks/Users/Departments/Materials/Vendors/Dashboard/Settings pages.
+    - Verify reusable dialog/form/input components submit payloads matching Section 18 endpoint contracts without local schema drift.
+  - Detailed extraction to enforce in this task:
+    - Final integration pass must reconcile any frontend/backend contract mismatches in query params, payload shapes, enum mappings, and response adapters.
+    - Route guard and session behavior must remain canonical across full app navigation: 401 refresh-then-logout on refresh failure, 403 toast-only/no logout/no forbidden page.
+    - Cache invalidation and optimistic updates must be audited for all mutation-heavy modules to prevent stale cards/tables/detail panes after edits/deletes/restores.
+    - Reusable component APIs must be frozen for release with consistent prop contracts, error-state behavior, and event signatures across all consuming pages.
+    - Bug-fix sweep must prioritize high-risk UX paths: nested dialogs, filter unions, realtime list/detail updates, and role-gated action surfaces.
+    - Final fixes must preserve canonical UI consistency and must not regress validated parity/accessibility/responsive outcomes from prior tasks.
+  - _Requirements: 60, 59, 35 (CAN-012)_
+
+- [ ] 7.8 Tests (Frontend)
+
+  - No frontend test implementation
+  - Execute final manual UAT checklist for all major flows and breakpoints
+  - Detailed manual verification extraction:
+    - Execute end-to-end UAT across auth, dashboard, departments, users, tasks, materials, vendors, notifications, and settings flows for representative roles/scopes.
+    - Validate all required UI reference screens and responsive variants are functionally complete and behaviorally aligned with canonical requirements.
+    - Validate all frontend error/success feedback pathways with canonical toast behavior and session continuity rules.
+    - Validate cross-feature integration paths (task-material-vendor links, user/department detail dependencies, dashboard drilldowns, notification deep-links).
+    - Record and close all residual defects before release readiness, ensuring no unresolved canonical compliance gaps remain.
 
 ---
 
 ## Notes
 
-**Implementation Dependencies**:
+**Implementation Dependencies (Strict)**:
 
-- Backend models must be completed before controllers
-- Backend middleware must be completed before routes
-- Frontend store must be configured before components
-- Frontend layouts must be completed before feature components
-- Real-time integration requires both backend Socket.IO service and frontend socketService
+- Phase 1 must complete before any model/controller/UI feature work.
+- Phase 2 data contracts must complete before Phase 3 resource implementation.
+- Phase 3 identity/resource flows must complete before Phase 4 task detail workflows.
+- Phase 4 task linkage must complete before Phase 5 material/vendor association logic.
+- Phase 5 metric-bearing resources must complete before Phase 6 dashboard analytics.
+- Phase 6 functional completion is required before Phase 7 hardening and release prep.
 
-**Testing Approach**:
+**Testing Policy**:
 
-- Manual testing only (no test frameworks allowed per PRD)
-- Use comprehensive test scenarios from prd-test-cases.md (15,280 lines)
-- Test all CRUD operations for all roles
-- Test all validation rules
-- Test all authorization rules
-- Test multi-tenant isolation
-- Test soft delete and cascade
-- Test real-time updates
-- Test responsive layout
+- Backend: manual/API verification only, executed after each resource controller completion in its phase.
+- Frontend: no formal test suite; manual verification only.
+- No forbidden test frameworks (Jest, Mocha, Chai, Supertest, Vitest, Cypress).
 
-**Alignment Corrections**:
+**Canonical Consistency Policy**:
 
-- Can be done in parallel with implementation
-- Should be completed before final review
-- Ensure requirements.md and design.md are single source of truth
-
-**Deployment Preparation**:
-
-- Configure production environment variables
-- Configure MongoDB Atlas connection
-- Configure Cloudinary production account
-- Configure Gmail SMTP production credentials
-- Configure CORS for production CLIENT_URL
-- Configure rate limiting for production
-- Configure logging for production (file transport)
-- Configure error monitoring (optional: Sentry)
-
-## Canonical Decisions Execution Plan (CAN-001 to CAN-027)
-
-> Each CAN item includes implementation tasks and explicit verification steps.
-
-- [ ] **CAN-001** Implement canonical breakpoints across layouts/components.
-  - [ ] Update responsive wrappers and viewport tests matrix.
-  - [ ] Verification: manually validate xs/sm/md/lg/xl screenshots and nav behavior.
-- [ ] **CAN-002** Enforce bottom nav visibility/items and “More” profile grouping.
-  - [ ] Update bottom-nav config and auth-aware item rendering.
-  - [ ] Verification: xs shows nav; sm+ hides; profile actions reachable via More.
-- [ ] **CAN-003** Enforce comment depth max=5.
-  - [ ] Add backend depth validation and UI reply cut-off logic.
-  - [ ] Verification: depth 6 creation fails with validation error; depth 5 reply UI disabled.
-- [ ] **CAN-004** Implement union filters for list endpoints.
-  - [ ] Extend query parser/builders for composable filter predicates.
-  - [ ] Verification: combined filters return intersection-correct result sets.
-- [ ] **CAN-005** Centralize authorization matrix usage.
-  - [ ] Refactor API/FE checks to consume canonical matrix module only.
-  - [ ] Verification: spot-check role/resource matrix cases in UI and API.
-- [ ] **CAN-006** Standardize Ethiopian phone regex everywhere.
-  - [ ] Replace divergent regexes in model validators/forms/placeholders.
-  - [ ] Verification: +251xxxxxxxxx and 0xxxxxxxxx pass; invalid lengths fail.
-- [ ] **CAN-007** Remove terms checkbox from registration.
-  - [ ] Delete terms UI/control and remove backend dependency.
-  - [ ] Verification: registration completes with no terms field.
-- [ ] **CAN-008** Align verification + welcome email behavior.
-  - [ ] Enforce unverified login block and idempotent verify/welcome flow.
-  - [ ] Verification: initial user blocked pre-verify; org-created user auto-verified.
-- [ ] **CAN-009** Keep department selector in sidebar only (HOD).
-  - [ ] Remove selector from Department Details header and gate sidebar selector by HOD.
-  - [ ] Verification: HOD sees sidebar selector; non-HOD does not.
-- [ ] **CAN-010** Rename sidebar “My Tasks” to “Tasks”.
-  - [ ] Update nav labels/translations/constants.
-  - [ ] Verification: sidebar renders only “Tasks”.
-- [ ] **CAN-011** Enforce User Details tab set.
-  - [ ] Normalize tabs and routing to Overview/Tasks/Activity/Performance.
-  - [ ] Verification: all four tabs render and deep-link correctly.
-- [ ] **CAN-012** Handle 403 as toast-only.
-  - [ ] Adjust global error interceptor to suppress forbidden page/logout behavior.
-  - [ ] Verification: induced 403 shows toast, session remains active.
-- [ ] **CAN-013** Canonical status/priority enum + UI mapping.
-  - [ ] Consolidate enum constants and chip label mappings.
-  - [ ] Verification: invalid enum rejected; UI labels match spec.
-- [ ] **CAN-014** Use Intl for user-facing date formatting.
-  - [ ] Replace dayjs formatting calls in rendering layers.
-  - [ ] Verification: grep/lint shows no dayjs format usage in UI rendering.
-- [ ] **CAN-015** Block material/vendor delete on associations.
-  - [ ] Implement withDeleted association checks + 409 responses.
-  - [ ] Verification: associated entity delete returns 409; unassociated soft-delete succeeds.
-- [ ] **CAN-016** Enforce immutable fields for Admin/Manager/User targets.
-  - [ ] Add API guard + UI read-only fields for immutable set.
-  - [ ] Verification: attempted mutation returns 409 and UI disables edits.
-- [ ] **CAN-017** Implement mobile dialog full-height behavior.
-  - [ ] Apply canonical MUI dialog props/sx for <=600px.
-  - [ ] Verification: mobile viewport dialogs occupy 100vh and remain usable.
-- [ ] **CAN-018** Department Details tab architecture.
-  - [ ] Rework tabs to Overview/Members/Tasks with Tasks sub-tabs including All Activity.
-  - [ ] Verification: no top-level Activity tab; sub-tabs present under Tasks.
-- [ ] **CAN-019** Material SKU/inventory/restock consistency.
-  - [ ] Ensure transactional stock decrement/restock and low-stock cues.
-  - [ ] Verification: negative stock blocked; restock updates stock atomically.
-- [ ] **CAN-020** Vendor extended fields/metrics.
-  - [ ] Add schema/API/UI support for website/location/partner/status/rating/metrics.
-  - [ ] Verification: CRUD validates fields; details show metric cards.
-- [ ] **CAN-021** Disallow material attachments.
-  - [ ] Remove UI entry points and block API parentModel=Material.
-  - [ ] Verification: API rejects Material parent; material detail has no attachments section.
-- [ ] **CAN-022** Enforce department ACTIVE/INACTIVE status.
-  - [ ] Add status lifecycle checks and inactive-operation constraints.
-  - [ ] Verification: inactive department restricted per policy.
-- [ ] **CAN-023** Standardize Grid vs List implementation.
-  - [ ] Ensure grid uses MuiDataGrid and list uses MUI card Grid with `size` prop.
-  - [ ] Verification: mode toggles render canonical components and toolbar/columns.
-- [ ] **CAN-024** Move dashboard logo ownership to sidebar.
-  - [ ] Remove header logo and confirm sidebar-only logo presentation.
-  - [ ] Verification: dashboard header has no logo across breakpoints.
-- [ ] **CAN-025** Public header CTA label normalization.
-  - [ ] Set CTA labels to exactly “Log In” and “Sign Up”.
-  - [ ] Verification: header buttons match copy exactly.
-- [ ] **CAN-026** Department description max length 500.
-  - [ ] Add UI helper/limit + backend validation cap.
-  - [ ] Verification: 501 chars rejected in UI/API.
-- [ ] **CAN-027** Attachment URL regex + extension allowlist.
-  - [ ] Enforce extension pre-upload and Cloudinary URL pattern post-upload.
-  - [ ] Verification: disallowed ext rejected; valid URL pattern accepted only with version segment.
-
-## Manual consistency pass (cross-file relevance check)
-
-- [ ] Verified CAN-001..CAN-027 appear in requirements, design mapping, and task execution plan where they impact behavior.
-- [ ] Verified no CAN rule exists only in one `.kiro` file when it has cross-layer implications.
-- [ ] Verified CAN wording remains canonical with source section 23.1.
-
-### Trace Table
-
-| CAN-ID           | Source location                                   | Task location                                                                                    |
-| ---------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| CAN-001..CAN-027 | `docs/product-requirements-document-new.md` §23.1 | This file, “Canonical Decisions Execution Plan (CAN-001 to CAN-027)” + “Manual consistency pass” |
+- Keep `requirements.md`, `design.md`, and `tasks.md` synchronized whenever any contract/UI/flow changes.
+- Treat PRD Section 18 and CAN-001..CAN-027 as the authoritative source for endpoint contracts and behavior.

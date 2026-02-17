@@ -571,7 +571,7 @@ The system serves two types of organizations:
 
 1. WHEN a user navigates to /dashboard/users/:userId, THE System SHALL display the user detail page with 4 tabs: Overview, Tasks, Activity, Performance
 2. WHEN a user views the Overview tab, THE System SHALL display profile header with avatar, contact info, role, department, employee ID, joined date, and skills chart
-3. WHEN a user views the Tasks tab, THE System SHALL display tabs (Created, Assigned, Watching) with task lists and filters
+3. WHEN a user views the Tasks tab, THE System SHALL display sub-tabs (Assigned, Created, Watching) with task lists and filters
 4. WHEN a user views the Activity tab, THE System SHALL display a chronological feed of user actions
 5. WHEN a user views the Performance tab (Manager/Admin only), THE System SHALL display KPIs: completion rate, average task time, throughput, and comparison to department averages
 6. WHEN a user views the Performance tab, THE System SHALL display charts: task completion trend, priority distribution, and status breakdown
@@ -582,15 +582,15 @@ The system serves two types of organizations:
 
 ### Requirement 32: Task Details with Tabs
 
-**User Story:** As a user, I want to view task details with tabs for overview, activities, comments, and attachments, so that I can access all task-related information in one place.
+**User Story:** As a user, I want to view task details with tabs for overview, activities, comments, and files, so that I can access all task-related information in one place.
 
 #### Acceptance Criteria
 
-1. WHEN a user navigates to /dashboard/tasks/:taskId, THE System SHALL display the task detail page with 4 tabs: Overview, Activities, Comments, Attachments
+1. WHEN a user navigates to /dashboard/tasks/:taskId, THE System SHALL display the task detail page with 4 tabs: Overview, Activities, Comments, Files
 2. WHEN a user views the Overview tab, THE System SHALL display task header, status, priority, type, dates, assignees/watchers, vendor (ProjectTask), description, and tags
 3. WHEN a user views the Activities tab (ProjectTask/AssignedTask only), THE System SHALL display a timeline of TaskActivity entries with user avatars, timestamps, materials, attachments, and expandable details
 4. WHEN a user views the Comments tab, THE System SHALL display threaded comments (max depth 5) with @mentions, reply, edit, delete, and attachments
-5. WHEN a user views the Attachments tab, THE System SHALL display a gallery view with file previews, download buttons, and lightbox for images
+5. WHEN a user views the Files tab, THE System SHALL display a gallery view with file previews, download buttons, and lightbox for images
 6. WHEN a user adds a comment with @mentions, THE System SHALL parse @username patterns, validate mentioned users, and create notifications
 7. WHEN a user replies to a comment, THE System SHALL create a nested comment with depth incremented by 1
 8. WHEN a user edits their own comment, THE System SHALL allow the update and preserve the original createdAt timestamp
@@ -599,20 +599,20 @@ The system serves two types of organizations:
 
 ### Requirement 33: Settings Page
 
-**User Story:** As a user, I want to manage my profile, account, and security settings, so that I can customize my experience and maintain account security.
+**User Story:** As a user, I want to manage my profile, account security, notification preferences, and appearance settings, so that I can customize my experience and maintain account security.
 
 #### Acceptance Criteria
 
-1. WHEN a user navigates to /dashboard/settings, THE System SHALL display the settings page with 3 tabs: Profile, Account, Security
-2. WHEN a user views the Profile tab, THE System SHALL display fields: profile picture, first name, last name, position, phone, skills, and preferences (theme, date format, time format, timezone)
-3. WHEN a user updates profile information, THE System SHALL validate and save the changes
-4. WHEN a user views the Account tab, THE System SHALL display fields: email, phone, and password change form
-5. WHEN a user changes their password, THE System SHALL validate current password, new password (8-128 chars), and confirmation, then hash with bcrypt (>=12 rounds)
-6. WHEN a user views the Security tab, THE System SHALL display two-factor authentication toggle
-7. WHEN a user enables 2FA, THE System SHALL generate a QR code and backup codes
-8. WHEN a user disables 2FA, THE System SHALL require password confirmation
-9. THE System SHALL display success toast notifications for all settings updates
-10. THE System SHALL persist theme preference in Redux with redux-persist
+1. WHEN a user navigates to /dashboard/settings, THE System SHALL display the settings page with 4 tabs: Profile, Account, Notifications, Appearance
+2. WHEN a user views the Profile tab, THE System SHALL display fields: profile picture, first name, last name, position, phone, and skills
+3. WHEN a user updates profile information, THE System SHALL validate and save the changes via PUT /api/users/:userId
+4. WHEN a user views the Account tab, THE System SHALL display fields for changing email and password (current password, new password, confirm new password)
+5. WHEN a user changes their password, THE System SHALL call POST /api/auth/change-password and validate current/new/confirm password constraints
+6. WHEN a user views the Notifications tab, THE System SHALL display email and in-app event toggles and browser notification preference controls
+7. WHEN a user views the Appearance tab, THE System SHALL display theme mode (light/dark/system), language, and date/time format controls
+8. WHEN a user updates notification or appearance settings, THE System SHALL persist the changes via PUT /api/users/:userId/preferences
+9. WHEN a user updates two-factor preference, THE System SHALL persist via PUT /api/users/:userId/security
+10. THE System SHALL display success toast notifications for all settings updates
 
 ### Requirement 34: Constraints and Engineering Rules
 
@@ -797,11 +797,11 @@ The system serves two types of organizations:
 6. WHEN a user creates a task, THE System SHALL display a dynamic dialog based on task type (Project, Assigned, Routine) with appropriate fields and validation
 7. WHEN a user creates a RoutineTask with materials, THE System SHALL show stock on hand, quantity required, and cost preview; backend SHALL enforce inventory rule
 8. WHEN a soft-deleted task is displayed, THE System SHALL show a "Restore" button instead of "Delete"
-9. WHEN a user navigates to /dashboard/tasks/:taskId, THE System SHALL display tabs: Overview, Activities, Comments, Attachments
+9. WHEN a user navigates to /dashboard/tasks/:taskId, THE System SHALL display tabs: Overview, Activities, Comments, Files
 10. WHEN a user views Overview tab, THE System SHALL display title, chips, description, dates, assignees/watchers, vendor (ProjectTask), tags, required materials table (RoutineTask)
 11. WHEN a user views Activities tab (ProjectTask/AssignedTask only), THE System SHALL display timeline of TaskActivity entries with search and "Add Note"
 12. WHEN a user views Comments tab, THE System SHALL display threaded comments (max depth 5) with rich text editor, @mention detection, reply, edit, delete, attachments
-13. WHEN a user views Attachments tab, THE System SHALL display upload dropzone with file type/size validation, gallery view, preview, download
+13. WHEN a user views Files tab, THE System SHALL display upload dropzone with file type/size validation, gallery view, preview, download
 14. WHEN a ProjectTask is created, THE System SHALL auto-add creator as watcher; any active user in same org+dept can be added as watcher
 
 ### Requirement 43: Comprehensive Authorization Matrix
@@ -1071,7 +1071,7 @@ The system serves two types of organizations:
 #### Acceptance Criteria
 
 1. THE System SHALL implement PublicLayout with fixed header containing logo, nav links (desktop), mobile menu drawer, and CTA buttons
-2. THE System SHALL implement DashboardLayout with header containing page title, search, theme toggle, notifications, user avatar; sidebar with navigation sections and department selector (HOD only)
+2. THE System SHALL implement DashboardLayout with header containing page title, organization switcher (Platform SuperAdmin only), search, theme toggle, notifications, and user avatar; the product logo SHALL be rendered in sidebar header only, and the sidebar SHALL include navigation sections and department selector (HOD only)
 3. WHEN viewing on xs/sm, THE System SHALL display sidebar as temporary drawer
 4. WHEN viewing on md+, THE System SHALL display sidebar as permanent
 5. THE System SHALL implement bottom navigation exactly as defined in CAN-002 and hide on sm+

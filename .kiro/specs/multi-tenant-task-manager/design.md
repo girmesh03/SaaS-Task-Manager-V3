@@ -1394,41 +1394,47 @@ const authorize = (resource, operation, options = {}) => {
   - Update user password
   - Invalidate all existing refresh tokens except current
 
-### Organization Endpoints
+### Organization Endpoints (Optional Platform Management; Non-Canonical for MVP API §18)
 
-**GET /api/organizations** - List organizations (Platform SuperAdmin only)
+**GET /api/organizations** - List organizations (optional, Platform SuperAdmin only)
 
 - Query Params: `page, limit, sortBy, sortOrder, search, includeDeleted`
 - Response: `{ success: true, data: { organizations: [...], pagination: {...} } }`
 - Errors: 401 (unauthenticated), 403 (not Platform SuperAdmin)
 - Authorization: Platform SuperAdmin only (scope: any)
 
-**GET /api/organizations/:organizationId** - Get organization details
+**GET /api/organizations/:organizationId** - Get organization details (optional)
 
 - Response: `{ success: true, data: { organization: {...} } }`
 - Errors: 401 (unauthenticated), 403 (unauthorized), 404 (not found)
 - Authorization: Platform SuperAdmin (any), All roles (ownOrg)
 
-**PUT /api/organizations/:organizationId** - Update organization
+**PUT /api/organizations/:organizationId** - Update organization (optional)
 
 - Request Body: Organization fields (name, email, phone, address, industry, size, description, logo)
 - Response: `{ success: true, data: { organization: {...} }, message: "Organization updated" }`
 - Errors: 400 (validation), 401 (unauthenticated), 403 (unauthorized), 404 (not found), 409 (duplicate email)
 - Authorization: Platform SuperAdmin (crossOrg), Org SuperAdmin (ownOrg)
 
-**DELETE /api/organizations/:organizationId** - Soft delete organization
+**DELETE /api/organizations/:organizationId** - Soft delete organization (optional)
 
 - Response: `{ success: true, message: "Organization deleted" }`
 - Errors: 401 (unauthenticated), 403 (unauthorized or platform org), 404 (not found)
 - Authorization: Platform SuperAdmin (crossOrg, NOT platform org)
 - Business Logic: Cascade soft-delete to departments, users, tasks, materials, vendors, activities, comments, attachments, notifications
 
-**PATCH /api/organizations/:organizationId/restore** - Restore organization
+**PATCH /api/organizations/:organizationId/restore** - Restore organization (optional)
 
 - Response: `{ success: true, message: "Organization restored" }`
 - Errors: 401 (unauthenticated), 403 (unauthorized), 404 (not found)
 - Authorization: Platform SuperAdmin (crossOrg)
 - Business Logic: Restore cascaded resources in correct order
+
+Notes:
+
+- Canonical MVP API contract is defined in PRD Section 18 and does not require `/api/organizations/*` endpoints.
+- Customer organization creation is ONLY via `POST /api/auth/register` onboarding flow; platform organization creation is ONLY via backend seeding.
+- Keep these endpoints disabled unless explicit platform operations require them.
 
 ### Department Endpoints
 
@@ -2128,7 +2134,7 @@ export const socketService = new SocketService();
 
 **DashboardLayout** (Main authenticated layout):
 
-- Header: Logo, search bar, notifications bell, profile menu
+- Header: Menu toggle (xs/sm), page title, organization switcher (Platform SuperAdmin only), search bar, notifications bell, theme toggle, profile menu (no logo in header; logo is sidebar-only per CAN-024)
 - Sidebar (md+ screens): Navigation menu with department selector for HOD users
 - Bottom Navigation (xs screens): 4 items (Dashboard, Tasks, Users, Profile) + centered FAB
 - Content Area: Route-specific page content

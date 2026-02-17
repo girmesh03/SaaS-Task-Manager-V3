@@ -31,7 +31,6 @@ import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
 
 const MuiLoading = ({
   message = "Loading",
@@ -110,8 +109,6 @@ const MuiLoading = ({
     </Box>
   );
 };
-
-MuiLoading.displayName = "MuiLoading";
 
 MuiLoading.propTypes = {
   message: PropTypes.string,
