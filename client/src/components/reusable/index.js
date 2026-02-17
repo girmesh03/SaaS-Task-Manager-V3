@@ -21,6 +21,7 @@ export { default as MuiChip } from "./MuiChip";
 export { default as MuiTooltip } from "./MuiTooltip";
 export { default as MuiBackdrop } from "./MuiBackdrop";
 export { default as MuiProgress } from "./MuiProgress";
+export { default as MuiLoading } from "./MuiLoading";
 export { default as MuiEmptyState } from "./MuiEmptyState";
 export { default as MuiAvatarStack } from "./MuiAvatarStack";
 export { default as MuiStatCard } from "./MuiStatCard";
