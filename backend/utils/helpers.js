@@ -36,6 +36,12 @@ const normalizeSortOrder = (sortOrder) => {
  *   skip: number;
  *   sortBy: string;
  *   sortOrder: "asc" | "desc";
+ *   sort: Record<string, 1 | -1>;
+ *   paginateOptions: {
+ *     page: number;
+ *     limit: number;
+ *     sort: Record<string, 1 | -1>;
+ *   };
  *   search: string;
  *   includeDeleted: boolean;
  *   searchDebounceMs: number;
@@ -51,6 +57,7 @@ export const parsePagination = (query = {}) => {
 
   const sortBy = query.sortBy || PAGINATION_DEFAULTS.SORT_BY;
   const sortOrder = normalizeSortOrder(query.sortOrder);
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
   const search = String(query.search || PAGINATION_DEFAULTS.SEARCH).trim();
   const includeDeleted = toBoolean(
     query.includeDeleted,
@@ -63,6 +70,12 @@ export const parsePagination = (query = {}) => {
     skip: (page - 1) * limit,
     sortBy,
     sortOrder,
+    sort,
+    paginateOptions: {
+      page,
+      limit,
+      sort,
+    },
     search,
     includeDeleted,
     searchDebounceMs: API_DEFAULTS.SEARCH_DEBOUNCE_MS,
@@ -103,14 +116,24 @@ export const buildSuccessResponse = ({
  *
  * @param {{
  *   payloadKey: string;
- *   payload: unknown[];
- *   page: number;
- *   limit: number;
- *   totalDocs: number;
+ *   payload?: unknown[];
+ *   page?: number;
+ *   limit?: number;
+ *   totalDocs?: number;
+ *   paginationResult?: {
+ *     docs?: unknown[];
+ *     totalDocs: number;
+ *     limit: number;
+ *     page: number;
+ *     totalPages: number;
+ *     hasNextPage: boolean;
+ *     hasPrevPage: boolean;
+ *   };
  * }} options - Pagination response options.
  * @returns {{
  *   success: true;
  *   pagination: {
+ *     totalItems: number;
  *     totalDocs: number;
  *     limit: number;
  *     page: number;
@@ -123,24 +146,41 @@ export const buildSuccessResponse = ({
  */
 export const buildPaginatedResponse = ({
   payloadKey,
-  payload,
-  page,
-  limit,
-  totalDocs,
+  payload = [],
+  page = PAGINATION_DEFAULTS.PAGE,
+  limit = PAGINATION_DEFAULTS.LIMIT,
+  totalDocs = 0,
+  paginationResult = null,
 }) => {
-  const totalPages = Math.max(Math.ceil(totalDocs / limit), 1);
+  const resolvedPayload =
+    paginationResult?.docs && Array.isArray(paginationResult.docs)
+      ? paginationResult.docs
+      : payload;
+  const resolvedTotalDocs = Number(paginationResult?.totalDocs ?? totalDocs);
+  const resolvedLimit = Number(paginationResult?.limit ?? limit);
+  const resolvedPage = Number(paginationResult?.page ?? page);
+  const resolvedTotalPages = Number(
+    paginationResult?.totalPages ?? Math.max(Math.ceil(resolvedTotalDocs / resolvedLimit), 1)
+  );
+  const hasNextPage = Boolean(
+    paginationResult?.hasNextPage ?? resolvedPage < resolvedTotalPages
+  );
+  const hasPrevPage = Boolean(
+    paginationResult?.hasPrevPage ?? resolvedPage > PAGINATION_DEFAULTS.PAGE
+  );
 
   return {
     success: true,
     pagination: {
-      totalDocs,
-      limit,
-      page,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
+      totalItems: resolvedTotalDocs,
+      totalDocs: resolvedTotalDocs,
+      limit: resolvedLimit,
+      page: resolvedPage,
+      totalPages: resolvedTotalPages,
+      hasNextPage,
+      hasPrevPage,
     },
-    [payloadKey]: payload,
+    [payloadKey]: resolvedPayload,
   };
 };
 

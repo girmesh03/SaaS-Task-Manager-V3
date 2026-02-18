@@ -1,38 +1,68 @@
 /**
- * @file Phase 1 wipe-script placeholder.
- *
- * Data wipe logic is deferred to Phase 2 because model implementations are
- * not active in this phase.
+ * @file Phase 2 wipe script for repeatable manual verification cycles.
  */
-
 import dotenv from "dotenv";
+import { connectDB, disconnectDB } from "../config/db.js";
+import {
+  Attachment,
+  Department,
+  Material,
+  Notification,
+  Organization,
+  Task,
+  TaskActivity,
+  TaskComment,
+  User,
+  Vendor,
+} from "../models/index.js";
 import logger from "../utils/logger.js";
-import { PLATFORM_SEED_ENV_KEYS } from "./data.js";
 
 dotenv.config();
 
-/**
- * Executes the Phase 1 wipe placeholder routine.
- *
- * @returns {Promise<void>} Resolves after logging deferred implementation guidance.
- * @throws {never} This placeholder handles all failures internally.
- */
-const runWipePlaceholder = async () => {
-  logger.warn("Wipe script is a Phase 1 placeholder. No data was deleted.", {
-    plannedPhase: "PHASE_2",
-    requiredEnvGroupsForFutureMockFlows: PLATFORM_SEED_ENV_KEYS,
-  });
+const ensureSafeRuntime = () => {
+  const env = String(process.env.NODE_ENV || "development").toLowerCase();
+  if (env === "production") {
+    throw new Error("Wipe script is blocked in production environments");
+  }
 };
 
-runWipePlaceholder()
-  .then(() => {
-    logger.info("Wipe placeholder completed successfully");
+const wipeCollections = async () => {
+  const models = [
+    Attachment,
+    Notification,
+    TaskComment,
+    TaskActivity,
+    Task,
+    Material,
+    Vendor,
+    User,
+    Department,
+    Organization,
+  ];
+
+  for (const Model of models) {
+    await Model.deleteMany({});
+  }
+};
+
+const runWipe = async () => {
+  ensureSafeRuntime();
+  await connectDB();
+  await wipeCollections();
+};
+
+runWipe()
+  .then(async () => {
+    await disconnectDB();
+    logger.info("Wipe script completed successfully");
     process.exit(0);
   })
-  .catch((error) => {
-    logger.error("Wipe placeholder failed unexpectedly", {
+  .catch(async (error) => {
+    logger.error("Wipe script failed", {
       message: error.message,
       stack: error.stack,
     });
+
+    await disconnectDB();
     process.exit(1);
   });

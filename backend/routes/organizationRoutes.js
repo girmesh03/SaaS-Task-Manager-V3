@@ -1,6 +1,5 @@
 /**
- * @file Phase 1 organization-route placeholder surface.
- * @throws {never} Module initialization does not throw.
+ * @file Organization route contracts (disabled in canonical MVP).
  */
 import { Router } from "express";
 

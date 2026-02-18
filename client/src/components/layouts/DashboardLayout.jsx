@@ -43,6 +43,8 @@ import {
   MuiThemeDropDown,
 } from "../reusable";
 import useResponsive from "../../hooks/useResponsive";
+import useDebounce from "../../hooks/useDebounce";
+import useAuth from "../../hooks/useAuth";
 import { LAYOUT_DIMENSIONS, UI_PLACEHOLDERS } from "../../utils/constants";
 
 const workspaceLinks = [
@@ -154,22 +156,24 @@ const getBottomNavValue = (pathname) => {
 const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isXs, isDesktop } = useResponsive();
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const [fabAnchorEl, setFabAnchorEl] = useState(null);
+  const debouncedGlobalSearch = useDebounce(globalSearch);
 
   const currentUser = useMemo(
     () => ({
-      name: "Alex M.",
-      role: "Admin",
-      organization: "Acme Corp",
-      department: "Engineering Dept",
-      isPlatformOrgUser: false,
+      name: user?.fullName || user?.firstName || "User",
+      role: user?.role || "Member",
+      organization: user?.organizationName || "Organization",
+      department: user?.departmentName || "Department",
+      isPlatformOrgUser: Boolean(user?.isPlatformOrgUser),
     }),
-    [],
+    [user],
   );
 
   const pageTitle = getPageTitle(location.pathname);
@@ -388,11 +392,23 @@ const DashboardLayout = () => {
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
               placeholder="Search by name, email or phone..."
+              ariaLabel={
+                debouncedGlobalSearch
+                  ? `Search term ${debouncedGlobalSearch}`
+                  : "Search by name, email or phone"
+              }
               reserveHelperTextSpace={false}
               sx={{
                 maxWidth: 360,
                 my: 0,
-                "& .MuiFormHelperText-root": { display: "none" },
+                "& .MuiInputBase-root": {
+                  my: 0,
+                  alignItems: "center",
+                },
+                "& .MuiFormHelperText-root": {
+                  display: "none",
+                  m: 0,
+                },
               }}
             />
           </Box>
@@ -489,31 +505,23 @@ const DashboardLayout = () => {
             showLabels
             sx={{ minHeight: LAYOUT_DIMENSIONS.MOBILE_BOTTOM_NAV_HEIGHT_PX }}
           />
-          <Box
+          <MuiFAB
+            aria-label="Create new item"
+            onClick={(event) => openFabMenu(event.currentTarget)}
+            size="medium"
             sx={{
               position: "fixed",
-              left: 0,
-              right: 0,
-              bottom: 25,
-              height: LAYOUT_DIMENSIONS.MOBILE_BOTTOM_NAV_HEIGHT_PX,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              pointerEvents: "none",
+              left: "50%",
+              transform: "translateX(-50%)",
+              bottom:
+                (LAYOUT_DIMENSIONS.MOBILE_BOTTOM_NAV_HEIGHT_PX -
+                  LAYOUT_DIMENSIONS.MOBILE_FAB_SIZE_PX) /
+                2,
               zIndex: (theme) => theme.zIndex.modal,
             }}
           >
-            <MuiFAB
-              aria-label="Create new item"
-              onClick={(event) => openFabMenu(event.currentTarget)}
-              size="medium"
-              sx={{
-                pointerEvents: "auto",
-              }}
-            >
-              <AddIcon />
-            </MuiFAB>
-          </Box>
+            <AddIcon />
+          </MuiFAB>
         </>
       ) : null}
 

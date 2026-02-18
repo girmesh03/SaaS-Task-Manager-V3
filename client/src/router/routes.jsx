@@ -2,8 +2,10 @@
  * @file Application route map for public and dashboard placeholders.
  */
 import { createBrowserRouter } from "react-router";
-import { DashboardLayout, PublicLayout, RootLayout } from "../components/layouts";
+import { RootLayout } from "../components/layouts";
 import { MuiLoading } from "../components/reusable";
+import ProtectedDashboardLayout from "./ProtectedDashboardLayout";
+import PublicRouteLayout from "./PublicRouteLayout";
 
 /**
  * Wraps a lazy module loader in React Router `lazy` contract.
@@ -27,7 +29,7 @@ const routes = createBrowserRouter([
     HydrateFallback: MuiLoading,
     children: [
       {
-        Component: PublicLayout,
+        Component: PublicRouteLayout,
         children: [
           {
             index: true,
@@ -57,7 +59,7 @@ const routes = createBrowserRouter([
       },
       {
         path: "dashboard",
-        Component: DashboardLayout,
+        Component: ProtectedDashboardLayout,
         children: [
           {
             index: true,

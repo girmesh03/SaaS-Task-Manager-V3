@@ -84,7 +84,13 @@ const PublicLayout = () => {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box
+      sx={{
+        height: "100vh",
+        overflow: "hidden",
+        bgcolor: "background.default",
+      }}
+    >
       <AppBar
         position="sticky"
         elevation={0}
@@ -95,8 +101,15 @@ const PublicLayout = () => {
           bgcolor: "background.default",
         }}
       >
-        <Toolbar sx={{ minHeight: `${LAYOUT_DIMENSIONS.APP_BAR_HEIGHT_REM}rem` }}>
-          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexGrow: 1 }}>
+        <Toolbar
+          sx={{ minHeight: `${LAYOUT_DIMENSIONS.APP_BAR_HEIGHT_REM}rem` }}
+        >
+          <Stack
+            direction="row"
+            spacing={1.25}
+            alignItems="center"
+            sx={{ flexGrow: 1 }}
+          >
             <MuiAppIconLogo />
             <Typography
               component={Link}
@@ -115,7 +128,12 @@ const PublicLayout = () => {
           {!isXs && (
             <Stack direction="row" spacing={0.5} sx={{ mr: 1 }}>
               {navItems.map((item) => (
-                <Button key={item.label} color="inherit" size="small" href={item.href}>
+                <Button
+                  key={item.label}
+                  color="inherit"
+                  size="small"
+                  href={item.href}
+                >
                   {item.label}
                 </Button>
               ))}
@@ -126,15 +144,28 @@ const PublicLayout = () => {
             <MuiThemeDropDown />
             {!isXs ? (
               <>
-                <Button component={Link} to="/login" variant="text" size="small">
+                <Button
+                  component={Link}
+                  to="/login"
+                  variant="text"
+                  size="small"
+                >
                   Log In
                 </Button>
-                <Button component={Link} to="/register" variant="contained" size="small">
+                <Button
+                  component={Link}
+                  to="/register"
+                  variant="contained"
+                  size="small"
+                >
                   Sign Up
                 </Button>
               </>
             ) : (
-              <IconButton onClick={handleToggleMobileMenu} aria-label="Open menu">
+              <IconButton
+                onClick={handleToggleMobileMenu}
+                aria-label="Open menu"
+              >
                 <MenuIcon />
               </IconButton>
             )}
@@ -154,9 +185,12 @@ const PublicLayout = () => {
       <Box
         component="main"
         sx={{
+          minHeight: 0,
           height: `calc(100vh - ${LAYOUT_DIMENSIONS.APP_BAR_HEIGHT_REM}rem)`,
           maxHeight: `calc(100vh - ${LAYOUT_DIMENSIONS.APP_BAR_HEIGHT_REM}rem)`,
           overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehaviorY: "contain",
           bgcolor: "background.default",
           color: "text.primary",
         }}

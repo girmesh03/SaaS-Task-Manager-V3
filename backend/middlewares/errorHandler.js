@@ -61,6 +61,7 @@ export const errorHandler = (error, req, res, _next) => {
     success: false,
     message: mapped.message,
     error: {
+      type: mapped.errorCode,
       code: mapped.errorCode,
       statusCode: mapped.statusCode,
     },

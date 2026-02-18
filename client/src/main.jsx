@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
 
 import { RouterProvider } from "react-router";
 
@@ -14,14 +15,17 @@ import CssBaseline from "@mui/material/CssBaseline";
 import AppTheme from "./theme/AppTheme";
 
 import routes from "./router/routes";
+import { store } from "./redux/store";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <AppTheme>
-        <CssBaseline enableColorScheme />
-        <RouterProvider router={routes} />
-      </AppTheme>
-    </LocalizationProvider>
+    <Provider store={store}>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <AppTheme>
+          <CssBaseline enableColorScheme />
+          <RouterProvider router={routes} />
+        </AppTheme>
+      </LocalizationProvider>
+    </Provider>
   </StrictMode>
 );

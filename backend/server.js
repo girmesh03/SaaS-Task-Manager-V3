@@ -4,7 +4,9 @@
 import dotenv from "dotenv";
 import http from "http";
 import app from "./app.js";
+import { getAllowedOrigins } from "./config/allowedOrigins.js";
 import { connectDB, disconnectDB } from "./config/db.js";
+import { initializeSocketService, closeSocketService } from "./services/socketService.js";
 import { validateEnv } from "./utils/validateEnv.js";
 import logger from "./utils/logger.js";
 
@@ -16,19 +18,26 @@ let shuttingDown = false;
 
 /**
  * Starts the backend runtime by validating environment variables, connecting to
- * MongoDB, and binding the HTTP listener.
+ * MongoDB, initializing Socket.IO, and binding the HTTP listener.
  *
  * @returns {Promise<void>} Resolves after the listener is active.
- * @throws {Error} Throws when env validation, DB connection, or listener startup fails.
+ * @throws {Error} Throws when env validation, DB connection, socket initialization, or listener startup fails.
  */
 const startServer = async () => {
-  validateEnv(process.env);
+  const envValidation = validateEnv(process.env);
+  const resolvedEnv = envValidation.resolved;
+
   logger.info("Environment validation passed");
 
   await connectDB();
   logger.info("Database connection established");
 
   server = http.createServer(app);
+
+  initializeSocketService(server, {
+    jwtSecret: resolvedEnv.JWT_ACCESS_SECRET,
+    corsOrigin: getAllowedOrigins(),
+  });
 
   await new Promise((resolve, reject) => {
     const handleListenError = (error) => {
@@ -45,8 +54,8 @@ const startServer = async () => {
 };
 
 /**
- * Handles graceful process shutdown by stopping the HTTP listener and closing
- * database resources.
+ * Handles graceful process shutdown by stopping the HTTP listener, closing
+ * socket resources, and closing database resources.
  *
  * @param {"SIGINT" | "SIGTERM"} signal - The process signal that initiated shutdown.
  * @returns {Promise<void>} Resolves after shutdown path completes.
@@ -80,6 +89,9 @@ const gracefulShutdown = async (signal) => {
 
       logger.info("HTTP server stopped accepting requests");
     }
+
+    await closeSocketService();
+    logger.info("Socket service closed");
 
     await disconnectDB();
     logger.info("Database connection closed");

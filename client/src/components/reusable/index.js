@@ -18,6 +18,7 @@ export { default as MuiSwitch } from "./MuiSwitch";
 export { default as MuiSlider } from "./MuiSlider";
 export { default as MuiRating } from "./MuiRating";
 export { default as MuiSearchField } from "./MuiSearchField";
+export { default as MuiFileUpload } from "./MuiFileUpload";
 
 // Display Components
 export { default as MuiBadge } from "./MuiBadge";

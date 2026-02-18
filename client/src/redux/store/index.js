@@ -1,18 +1,53 @@
 /**
- * @file Phase 1 Redux store placeholder.
+ * @file Redux store configuration for phase 2 state architecture.
  */
+import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
+import {
+  authReducer,
+  resourceViewReducer,
+  themeReducer,
+} from "../features";
+import { api } from "../../services/api";
 
 /**
- * Returns the Phase 1 store placeholder descriptor.
+ * Builds the application Redux store.
  *
- * @returns {{ initialized: false; message: string }} Placeholder store metadata.
+ * @returns {import("@reduxjs/toolkit").EnhancedStore} Configured Redux store.
  * @throws {never} This helper does not throw.
  */
-export const createStorePlaceholder = () => {
-  return {
-    initialized: false,
-    message: "Store wiring starts in Phase 2.",
-  };
+export const createAppStore = () => {
+  const store = configureStore({
+    reducer: {
+      auth: authReducer,
+      theme: themeReducer,
+      resourceView: resourceViewReducer,
+      [api.reducerPath]: api.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: {
+          ignoredActions: [
+            "persist/PERSIST",
+            "persist/REHYDRATE",
+            "persist/PAUSE",
+            "persist/PURGE",
+            "persist/REGISTER",
+            "persist/FLUSH",
+          ],
+        },
+      }).concat(api.middleware),
+  });
+
+  setupListeners(store.dispatch);
+  return store;
 };
 
-export default createStorePlaceholder;
+/**
+ * Singleton store instance for app bootstrap.
+ *
+ * @type {import("@reduxjs/toolkit").EnhancedStore}
+ */
+export const store = createAppStore();
+
+export default store;

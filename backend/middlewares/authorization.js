@@ -55,13 +55,25 @@ const matchesScope = (rule, user, target) => {
     return true;
   }
 
-  if (scope === "crossOrg") {
-    return Boolean(user.isPlatformOrgUser);
-  }
-
   const userOrgId = normalizeId(user.organization);
+  const userDeptId = normalizeId(user.department);
   const targetOrgId = normalizeId(target?.organization);
+  const targetDeptId = normalizeId(target?.department);
+
   const sameOrg = !targetOrgId || userOrgId === targetOrgId;
+  const sameDept = !targetDeptId || userDeptId === targetDeptId;
+
+  if (scope === "crossOrg") {
+    if (!user.isPlatformOrgUser) {
+      return false;
+    }
+
+    if (!targetOrgId) {
+      return true;
+    }
+
+    return targetOrgId !== userOrgId;
+  }
 
   if (scope === "ownOrg") {
     return sameOrg;
@@ -72,9 +84,6 @@ const matchesScope = (rule, user, target) => {
   }
 
   if (scope === "ownOrg.ownDept") {
-    const userDeptId = normalizeId(user.department);
-    const targetDeptId = normalizeId(target?.department);
-    const sameDept = !targetDeptId || userDeptId === targetDeptId;
     return sameOrg && sameDept;
   }
 
@@ -89,28 +98,41 @@ const checkArrayOwnership = (values, userId) => {
   return values.some((value) => normalizeId(value) === userId);
 };
 
+const checkOwnershipKey = (ownerKey, user, target, req) => {
+  const userId = normalizeId(user.id);
+  const params = req.validated?.params || req.params || {};
+  const paramUserId = normalizeId(params.userId);
+
+  if (ownerKey === "self") {
+    if (paramUserId) {
+      return paramUserId === userId;
+    }
+
+    return normalizeId(target?._id || target?.id) === userId;
+  }
+
+  if (ownerKey === "manager") {
+    return normalizeId(target?.manager) === userId;
+  }
+
+  if (["assignees", "watchers", "mentioned", "mentions"].includes(ownerKey)) {
+    return checkArrayOwnership(target?.[ownerKey], userId);
+  }
+
+  if (["createdBy", "uploadedBy"].includes(ownerKey)) {
+    return normalizeId(target?.[ownerKey]) === userId;
+  }
+
+  return normalizeId(target?.[ownerKey]) === userId;
+};
+
 const matchesOwnership = (rule, user, target, req) => {
   const ownership = rule.ownership || [];
   if (ownership.length === 0) {
     return true;
   }
 
-  const userId = normalizeId(user.id);
-  const targetId = normalizeId(target?._id || target?.id);
-  const params = req.validated?.params || req.params || {};
-
-  return ownership.some((ownerKey) => {
-    if (ownerKey === "self") {
-      const paramUserId = normalizeId(params.userId);
-      return paramUserId ? paramUserId === userId : targetId === userId;
-    }
-
-    if (["assignees", "watchers"].includes(ownerKey)) {
-      return checkArrayOwnership(target?.[ownerKey], userId);
-    }
-
-    return normalizeId(target?.[ownerKey]) === userId;
-  });
+  return ownership.some((ownerKey) => checkOwnershipKey(ownerKey, user, target, req));
 };
 
 const getTargetResource = async (req, options) => {
@@ -152,17 +174,14 @@ export const authorize = (resource, operation, options = {}) => {
 
       const candidates = rules.filter((rule) => {
         const roleMatch = rule.roles?.includes(req.user.role);
-        const resourceTypeMatch =
-          !rule.resourceType || rule.resourceType === resourceType;
+        const resourceTypeMatch = !rule.resourceType || rule.resourceType === resourceType;
         const requiresMatch = parseRequires(rule, req.user);
+
         return roleMatch && resourceTypeMatch && requiresMatch;
       });
 
       const allowed = candidates.some((rule) => {
-        return (
-          matchesScope(rule, req.user, target) &&
-          matchesOwnership(rule, req.user, target, req)
-        );
+        return matchesScope(rule, req.user, target) && matchesOwnership(rule, req.user, target, req);
       });
 
       if (!allowed) {
