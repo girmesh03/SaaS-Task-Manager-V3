@@ -1,7 +1,8 @@
 /**
  * @file Shared helper utilities for pagination, ids, and response shape.
  */
-import { PAGINATION_DEFAULTS, API_DEFAULTS } from "./constants.js";
+import mongoose from "mongoose";
+import { PAGINATION_DEFAULTS } from "./constants.js";
 
 const toInteger = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -42,9 +43,7 @@ const normalizeSortOrder = (sortOrder) => {
  *     limit: number;
  *     sort: Record<string, 1 | -1>;
  *   };
- *   search: string;
  *   includeDeleted: boolean;
- *   searchDebounceMs: number;
  * }} Normalized pagination payload.
  * @throws {never} Invalid values are normalized to defaults.
  */
@@ -58,7 +57,6 @@ export const parsePagination = (query = {}) => {
   const sortBy = query.sortBy || PAGINATION_DEFAULTS.SORT_BY;
   const sortOrder = normalizeSortOrder(query.sortOrder);
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  const search = String(query.search || PAGINATION_DEFAULTS.SEARCH).trim();
   const includeDeleted = toBoolean(
     query.includeDeleted,
     PAGINATION_DEFAULTS.INCLUDE_DELETED
@@ -76,9 +74,7 @@ export const parsePagination = (query = {}) => {
       limit,
       sort,
     },
-    search,
     includeDeleted,
-    searchDebounceMs: API_DEFAULTS.SEARCH_DEBOUNCE_MS,
   };
 };
 
@@ -218,4 +214,83 @@ export const normalizeId = (value) => {
   }
 
   return String(value);
+};
+
+/**
+ * Normalizes a string into a valid email local-part token.
+ *
+ * @param {string} value - Candidate string.
+ * @returns {string} Lower-cased alphanumeric token.
+ * @throws {never} This helper does not throw.
+ */
+export const normalizeEmailLocalPart = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  return normalized || "user";
+};
+
+/**
+ * Builds a Gmail address using first-name style local-part normalization.
+ *
+ * @param {string} firstName - Name token.
+ * @param {string} [domain="gmail.com"] - Email domain.
+ * @returns {string} Normalized Gmail address.
+ * @throws {never} This helper does not throw.
+ */
+export const toGmailAddress = (firstName, domain = "gmail.com") => {
+  return `${normalizeEmailLocalPart(firstName)}@${String(domain || "gmail.com")
+    .trim()
+    .toLowerCase()}`;
+};
+
+/**
+ * Returns true when runtime environment is development.
+ *
+ * @param {NodeJS.ProcessEnv} [env=process.env] - Environment object.
+ * @returns {boolean} Development mode flag.
+ * @throws {never} This helper does not throw.
+ */
+export const isDevelopmentEnv = (env = process.env) => {
+  return String(env.NODE_ENV || "development").trim().toLowerCase() === "development";
+};
+
+/**
+ * Converts a date-like value into ISO-8601 timestamp.
+ *
+ * @param {Date | string | number} [value=new Date()] - Date-like input.
+ * @returns {string} ISO-8601 timestamp.
+ * @throws {RangeError} Throws when date cannot be parsed.
+ */
+export const toISODateTime = (value = new Date()) => {
+  return new Date(value).toISOString();
+};
+
+/**
+ * Runs a callback in a MongoDB transaction and guarantees session cleanup.
+ *
+ * @template T
+ * @param {(session: import("mongoose").ClientSession) => Promise<T>} work - Transaction callback.
+ * @returns {Promise<T>} Callback result.
+ * @throws {Error} Re-throws callback errors after transaction abort.
+ */
+export const withMongoTransaction = async (work) => {
+  const session = await mongoose.startSession();
+
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      result = await work(session);
+    });
+    return /** @type {T} */ (result);
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    throw error;
+  } finally {
+    await session.endSession();
+  }
 };

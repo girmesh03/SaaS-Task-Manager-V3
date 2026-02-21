@@ -42,7 +42,6 @@ export const paginationValidators = () => {
       .optional()
       .isIn(["asc", "desc"])
       .withMessage("sortOrder must be asc or desc"),
-    query("search").optional().isString().trim(),
     query("includeDeleted")
       .optional()
       .isBoolean()

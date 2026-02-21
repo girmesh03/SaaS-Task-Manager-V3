@@ -2,6 +2,7 @@
  * @file Register step: organization details.
  */
 import { Controller } from "react-hook-form";
+import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import {
   MuiSelectAutocomplete,
@@ -27,52 +28,59 @@ import {
 const RegisterOrganizationDetailsStep = ({ control, register, errors }) => {
   return (
     <Stack spacing={1.25}>
-      <Controller
-        name="organization.industry"
-        control={control}
-        rules={{ required: "Industry is required" }}
-        render={({ field }) => (
-          <MuiSelectAutocomplete
-            value={field.value || null}
-            onChange={(_event, value) => field.onChange(value || "")}
-            label="Industry"
-            options={ORGANIZATION_INDUSTRIES}
-            error={errors.organization?.industry}
-            helperText={errors.organization?.industry?.message}
+      <Grid container spacing={1.25}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Controller
+            name="organization.industry"
+            control={control}
+            rules={{ required: "Industry is required" }}
+            render={({ field }) => (
+              <MuiSelectAutocomplete
+                value={field.value || null}
+                onChange={(_event, value) => field.onChange(value || "")}
+                label="Industry"
+                options={ORGANIZATION_INDUSTRIES}
+                error={errors.organization?.industry}
+                helperText={errors.organization?.industry?.message}
+              />
+            )}
           />
-        )}
-      />
-
-      <Controller
-        name="organization.size"
-        control={control}
-        rules={{ required: "Organization size is required" }}
-        render={({ field }) => (
-          <MuiSelectAutocomplete
-            value={field.value || null}
-            onChange={(_event, value) => field.onChange(value || "")}
-            label="Organization Size"
-            options={ORGANIZATION_SIZES}
-            error={errors.organization?.size}
-            helperText={errors.organization?.size?.message}
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Controller
+            name="organization.size"
+            control={control}
+            rules={{ required: "Organization size is required" }}
+            render={({ field }) => (
+              <MuiSelectAutocomplete
+                value={field.value || null}
+                onChange={(_event, value) => field.onChange(value || "")}
+                label="Company Size"
+                options={ORGANIZATION_SIZES}
+                error={errors.organization?.size}
+                helperText={errors.organization?.size?.message}
+              />
+            )}
           />
-        )}
-      />
-
-      <MuiTextField
-        {...register("organization.description", {
-          maxLength: {
-            value: VALIDATION_LIMITS.ORGANIZATION.DESCRIPTION_MAX,
-            message: "Maximum 1000 characters",
-          },
-        })}
-        label="Organization Description"
-        multiline
-        minRows={3}
-        maxRows={5}
-        error={errors.organization?.description}
-        reserveHelperTextSpace={false}
-      />
+        </Grid>
+        <Grid size={12}>
+          <MuiTextField
+            {...register("organization.description", {
+              maxLength: {
+                value: VALIDATION_LIMITS.ORGANIZATION.DESCRIPTION_MAX,
+                message: "Maximum 1000 characters",
+              },
+            })}
+            label="Description"
+            placeholder="Briefly describe what your organization does..."
+            multiline
+            minRows={3}
+            maxRows={5}
+            error={errors.organization?.description}
+            reserveHelperTextSpace={false}
+          />
+        </Grid>
+      </Grid>
     </Stack>
   );
 };

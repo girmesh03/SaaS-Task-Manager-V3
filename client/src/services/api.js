@@ -17,23 +17,8 @@ const AUTH_REFRESH_EXCLUDE_PATHS = Object.freeze([
   "/auth/reset-password",
 ]);
 
-const normalizeQueryObject = (query = {}) => {
-  const normalized = { ...query };
-
-  if (normalized.search && !normalized.q) {
-    normalized.q = normalized.search;
-  }
-
-  if (normalized.search !== undefined) {
-    delete normalized.search;
-  }
-
-  return normalized;
-};
-
 const buildListQueryParams = (query = {}) => {
   const params = {};
-  const normalizedQuery = normalizeQueryObject(query);
 
   const appendValue = (key, value) => {
     if (value === undefined || value === null || value === "") {
@@ -52,7 +37,7 @@ const buildListQueryParams = (query = {}) => {
     params[key] = String(value);
   };
 
-  Object.entries(normalizedQuery).forEach(([key, value]) =>
+  Object.entries(query || {}).forEach(([key, value]) =>
     appendValue(key, value)
   );
 
@@ -212,6 +197,7 @@ export const api = createApi({
   baseQuery: baseQueryWithRefresh,
   tagTypes: [
     "Auth",
+    "Organization",
     "User",
     "Department",
     "Task",
@@ -259,6 +245,15 @@ export const api = createApi({
     }),
     changePassword: builder.mutation({
       query: (body) => ({ url: "/auth/change-password", method: "POST", body }),
+    }),
+
+    // Organizations
+    getOrganizations: builder.query({
+      query: (query = {}) => ({
+        url: "/organizations",
+        params: buildListQueryParams(query),
+      }),
+      providesTags: ["Organization"],
     }),
 
     // Users
@@ -746,6 +741,7 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
+  useGetOrganizationsQuery,
   useGetUsersQuery,
   useCreateUserMutation,
   useGetUserQuery,

@@ -15,41 +15,44 @@
  *
  */
 
-import { forwardRef } from "react";
+import { forwardRef, useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import TextField from "@mui/material/TextField";
 
 /**
  * MuiSelectAutocomplete Component
  *
  * @param {Object} props - Component props
- * @param {any} props.value - The selected value(s)
- * @param {Function} props.onChange - Handler for change events (event, newValue)
- * @param {Function} props.onBlur - Handler for blur events
- * @param {string} props.name - Field name
- * @param {string} props.label - Field label
- * @param {Object} props.error - Error object
- * @param {string} props.helperText - Helper text to display
- * @param {Array} props.options - Array of options
- * @param {boolean} props.multiple - Whether to allow multiple selection
- * @param {boolean} props.isLoading - Whether options are loading
- * @param {Function} props.getOptionLabel - Function to get option label
- * @param {Function} props.getOptionValue - Function to get option value
- * @param {Function} props.isOptionEqualToValue - Function to compare options
- * @param {Function} props.filterOptions - Custom filter function
- * @param {Function} props.groupBy - Function to group options
- * @param {string} props.placeholder - Placeholder text
- * @param {boolean} props.disabled - Whether field is disabled
- * @param {boolean} props.required - Whether field is required
- * @param {boolean} props.fullWidth - Whether field takes full width
- * @param {string} props.size - Field size
- * @param {string} props.variant - Field variant
- * @param {boolean} props.freeSolo - Whether to allow free text input
- * @param {boolean} props.disableClearable - Whether to disable clear button
- * @param {number} props.limitTags - Maximum number of tags to show
- * @param {string} props.noOptionsText - Text to show when no options available
- * @param {string} props.loadingText - Text to show while loading
+ * @param {unknown} props.value - The selected value(s)
+ * @param {(event: import("react").SyntheticEvent, value: unknown) => void} [props.onChange] - Handler for change events
+ * @param {() => void} [props.onBlur] - Handler for blur events
+ * @param {string} [props.name] - Field name
+ * @param {string} [props.label] - Field label
+ * @param {{ message?: string }} [props.error] - Error object
+ * @param {string} [props.helperText] - Helper text to display
+ * @param {unknown[]} [props.options] - Array of options
+ * @param {boolean} [props.multiple=false] - Whether to allow multiple selection
+ * @param {boolean} [props.isLoading=false] - Whether options are loading
+ * @param {(option: unknown) => string} [props.getOptionLabel] - Function to get option label
+ * @param {(option: unknown) => string | number} [props.getOptionValue] - Function to get option value
+ * @param {(option: unknown, value: unknown) => boolean} [props.isOptionEqualToValue] - Function to compare options
+ * @param {(options: unknown[], state: unknown) => unknown[]} [props.filterOptions] - Custom filter function
+ * @param {(option: unknown) => string} [props.groupBy] - Function to group options
+ * @param {string} [props.placeholder] - Placeholder text
+ * @param {boolean} [props.disabled=false] - Whether field is disabled
+ * @param {boolean} [props.required=false] - Whether field is required
+ * @param {boolean} [props.fullWidth=true] - Whether field takes full width
+ * @param {"small" | "medium"} [props.size="small"] - Field size
+ * @param {"outlined" | "filled" | "standard"} [props.variant="outlined"] - Field variant
+ * @param {boolean} [props.freeSolo=false] - Whether to allow free text input
+ * @param {boolean} [props.disableClearable=false] - Whether to disable clear button
+ * @param {number} [props.limitTags=2] - Maximum number of tags to show
+ * @param {string} [props.noOptionsText="No options"] - Text to show when no options available
+ * @param {string} [props.loadingText="Loading..."] - Text to show while loading
+ * @param {"id" | "object"} [props.valueMode="id"] - Controls whether values are emitted as object IDs or option objects
+ * @param {boolean} [props.showSelectionChip=false] - Render selected values as chips instead of plain text
  * @returns {JSX.Element} Select-autocomplete element.
  * @throws {never} This component does not throw.
  */
@@ -69,13 +72,13 @@ const MuiSelectAutocomplete = forwardRef(
       getOptionLabel = (option) =>
         option?.label || option?.name || option || "",
       getOptionValue = (option) => option?.value || option?._id || option,
-      isOptionEqualToValue = (option, value) => {
-        if (!option || !value) return false;
-        return getOptionValue(option) === getOptionValue(value);
+      isOptionEqualToValue = (option, selectedValue) => {
+        if (!option || !selectedValue) return false;
+        return getOptionValue(option) === getOptionValue(selectedValue);
       },
       filterOptions,
       groupBy,
-      placeholder,
+      placeholder = multiple ? "Select one or more options" : "Select an option",
       disabled = false,
       required = false,
       fullWidth = true,
@@ -86,17 +89,62 @@ const MuiSelectAutocomplete = forwardRef(
       limitTags = 2,
       noOptionsText = "No options",
       loadingText = "Loading...",
+      valueMode = "id",
+      showSelectionChip = false,
       ...otherProps
     },
     ref
   ) => {
+    const resolveOptionFromValue = useMemo(() => {
+      return (rawValue) => {
+        if (rawValue === undefined || rawValue === null || rawValue === "") {
+          return null;
+        }
+
+        if (typeof rawValue === "object") {
+          return rawValue;
+        }
+
+        return (
+          options.find(
+            (option) =>
+              String(getOptionValue(option)) === String(rawValue)
+          ) || null
+        );
+      };
+    }, [getOptionValue, options]);
+
+    const normalizedValue = useMemo(() => {
+      if (multiple) {
+        const nextValues = Array.isArray(value) ? value : [];
+        return nextValues
+          .map((entry) => resolveOptionFromValue(entry))
+          .filter(Boolean);
+      }
+
+      return resolveOptionFromValue(value);
+    }, [multiple, resolveOptionFromValue, value]);
+
     return (
       <Autocomplete
-        value={value || (multiple ? [] : null)}
+        value={normalizedValue || (multiple ? [] : null)}
         onChange={(event, newValue) => {
-          if (onChange) {
-            onChange(event, newValue);
+          if (!onChange) {
+            return;
           }
+
+          if (valueMode === "object") {
+            onChange(event, newValue);
+            return;
+          }
+
+          if (multiple) {
+            const ids = (newValue || []).map((entry) => getOptionValue(entry));
+            onChange(event, ids);
+            return;
+          }
+
+          onChange(event, newValue ? getOptionValue(newValue) : "");
         }}
         onBlur={onBlur}
         ref={ref}
@@ -115,6 +163,34 @@ const MuiSelectAutocomplete = forwardRef(
         loadingText={loadingText}
         size={size}
         fullWidth={fullWidth}
+        renderValue={
+          showSelectionChip
+            ? (selectedValue, getItemProps) => {
+                if (!selectedValue) {
+                  return null;
+                }
+
+                if (Array.isArray(selectedValue)) {
+                  return selectedValue.map((entry, index) => (
+                    <Chip
+                      {...getItemProps({ index })}
+                      key={String(getOptionValue(entry))}
+                      label={getOptionLabel(entry)}
+                      size={size}
+                    />
+                  ));
+                }
+
+                return (
+                  <Chip
+                    {...getItemProps()}
+                    label={getOptionLabel(selectedValue)}
+                    size={size}
+                  />
+                );
+              }
+            : undefined
+        }
         renderInput={(params) => (
           <TextField
             {...params}

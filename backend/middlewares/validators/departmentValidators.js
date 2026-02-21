@@ -11,6 +11,7 @@ import {
 } from "../../utils/constants.js";
 import {
   csvEnumQuery,
+  csvObjectIdQuery,
   isoDateQuery,
   objectIdParam,
   paginationValidators,
@@ -49,6 +50,7 @@ export const listDepartmentValidators = [
     .optional()
     .isMongoId()
     .withMessage("organizationId must be a valid object id"),
+  csvObjectIdQuery("departmentId"),
   csvEnumQuery("status", Object.values(DEPARTMENT_STATUS)),
   query("managerId")
     .optional()

@@ -34,8 +34,6 @@ const parseResourceType = (req, target, options) => {
   return (
     req.validated?.body?.type ||
     req.validated?.body?.resourceType ||
-    req.body?.type ||
-    req.body?.resourceType ||
     target?.type ||
     null
   );
@@ -100,7 +98,7 @@ const checkArrayOwnership = (values, userId) => {
 
 const checkOwnershipKey = (ownerKey, user, target, req) => {
   const userId = normalizeId(user.id);
-  const params = req.validated?.params || req.params || {};
+  const params = req.validated?.params || {};
   const paramUserId = normalizeId(params.userId);
 
   if (ownerKey === "self") {

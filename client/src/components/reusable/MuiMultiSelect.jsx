@@ -57,6 +57,7 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
  * @param {number} props.limitTags - Maximum number of tags to show
  * @param {string} props.noOptionsText - Text to show when no options available
  * @param {string} props.loadingText - Text to show while loading
+ * @param {"id" | "object"} props.valueMode - Controls emitted value format
  * @returns {JSX.Element} Multi-select element.
  * @throws {never} This component does not throw.
  */
@@ -84,7 +85,7 @@ const MuiMultiSelect = forwardRef(
       },
       filterOptions,
       groupBy,
-      placeholder,
+      placeholder = "Select one or more options",
       disabled = false,
       required = false,
       fullWidth = true,
@@ -93,10 +94,35 @@ const MuiMultiSelect = forwardRef(
       limitTags = 2,
       noOptionsText = "No options",
       loadingText = "Loading...",
+      valueMode = "id",
       ...otherProps
     },
     ref
   ) => {
+    const resolveOptionFromValue = useMemo(() => {
+      return (rawValue) => {
+        if (rawValue === undefined || rawValue === null || rawValue === "") {
+          return null;
+        }
+
+        if (typeof rawValue === "object") {
+          return rawValue;
+        }
+
+        return (
+          options.find(
+            (option) =>
+              String(getOptionValue(option)) === String(rawValue),
+          ) || null
+        );
+      };
+    }, [getOptionValue, options]);
+
+    const normalizedValue = useMemo(() => {
+      const selectedValues = Array.isArray(value) ? value : [];
+      return selectedValues.map((entry) => resolveOptionFromValue(entry)).filter(Boolean);
+    }, [resolveOptionFromValue, value]);
+
     // Memoize options with "Select all" to prevent re-creation on every render
     const optionsWithSelectAll = useMemo(() => {
       return selectAll
@@ -104,7 +130,7 @@ const MuiMultiSelect = forwardRef(
         : options;
     }, [selectAll, options]);
 
-    const selectedCount = value?.length || 0;
+    const selectedCount = normalizedValue.length || 0;
     const isMaxReached = maxItems && selectedCount >= maxItems;
 
     // Handle "Select all" functionality
@@ -120,7 +146,14 @@ const MuiMultiSelect = forwardRef(
             (option) => getOptionValue(option) !== "SELECT_ALL"
           );
           if (onChange) {
-            onChange(event, allOptions);
+            if (valueMode === "object") {
+              onChange(event, allOptions);
+            } else {
+              onChange(
+                event,
+                allOptions.map((option) => getOptionValue(option)),
+              );
+            }
           }
           return;
         }
@@ -132,7 +165,14 @@ const MuiMultiSelect = forwardRef(
       }
 
       if (onChange) {
-        onChange(event, newValue);
+        if (valueMode === "object") {
+          onChange(event, newValue);
+        } else {
+          onChange(
+            event,
+            (newValue || []).map((option) => getOptionValue(option)),
+          );
+        }
       }
     };
 
@@ -145,7 +185,7 @@ const MuiMultiSelect = forwardRef(
     return (
       <>
         <Autocomplete
-          value={value || []}
+          value={normalizedValue}
           onChange={handleSelectAll}
           onBlur={onBlur}
           ref={ref}
@@ -186,10 +226,11 @@ const MuiMultiSelect = forwardRef(
               </li>
             );
           }}
-          renderValue={(selected) =>
-            selected.map((option) => (
+          renderValue={(selected, getItemProps) =>
+            selected.map((option, index) => (
               <Chip
-                key={getOptionValue(option)}
+                {...getItemProps({ index })}
+                key={String(getOptionValue(option))}
                 label={getOptionLabel(option)}
                 size={size}
                 sx={{ mr: 0.5 }}

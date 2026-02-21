@@ -2,7 +2,8 @@
  * @file Application route map for public and dashboard placeholders.
  */
 import { createBrowserRouter } from "react-router";
-import { RootLayout } from "../components/layouts";
+import { RootLayout } from "../components/layout";
+import { RouteError } from "../components/common";
 import { MuiLoading } from "../components/reusable";
 import ProtectedDashboardLayout from "./ProtectedDashboardLayout";
 import PublicRouteLayout from "./PublicRouteLayout";
@@ -26,6 +27,7 @@ const routes = createBrowserRouter([
   {
     path: "/",
     Component: RootLayout,
+    ErrorBoundary: RouteError,
     HydrateFallback: MuiLoading,
     children: [
       {

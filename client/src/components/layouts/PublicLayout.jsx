@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, useNavigate } from "react-router";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,6 +19,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import MenuIcon from "@mui/icons-material/Menu";
 import { MuiAppIconLogo, MuiThemeDropDown } from "../reusable";
+import useAuth from "../../hooks/useAuth";
 import useResponsive from "../../hooks/useResponsive";
 import { LAYOUT_DIMENSIONS } from "../../utils/constants";
 
@@ -36,8 +37,11 @@ const navItems = [
  * @throws {never} This component does not throw.
  */
 const PublicLayout = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   const { isXs } = useResponsive();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const homePath = isAuthenticated ? "/dashboard" : "/";
 
   /**
    * Toggles the mobile navigation drawer visibility.
@@ -49,13 +53,32 @@ const PublicLayout = () => {
     setMobileOpen((prev) => !prev);
   };
 
+  /**
+   * Logs out current authenticated user.
+   *
+   * @returns {Promise<void>} Resolves when logout finishes.
+   * @throws {never} Logout errors are swallowed by hook to keep UI deterministic.
+   */
+  const handleLogout = async () => {
+    await logout();
+    setMobileOpen(false);
+    navigate("/");
+  };
+
   const drawerContent = (
     <Box
       sx={{ width: LAYOUT_DIMENSIONS.PUBLIC_DRAWER_WIDTH_PX }}
       role="presentation"
       onClick={handleToggleMobileMenu}
     >
-      <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 2 }}>
+      <Stack
+        component={Link}
+        to={homePath}
+        direction="row"
+        spacing={1.25}
+        alignItems="center"
+        sx={{ p: 2, textDecoration: "none", color: "text.primary" }}
+      >
         <MuiAppIconLogo />
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
           TaskManager
@@ -73,12 +96,20 @@ const PublicLayout = () => {
       </List>
       <Divider />
       <Stack spacing={1} sx={{ p: 2 }}>
-        <Button component={Link} to="/login" variant="outlined">
-          Log In
-        </Button>
-        <Button component={Link} to="/register" variant="contained">
-          Sign Up
-        </Button>
+        {isAuthenticated ? (
+          <Button variant="contained" color="error" onClick={handleLogout}>
+            Log Out
+          </Button>
+        ) : (
+          <>
+            <Button component={Link} to="/login" variant="outlined">
+              Log In
+            </Button>
+            <Button component={Link} to="/register" variant="contained">
+              Sign Up
+            </Button>
+          </>
+        )}
       </Stack>
     </Box>
   );
@@ -105,15 +136,15 @@ const PublicLayout = () => {
           sx={{ minHeight: `${LAYOUT_DIMENSIONS.APP_BAR_HEIGHT_REM}rem` }}
         >
           <Stack
+            component={Link}
+            to={homePath}
             direction="row"
             spacing={1.25}
             alignItems="center"
-            sx={{ flexGrow: 1 }}
+            sx={{ flexGrow: 1, textDecoration: "none", color: "text.primary" }}
           >
             <MuiAppIconLogo />
             <Typography
-              component={Link}
-              to="/"
               variant="h6"
               sx={{
                 fontWeight: 700,
@@ -143,24 +174,30 @@ const PublicLayout = () => {
           <Stack direction="row" spacing={1} alignItems="center">
             <MuiThemeDropDown />
             {!isXs ? (
-              <>
-                <Button
-                  component={Link}
-                  to="/login"
-                  variant="text"
-                  size="small"
-                >
-                  Log In
+              isAuthenticated ? (
+                <Button variant="contained" color="error" size="small" onClick={handleLogout}>
+                  Log Out
                 </Button>
-                <Button
-                  component={Link}
-                  to="/register"
-                  variant="contained"
-                  size="small"
-                >
-                  Sign Up
-                </Button>
-              </>
+              ) : (
+                <>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    variant="text"
+                    size="small"
+                  >
+                    Log In
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/register"
+                    variant="contained"
+                    size="small"
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              )
             ) : (
               <IconButton
                 onClick={handleToggleMobileMenu}

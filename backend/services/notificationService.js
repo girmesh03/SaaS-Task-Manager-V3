@@ -17,12 +17,15 @@ import { sendEmail } from "./emailService.js";
  *   department: string;
  *   entity?: string | null;
  *   entityModel?: string | null;
+ *   session?: import("mongoose").ClientSession;
  * }} payload - Notification payload.
  * @returns {Promise<import("mongoose").Document | null>} Created notification document.
  * @throws {Error} Throws when persistence fails.
  */
 export const createNotification = async (payload) => {
-  const document = await Notification.create(payload);
+  const { session = null, ...notificationPayload } = payload || {};
+  const created = await Notification.create([notificationPayload], session ? { session } : undefined);
+  const document = Array.isArray(created) ? created[0] : created;
   return document;
 };
 

@@ -16,6 +16,7 @@ import AppTheme from "./theme/AppTheme";
 
 import routes from "./router/routes";
 import { store } from "./redux/store";
+import { ErrorBoundary } from "./components/common";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")).render(
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <AppTheme>
           <CssBaseline enableColorScheme />
-          <RouterProvider router={routes} />
+          <ErrorBoundary>
+            <RouterProvider router={routes} />
+          </ErrorBoundary>
         </AppTheme>
       </LocalizationProvider>
     </Provider>

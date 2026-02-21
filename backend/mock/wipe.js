@@ -1,68 +1,64 @@
 /**
- * @file Phase 2 wipe script for repeatable manual verification cycles.
+ * @file Development database wipe script.
  */
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import { connectDB, disconnectDB } from "../config/db.js";
-import {
-  Attachment,
-  Department,
-  Material,
-  Notification,
-  Organization,
-  Task,
-  TaskActivity,
-  TaskComment,
-  User,
-  Vendor,
-} from "../models/index.js";
+import { isDevelopmentEnv } from "../utils/helpers.js";
 import logger from "../utils/logger.js";
 
 dotenv.config();
 
-const ensureSafeRuntime = () => {
-  const env = String(process.env.NODE_ENV || "development").toLowerCase();
-  if (env === "production") {
-    throw new Error("Wipe script is blocked in production environments");
+/**
+ * Throws when runtime is not development.
+ *
+ * @param {NodeJS.ProcessEnv} [env=process.env] - Environment object.
+ * @returns {void}
+ * @throws {Error} Throws for non-development environments.
+ */
+const assertDevelopmentRuntime = (env = process.env) => {
+  if (!isDevelopmentEnv(env)) {
+    throw new Error("Wipe script is allowed only in development mode");
   }
 };
 
-const wipeCollections = async () => {
-  const models = [
-    Attachment,
-    Notification,
-    TaskComment,
-    TaskActivity,
-    Task,
-    Material,
-    Vendor,
-    User,
-    Department,
-    Organization,
-  ];
-
-  for (const Model of models) {
-    await Model.deleteMany({});
+/**
+ * Drops the active MongoDB database.
+ *
+ * @returns {Promise<void>}
+ */
+const wipeDatabase = async () => {
+  if (!mongoose.connection?.db) {
+    throw new Error("Database connection is not initialized");
   }
+
+  await mongoose.connection.db.dropDatabase();
 };
 
+/**
+ * Runs wipe flow.
+ *
+ * @returns {Promise<void>}
+ */
 const runWipe = async () => {
-  ensureSafeRuntime();
+  assertDevelopmentRuntime(process.env);
   await connectDB();
-  await wipeCollections();
+
+  try {
+    await wipeDatabase();
+    logger.info("Development wipe completed");
+  } finally {
+    await disconnectDB();
+  }
 };
 
 runWipe()
-  .then(async () => {
-    await disconnectDB();
-    logger.info("Wipe script completed successfully");
-    process.exit(0);
-  })
-  .catch(async (error) => {
+  .then(() => process.exit(0))
+  .catch((error) => {
     logger.error("Wipe script failed", {
       message: error.message,
       stack: error.stack,
     });
-
-    await disconnectDB();
     process.exit(1);
   });
+

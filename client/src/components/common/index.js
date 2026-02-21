@@ -1,5 +1,6 @@
 /**
  * @file Barrel exports for common components.
- * @throws {never} Module initialization does not throw.
  */
+export { default as ErrorBoundary } from "./ErrorBoundary";
+export { default as RouteError } from "./RouteError";
 export { default as RoutePlaceholder } from "./RoutePlaceholder";

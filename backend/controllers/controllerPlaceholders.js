@@ -1,6 +1,7 @@
 /**
  * @file Shared placeholder-controller factory for scaffolded endpoints.
  */
+import asyncHandler from "express-async-handler";
 import { HTTP_STATUS } from "../utils/constants.js";
 
 /**
@@ -26,7 +27,7 @@ export const createPlaceholderController = (domain, action, options = {}) => {
   const defaultMessage = `${domain}.${action} is scaffolded in Phase 2 and will be implemented in a later phase`;
   const implementationPhase = options.implementationPhase || "PHASE_3_PLUS";
 
-  return (req, res) => {
+  return asyncHandler(async (req, res) => {
     const resolvedMessage =
       typeof options.message === "function"
         ? options.message(req)
@@ -57,7 +58,7 @@ export const createPlaceholderController = (domain, action, options = {}) => {
     }
 
     res.status(statusCode).json(payload);
-  };
+  });
 };
 
 export default createPlaceholderController;

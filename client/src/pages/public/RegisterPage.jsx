@@ -18,12 +18,9 @@ import {
   RegisterDepartmentStep,
   RegisterOrganizationDetailsStep,
   RegisterOrganizationStep,
+  RegisterReviewStep,
 } from "../../components/auth";
-import {
-  MuiDialog,
-  MuiLoading,
-  MuiProgress,
-} from "../../components/reusable";
+import { MuiLoading, MuiProgress } from "../../components/reusable";
 import useResponsive from "../../hooks/useResponsive";
 import { useRegisterAuthMutation } from "../../services/api";
 import { toastApiError } from "../../utils/errorHandling";
@@ -36,19 +33,38 @@ const REGISTRATION_STEPS = Object.freeze([
       "organization.email",
       "organization.phone",
       "organization.address",
+      "organization.industry",
+      "organization.size",
+      "organization.description",
     ],
-  },
-  {
-    label: "Organization Details",
-    fields: ["organization.industry", "organization.size", "organization.description"],
   },
   {
     label: "Department",
     fields: ["department.name", "department.description"],
   },
   {
-    label: "Admin User",
+    label: "Account",
     fields: [
+      "user.firstName",
+      "user.lastName",
+      "user.position",
+      "user.email",
+      "user.password",
+      "user.confirmPassword",
+    ],
+  },
+  {
+    label: "Review & Submit",
+    fields: [
+      "organization.name",
+      "organization.email",
+      "organization.phone",
+      "organization.address",
+      "organization.industry",
+      "organization.size",
+      "organization.description",
+      "department.name",
+      "department.description",
       "user.firstName",
       "user.lastName",
       "user.position",
@@ -69,7 +85,6 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { isXs } = useResponsive();
   const [activeStep, setActiveStep] = useState(0);
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [registerAuth, registerState] = useRegisterAuthMutation();
 
   const {
@@ -110,7 +125,23 @@ const RegisterPage = () => {
   const progressValue = ((activeStep + 1) / REGISTRATION_STEPS.length) * 100;
 
   const title = useMemo(() => {
-    return `Sign Up - Step ${activeStep + 1} of ${REGISTRATION_STEPS.length}`;
+    if (activeStep === 0) return "Organization Details";
+    if (activeStep === 1) return "Department Setup";
+    if (activeStep === 2) return "Create Your Account";
+    return "Final Review";
+  }, [activeStep]);
+
+  const subtitle = useMemo(() => {
+    if (activeStep === 0) {
+      return "Let's start by setting up your company profile.";
+    }
+    if (activeStep === 1) {
+      return "Define your primary department to organize your team's workflow and tasks effectively.";
+    }
+    if (activeStep === 2) {
+      return "Set up your personal details to access your workspace.";
+    }
+    return "Please verify your information before submitting.";
   }, [activeStep]);
 
   /**
@@ -152,7 +183,7 @@ const RegisterPage = () => {
     try {
       await registerAuth(values).unwrap();
       toast.success("Registration submitted. Verify email to continue.");
-      setSuccessDialogOpen(true);
+      navigate("/verify-email");
     } catch (error) {
       toastApiError(error);
     }
@@ -167,18 +198,19 @@ const RegisterPage = () => {
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
-        return <RegisterOrganizationStep register={register} errors={errors} />;
-      case 1:
         return (
-          <RegisterOrganizationDetailsStep
-            control={control}
-            register={register}
-            errors={errors}
-          />
+          <Stack spacing={1.25}>
+            <RegisterOrganizationStep register={register} errors={errors} />
+            <RegisterOrganizationDetailsStep
+              control={control}
+              register={register}
+              errors={errors}
+            />
+          </Stack>
         );
-      case 2:
+      case 1:
         return <RegisterDepartmentStep register={register} errors={errors} />;
-      case 3:
+      case 2:
         return (
           <RegisterAdminUserStep
             register={register}
@@ -186,6 +218,8 @@ const RegisterPage = () => {
             getValues={getValues}
           />
         );
+      case 3:
+        return <RegisterReviewStep getValues={getValues} />;
       default:
         return null;
     }
@@ -205,18 +239,15 @@ const RegisterPage = () => {
         component="form"
         variant="outlined"
         onSubmit={handleSubmit(onSubmit)}
-        sx={{ width: "100%", maxWidth: 760, p: { xs: 2.5, sm: 3 } }}
+        sx={{
+          width: "100%",
+          maxWidth: 860,
+          p: { xs: 2.5, sm: 3 },
+          borderRadius: 2,
+          boxShadow: (theme) => theme.shadows[8],
+        }}
       >
         <Stack spacing={2}>
-          <Stack spacing={0.5}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create your organization, department, and initial SuperAdmin account.
-            </Typography>
-          </Stack>
-
           {isXs ? (
             <Stack spacing={0.75}>
               <MuiProgress
@@ -230,7 +261,7 @@ const RegisterPage = () => {
               </Typography>
             </Stack>
           ) : (
-            <Stepper activeStep={activeStep} alternativeLabel sx={{ pb: 1 }}>
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ pb: 0.5 }}>
               {REGISTRATION_STEPS.map((step) => (
                 <Step key={step.label}>
                   <StepLabel>{step.label}</StepLabel>
@@ -238,6 +269,15 @@ const RegisterPage = () => {
               ))}
             </Stepper>
           )}
+
+          <Stack spacing={0.5}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {subtitle}
+            </Typography>
+          </Stack>
 
           {renderStepContent()}
 
@@ -248,6 +288,7 @@ const RegisterPage = () => {
           <Stack direction="row" justifyContent="space-between">
             <Button
               type="button"
+              size="small"
               variant="outlined"
               onClick={handleBack}
               disabled={activeStep === 0}
@@ -258,14 +299,17 @@ const RegisterPage = () => {
             {isLastStep ? (
               <Button
                 type="submit"
+                size="small"
                 variant="contained"
                 disabled={registerState.isLoading || isSubmitting}
               >
-                Sign Up
+                {registerState.isLoading || isSubmitting
+                  ? "Submitting..."
+                  : "Submit Registration"}
               </Button>
             ) : (
-              <Button type="button" variant="contained" onClick={handleNext}>
-                Next
+              <Button type="button" size="small" variant="contained" onClick={handleNext}>
+                Next Step
               </Button>
             )}
           </Stack>
@@ -278,36 +322,6 @@ const RegisterPage = () => {
           </Typography>
         </Stack>
       </Paper>
-
-      <MuiDialog
-        open={successDialogOpen}
-        onClose={() => setSuccessDialogOpen(false)}
-        title="Registration Submitted"
-        actions={
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              onClick={() => setSuccessDialogOpen(false)}
-            >
-              Close
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                setSuccessDialogOpen(false);
-                navigate("/verify-email");
-              }}
-            >
-              Continue
-            </Button>
-          </Stack>
-        }
-      >
-        <Typography variant="body2" color="text.secondary">
-          Your onboarding payload has been sent. Continue to email verification to activate your
-          organization.
-        </Typography>
-      </MuiDialog>
     </Box>
   );
 };

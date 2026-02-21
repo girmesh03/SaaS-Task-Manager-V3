@@ -14,9 +14,12 @@
  *
  */
 
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo, useState } from "react";
+import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 /**
  * MuiTextField Component
@@ -84,6 +87,8 @@ const MuiTextField = forwardRef(
     },
     ref
   ) => {
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
     // Memoize start adornment
     const computedStartAdornment = useMemo(
       () =>
@@ -98,8 +103,23 @@ const MuiTextField = forwardRef(
       () =>
         endAdornment ? (
           <InputAdornment position="end">{endAdornment}</InputAdornment>
+        ) : type === "password" ? (
+          <InputAdornment position="end">
+            <IconButton
+              aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+              onClick={() => setIsPasswordVisible((current) => !current)}
+              edge="end"
+              size="small"
+            >
+              {isPasswordVisible ? (
+                <VisibilityOffOutlinedIcon fontSize="small" />
+              ) : (
+                <VisibilityOutlinedIcon fontSize="small" />
+              )}
+            </IconButton>
+          </InputAdornment>
         ) : null,
-      [endAdornment]
+      [endAdornment, isPasswordVisible, type]
     );
 
     return (
@@ -112,7 +132,7 @@ const MuiTextField = forwardRef(
         placeholder={placeholder}
         disabled={disabled}
         required={required}
-        type={type}
+        type={type === "password" && isPasswordVisible ? "text" : type}
         error={!!error}
         helperText={error?.message || helperText || (reserveHelperTextSpace ? " " : "")}
         slotProps={{

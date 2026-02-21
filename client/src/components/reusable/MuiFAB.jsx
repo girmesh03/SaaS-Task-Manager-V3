@@ -52,7 +52,7 @@ const MuiFAB = forwardRef(
   (
     {
       color = "primary",
-      size = "medium",
+      size = "small",
       variant = "circular",
       onClick,
       disabled = false,

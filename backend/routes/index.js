@@ -14,6 +14,7 @@ import vendorRoutes from "./vendorRoutes.js";
 import notificationRoutes from "./notificationRoutes.js";
 import dashboardRoutes from "./dashboardRoutes.js";
 import attachmentRoutes from "./attachmentRoutes.js";
+import organizationRoutes from "./organizationRoutes.js";
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use("/vendors", vendorRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/attachments", attachmentRoutes);
+router.use("/organizations", organizationRoutes);
 
 export default router;

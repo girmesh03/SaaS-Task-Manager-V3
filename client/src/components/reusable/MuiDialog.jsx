@@ -11,7 +11,8 @@ import DialogActions from "@mui/material/DialogActions";
 import IconButton from "@mui/material/IconButton";
 import Slide from "@mui/material/Slide";
 import CloseIcon from "@mui/icons-material/Close";
-import useResponsive from "../../hooks/useResponsive";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 
 // Transition component for dialogs
 const Transition = forwardRef(function Transition(props, ref) {
@@ -38,13 +39,21 @@ const MuiDialog = forwardRef(
       fullScreen: forceFullScreen,
       showCloseButton = true,
       TransitionComponent = Transition,
+      ariaLabelledby,
+      ariaDescribedby,
+      disableEnforceFocus = true,
+      disableRestoreFocus = true,
       ...muiProps
     },
     ref
   ) => {
-    const { isMobile } = useResponsive();
+    const theme = useTheme();
+    const mobileFullHeight = useMediaQuery(theme.breakpoints.down("sm"));
+    const dialogTitleId = ariaLabelledby || "dialog-title";
+    const dialogDescriptionId = ariaDescribedby || "dialog-description";
     const fullScreen =
-      forceFullScreen !== undefined ? forceFullScreen : isMobile;
+      forceFullScreen !== undefined ? forceFullScreen : mobileFullHeight;
+    const fullscreenPaper = fullScreen || mobileFullHeight;
 
     return (
       <Dialog
@@ -55,16 +64,16 @@ const MuiDialog = forwardRef(
         maxWidth={maxWidth}
         fullScreen={fullScreen}
         slots={{ transition: TransitionComponent }}
-        disableEnforceFocus
-        disableRestoreFocus
-        aria-labelledby="dialog-title"
-        aria-describedby="dialog-description"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescriptionId}
+        disableEnforceFocus={disableEnforceFocus}
+        disableRestoreFocus={disableRestoreFocus}
         sx={{
           "& .MuiDialog-paper": {
             bgcolor: "background.default",
             backgroundImage: "none",
-            borderRadius: isMobile ? 0 : 2,
-            ...(isMobile && {
+            borderRadius: fullscreenPaper ? 0 : 2,
+            ...(fullscreenPaper && {
               margin: 0,
               width: "100vw",
               maxWidth: "100vw",
@@ -76,7 +85,7 @@ const MuiDialog = forwardRef(
         {...muiProps}
       >
         {title && (
-          <DialogTitle id="dialog-title" sx={{ m: 0, p: 2, pr: 6 }}>
+          <DialogTitle id={dialogTitleId} sx={{ m: 0, p: 2, pr: 6 }}>
             {title}
             {showCloseButton && onClose && (
               <IconButton
@@ -94,7 +103,7 @@ const MuiDialog = forwardRef(
             )}
           </DialogTitle>
         )}
-        <DialogContent id="dialog-description" dividers>
+        <DialogContent id={dialogDescriptionId} dividers>
           {children}
         </DialogContent>
         {actions && (

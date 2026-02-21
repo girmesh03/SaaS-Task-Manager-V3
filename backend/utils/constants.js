@@ -321,7 +321,6 @@ export const CLOUDINARY_FILE_URL_REGEX =
   /^https:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|video|raw)\/upload\/v\d+\/.+$/;
 
 export const API_DEFAULTS = {
-  SEARCH_DEBOUNCE_MS: 300,
   DEFAULT_SORT_ORDER: "desc",
 };
 
@@ -331,7 +330,6 @@ export const PAGINATION_DEFAULTS = {
   MAX_LIMIT: VALIDATION_LIMITS.PAGINATION.LIMIT_MAX,
   SORT_BY: "createdAt",
   SORT_ORDER: "desc",
-  SEARCH: "",
   INCLUDE_DELETED: false,
 };
 

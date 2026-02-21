@@ -10,7 +10,6 @@ const createDefaultResourceState = () => ({
   limit: PAGINATION_DEFAULTS.LIMIT,
   sortBy: PAGINATION_DEFAULTS.SORT_BY,
   sortOrder: PAGINATION_DEFAULTS.SORT_ORDER,
-  search: PAGINATION_DEFAULTS.SEARCH,
   includeDeleted: PAGINATION_DEFAULTS.INCLUDE_DELETED,
   filters: {},
   dialog: {
@@ -19,6 +18,8 @@ const createDefaultResourceState = () => ({
     payload: null,
   },
 });
+
+const DEFAULT_RESOURCE_STATE = createDefaultResourceState();
 
 const resourceViewSlice = createSlice({
   name: "resourceView",
@@ -71,7 +72,7 @@ export const {
 } = resourceViewSlice.actions;
 
 export const selectResourceViewState = (resource) => (state) => {
-  return state.resourceView.byResource[resource] || createDefaultResourceState();
+  return state.resourceView.byResource[resource] || DEFAULT_RESOURCE_STATE;
 };
 
 export default resourceViewSlice.reducer;

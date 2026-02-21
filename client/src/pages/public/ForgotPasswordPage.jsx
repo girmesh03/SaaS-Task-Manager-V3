@@ -3,14 +3,17 @@ import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { toast } from "react-toastify";
-import { MuiDialog, MuiLoading, MuiTextField } from "../../components/reusable";
+import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import MarkEmailReadOutlinedIcon from "@mui/icons-material/MarkEmailReadOutlined";
+import LockResetOutlinedIcon from "@mui/icons-material/LockResetOutlined";
+import { MuiLoading, MuiTextField } from "../../components/reusable";
 import { useForgotPasswordMutation } from "../../services/api";
 import { VALIDATION_LIMITS } from "../../utils/constants";
-import { toastApiError } from "../../utils/errorHandling";
 import { validators } from "../../utils/validators";
 
 /**
@@ -21,10 +24,12 @@ import { validators } from "../../utils/validators";
  */
 const ForgotPasswordPage = () => {
   const [forgotPassword, forgotState] = useForgotPasswordMutation();
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -42,10 +47,11 @@ const ForgotPasswordPage = () => {
   const onSubmit = async (values) => {
     try {
       await forgotPassword(values).unwrap();
-      toast.success("Password reset request submitted.");
-      setSuccessDialogOpen(true);
-    } catch (error) {
-      toastApiError(error);
+    } catch {
+      // Always resolve to success state to prevent account enumeration.
+    } finally {
+      setSubmittedEmail(values.email);
+      setRequestSubmitted(true);
     }
   };
 
@@ -60,73 +66,139 @@ const ForgotPasswordPage = () => {
       }}
     >
       <Paper
-        component="form"
         variant="outlined"
-        onSubmit={handleSubmit(onSubmit)}
-        sx={{ width: "100%", maxWidth: 480, p: { xs: 2.5, sm: 3 } }}
+        sx={{
+          width: "100%",
+          maxWidth: 460,
+          p: { xs: 2.5, sm: 3 },
+          borderRadius: 2,
+          boxShadow: (theme) => theme.shadows[8],
+        }}
       >
-        <Stack spacing={2}>
-          <Stack spacing={0.5}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Forgot Password
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Enter your account email to request a password reset token.
+        {!requestSubmitted ? (
+          <Stack component="form" spacing={2.25} onSubmit={handleSubmit(onSubmit)}>
+            <Button
+              component={Link}
+              to="/login"
+              size="small"
+              startIcon={<ArrowBackOutlinedIcon fontSize="small" />}
+              sx={{ alignSelf: "flex-start", p: 0, minWidth: "auto" }}
+            >
+              Back to Login
+            </Button>
+
+            <Stack spacing={1} alignItems="center" textAlign="center">
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  bgcolor: "primary.50",
+                  color: "primary.main",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <LockResetOutlinedIcon fontSize="small" />
+              </Box>
+
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                Forgot Password
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Enter the email address associated with your account and
+                we&apos;ll send you a link to reset your password.
+              </Typography>
+            </Stack>
+
+            <MuiTextField
+              {...register("email", {
+                required: "Email is required",
+                maxLength: {
+                  value: VALIDATION_LIMITS.USER.EMAIL_MAX,
+                  message: "Maximum 100 characters",
+                },
+                validate: (value) =>
+                  validators.email(value) || "Please enter a valid email address",
+              })}
+              label="Email"
+              type="email"
+              startAdornment={<EmailOutlinedIcon fontSize="small" />}
+              error={errors.email}
+              reserveHelperTextSpace={false}
+            />
+
+            {forgotState.isLoading || isSubmitting ? (
+              <MuiLoading message="Submitting reset request..." />
+            ) : null}
+
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={forgotState.isLoading || isSubmitting}
+            >
+              Request Reset
+            </Button>
+
+            <Divider>OR</Divider>
+
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              Don&apos;t have an account?{" "}
+              <Button component={Link} to="/register" size="small" sx={{ p: 0, minWidth: "auto" }}>
+                Sign Up
+              </Button>
             </Typography>
           </Stack>
-
-          <MuiTextField
-            {...register("email", {
-              required: "Email is required",
-              maxLength: {
-                value: VALIDATION_LIMITS.USER.EMAIL_MAX,
-                message: "Maximum 100 characters",
-              },
-              validate: (value) =>
-                validators.email(value) || "Please enter a valid email address",
-            })}
-            label="Email"
-            type="email"
-            error={errors.email}
-            reserveHelperTextSpace={false}
-          />
-
-          {forgotState.isLoading || isSubmitting ? (
-            <MuiLoading message="Submitting reset request..." />
-          ) : null}
-
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={forgotState.isLoading || isSubmitting}
-          >
-            Request Reset
-          </Button>
-
-          <Typography variant="body2" color="text.secondary">
-            Return to{" "}
-            <Button component={Link} to="/login" size="small" sx={{ p: 0 }}>
-              Log In
+        ) : (
+          <Stack spacing={2} alignItems="center" textAlign="center">
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                bgcolor: "success.50",
+                color: "success.main",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MarkEmailReadOutlinedIcon fontSize="small" />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Check Your Email
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              We sent a password reset link to <strong>{submittedEmail || "your email"}</strong>.
+              Please check your inbox and follow the instructions.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Didn&apos;t receive the email?{" "}
+              <Button
+                size="small"
+                onClick={() => {
+                  setRequestSubmitted(false);
+                  if (submittedEmail) {
+                    setValue("email", submittedEmail);
+                  }
+                }}
+                sx={{ p: 0, minWidth: "auto" }}
+              >
+                Click to resend
+              </Button>
+            </Typography>
+            <Button
+              component={Link}
+              to="/login"
+              variant="outlined"
+              startIcon={<ArrowBackOutlinedIcon fontSize="small" />}
+            >
+              Back to Login
             </Button>
-          </Typography>
-        </Stack>
+          </Stack>
+        )}
       </Paper>
-
-      <MuiDialog
-        open={successDialogOpen}
-        onClose={() => setSuccessDialogOpen(false)}
-        title="Reset Requested"
-        actions={
-          <Button variant="contained" onClick={() => setSuccessDialogOpen(false)}>
-            Close
-          </Button>
-        }
-      >
-        <Typography variant="body2" color="text.secondary">
-          If the email exists, a reset token or reset link will be sent. Continue with reset
-          using the token from your mailbox.
-        </Typography>
-      </MuiDialog>
     </Box>
   );
 };

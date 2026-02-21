@@ -2,6 +2,7 @@
  * @file Register step: department details.
  */
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { MuiTextField } from "../reusable";
 import { VALIDATION_LIMITS } from "../../utils/constants";
 import { validators } from "../../utils/validators";
@@ -35,6 +36,7 @@ const RegisterDepartmentStep = ({ register, errors }) => {
             "Department name format is invalid",
         })}
         label="Department Name"
+        placeholder="e.g. Engineering, Marketing HQ"
         error={errors.department?.name}
         reserveHelperTextSpace={false}
       />
@@ -52,12 +54,16 @@ const RegisterDepartmentStep = ({ register, errors }) => {
           },
         })}
         label="Department Description"
+        placeholder="Briefly describe the purpose of this department..."
         multiline
         minRows={3}
         maxRows={5}
         error={errors.department?.description}
         reserveHelperTextSpace={false}
       />
+      <Typography variant="caption" color="text.secondary">
+        This will be visible to all members invited to this department.
+      </Typography>
     </Stack>
   );
 };

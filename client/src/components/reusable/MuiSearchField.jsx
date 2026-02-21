@@ -1,6 +1,6 @@
-import { memo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import InputAdornment from "@mui/material/InputAdornment";
+import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -12,6 +12,9 @@ import MuiTextField from "./MuiTextField";
  * @param {{
  *   value?: string | number;
  *   onChange?: (event: { target: { value: string } }) => void;
+ *   onDebouncedChange?: (event: { target: { value: string } }) => void;
+ *   debounceMs?: number;
+ *   loading?: boolean;
  *   placeholder?: string;
  *   ariaLabel?: string;
  *   clearable?: boolean;
@@ -25,8 +28,11 @@ import MuiTextField from "./MuiTextField";
  * @throws {never} This component does not throw.
  */
 const MuiSearchField = ({
-  value,
+  value = "",
   onChange,
+  onDebouncedChange,
+  debounceMs = 500,
+  loading = false,
   placeholder = "Search...",
   ariaLabel = "Search",
   clearable = true,
@@ -37,9 +43,56 @@ const MuiSearchField = ({
   sx,
   ...muiProps
 }) => {
+  const normalizedValue = String(value ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(normalizedValue);
+  const isDebouncedMode = typeof onDebouncedChange === "function";
+
+  useEffect(() => {
+    setDebouncedSearch(normalizedValue);
+  }, [normalizedValue]);
+
+  useEffect(() => {
+    if (!isDebouncedMode) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (debouncedSearch !== normalizedValue) {
+        onDebouncedChange({ target: { value: debouncedSearch } });
+      }
+    }, debounceMs);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    debounceMs,
+    debouncedSearch,
+    isDebouncedMode,
+    normalizedValue,
+    onDebouncedChange,
+  ]);
+
+  const displayedValue = isDebouncedMode ? debouncedSearch : normalizedValue;
+  const isSearchPending = loading || (isDebouncedMode && debouncedSearch !== normalizedValue);
+
+  const handleInputChange = (event) => {
+    if (isDebouncedMode) {
+      setDebouncedSearch(event.target.value);
+      return;
+    }
+
+    onChange?.(event);
+  };
+
   const handleClear = () => {
     if (onClear) {
       onClear();
+      return;
+    }
+
+    if (isDebouncedMode) {
+      setDebouncedSearch("");
       return;
     }
 
@@ -48,10 +101,23 @@ const MuiSearchField = ({
     }
   };
 
+  const defaultSx = useMemo(
+    () => ({
+      mb: 0,
+      flex: { xs: 1, sm: "none" },
+      width: { xs: "auto", sm: 260 },
+      "& .MuiOutlinedInput-root": {
+        bgcolor: "background.paper",
+        pr: 1,
+      },
+    }),
+    []
+  );
+
   return (
     <MuiTextField
-      value={value}
-      onChange={onChange}
+      value={displayedValue}
+      onChange={handleInputChange}
       placeholder={placeholder}
       aria-label={ariaLabel}
       fullWidth={fullWidth}
@@ -59,19 +125,20 @@ const MuiSearchField = ({
       reserveHelperTextSpace={reserveHelperTextSpace}
       startAdornment={<SearchIcon fontSize="small" color="action" />}
       endAdornment={
-        clearable && value ? (
-          <InputAdornment position="end">
-            <IconButton
-              size="small"
-              aria-label="Clear search"
-              onClick={handleClear}
-            >
-              <ClearIcon fontSize="small" />
-            </IconButton>
-          </InputAdornment>
+        isSearchPending ? (
+          <CircularProgress size={20} color="inherit" />
+        ) : clearable && displayedValue ? (
+          <IconButton
+            size="small"
+            aria-label="Clear search"
+            onClick={handleClear}
+            edge="end"
+          >
+            <ClearIcon fontSize="small" />
+          </IconButton>
         ) : null
       }
-      sx={sx}
+      sx={[defaultSx, sx]}
       {...muiProps}
     />
   );
@@ -80,6 +147,9 @@ const MuiSearchField = ({
 MuiSearchField.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onChange: PropTypes.func,
+  onDebouncedChange: PropTypes.func,
+  debounceMs: PropTypes.number,
+  loading: PropTypes.bool,
   placeholder: PropTypes.string,
   ariaLabel: PropTypes.string,
   clearable: PropTypes.bool,

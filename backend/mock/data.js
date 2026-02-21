@@ -1,43 +1,19 @@
 /**
- * @file Phase 2 deterministic mock data and seed input helpers.
+ * @file Development mock-seed blueprints for Phase 3 organizations/departments/users.
  */
 import {
   DEPARTMENT_STATUS,
-  MATERIAL_STATUS,
   MOCK_DEFAULTS,
   NODE_ENVS,
-  TASK_PRIORITY,
-  TASK_STATUS,
-  TASK_TYPE,
+  ORGANIZATION_INDUSTRIES,
+  ORGANIZATION_SIZES,
   USER_ROLES,
   USER_STATUS,
-  VENDOR_STATUS,
 } from "../utils/constants.js";
-
-const normalizeEmailLocalPart = (value = "") => {
-  const localPart = String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-
-  return localPart || "user";
-};
-
-const toGmailFromName = (nameOrFirstName = "") => {
-  return `${normalizeEmailLocalPart(nameOrFirstName)}@${MOCK_DEFAULTS.GMAIL_DOMAIN}`;
-};
-
-const resolveMockPassword = (env = process.env) => {
-  const environment = String(env.NODE_ENV || NODE_ENVS.DEVELOPMENT).toLowerCase();
-  if (environment === NODE_ENVS.DEVELOPMENT) {
-    return MOCK_DEFAULTS.PASSWORD;
-  }
-
-  return env.PLATFORM_ADMIN_PASSWORD || MOCK_DEFAULTS.PASSWORD;
-};
+import { isDevelopmentEnv, toGmailAddress, toISODateTime } from "../utils/helpers.js";
 
 /**
- * Environment variable keys used to derive platform seed source values.
+ * Environment variable keys used for platform seed inputs.
  *
  * @type {Readonly<{
  *   organization: readonly string[];
@@ -70,7 +46,7 @@ export const PLATFORM_SEED_ENV_KEYS = Object.freeze({
 });
 
 /**
- * Resolves platform seed payload from environment variables.
+ * Resolves platform seed values from environment.
  *
  * @param {NodeJS.ProcessEnv} [env=process.env] - Source environment object.
  * @returns {{
@@ -80,13 +56,10 @@ export const PLATFORM_SEED_ENV_KEYS = Object.freeze({
  *     email: string;
  *     phone: string;
  *     address: string;
- *     size: string;
  *     industry: string;
+ *     size: string;
  *   };
- *   department: {
- *     name: string;
- *     description: string;
- *   };
+ *   department: { name: string; description: string };
  *   user: {
  *     firstName: string;
  *     lastName: string;
@@ -96,247 +69,489 @@ export const PLATFORM_SEED_ENV_KEYS = Object.freeze({
  *     password: string;
  *   };
  * }} Platform seed payload.
- * @throws {never} This helper does not throw.
  */
 export const getPlatformSeedFromEnv = (env = process.env) => {
-  const organizationName = env.PLATFORM_ORGANIZATION_NAME || "TaskManager Platform";
-  const adminFirstName = env.PLATFORM_ADMIN_FIRST_NAME || "Platform";
-  const organizationEmail = toGmailFromName(organizationName);
-  const adminEmail = toGmailFromName(adminFirstName);
+  const organizationName = env.PLATFORM_ORGANIZATION_NAME || "Task Manager";
+  const platformFirstName = env.PLATFORM_ADMIN_FIRST_NAME || "Platform";
+  const useDevPassword = isDevelopmentEnv(env);
 
   return {
     organization: {
       name: organizationName,
       description:
         env.PLATFORM_ORGANIZATION_DESCRIPTION ||
-        "System administration organization for the multi-tenant platform.",
-      email: organizationEmail,
-      phone: env.PLATFORM_ORGANIZATION_PHONE || "+251900000000",
-      address: env.PLATFORM_ORGANIZATION_ADDRESS || "Addis Ababa",
-      size: env.PLATFORM_ORGANIZATION_SIZE || "Small",
-      industry: env.PLATFORM_ORGANIZATION_INDUSTRY || "Technology",
+        "Task Manager is a multi-tenant SaaS application specifically designed for an industry structured as organizations, departments, and users.",
+      email:
+        env.PLATFORM_ORGANIZATION_EMAIL ||
+        toGmailAddress(organizationName.split(" ")[0], MOCK_DEFAULTS.GMAIL_DOMAIN),
+      phone: env.PLATFORM_ORGANIZATION_PHONE || "+251913050675",
+      address: env.PLATFORM_ORGANIZATION_ADDRESS || "Head Office, Addis Ababa",
+      industry:
+        env.PLATFORM_ORGANIZATION_INDUSTRY ||
+        ORGANIZATION_INDUSTRIES.find((value) => value === "Technology") ||
+        ORGANIZATION_INDUSTRIES[0],
+      size:
+        env.PLATFORM_ORGANIZATION_SIZE ||
+        ORGANIZATION_SIZES.find((value) => value === "Small") ||
+        ORGANIZATION_SIZES[0],
     },
     department: {
-      name: env.PLATFORM_DEPARTMENT_NAME || "Platform Administration",
+      name: env.PLATFORM_DEPARTMENT_NAME || "Administration",
       description:
         env.PLATFORM_DEPARTMENT_DESCRIPTION ||
-        "Owns platform runtime, governance, and tenant administration.",
+        "Platform administration and governance operations.",
     },
     user: {
-      firstName: adminFirstName,
-      lastName: env.PLATFORM_ADMIN_LAST_NAME || "Admin",
-      position: env.PLATFORM_ADMIN_POSITION || "System Owner",
+      firstName: platformFirstName,
+      lastName: env.PLATFORM_ADMIN_LAST_NAME || "Superadmin",
+      position: env.PLATFORM_ADMIN_POSITION || "Platform Super Administrator",
       role: env.PLATFORM_ADMIN_ROLE || USER_ROLES.SUPER_ADMIN,
-      email: adminEmail,
-      password: resolveMockPassword(env),
+      email:
+        env.PLATFORM_ADMIN_EMAIL ||
+        toGmailAddress(platformFirstName, MOCK_DEFAULTS.GMAIL_DOMAIN),
+      password: useDevPassword
+        ? MOCK_DEFAULTS.PASSWORD
+        : env.PLATFORM_ADMIN_PASSWORD || MOCK_DEFAULTS.PASSWORD,
     },
   };
 };
 
 /**
- * Deterministic fixture blueprint reserved for vertical-slice phases.
+ * Builds deterministic Phase 3 seed blueprint (platform + customer organizations).
  *
- * @type {Readonly<Record<string, unknown>>}
+ * @param {NodeJS.ProcessEnv} [env=process.env] - Source environment object.
+ * @returns {{
+ *   generatedAt: string;
+ *   organizations: Array<{
+ *     key: string;
+ *     payload: {
+ *       name: string;
+ *       description: string;
+ *       email: string;
+ *       phone: string;
+ *       address: string;
+ *       industry: string;
+ *       size: string;
+ *       isPlatformOrg: boolean;
+ *       isVerified: boolean;
+ *     };
+ *     departments: Array<{
+ *       key: string;
+ *       name: string;
+ *       description: string;
+ *       status: string;
+ *     }>;
+ *     users: Array<{
+ *       firstName: string;
+ *       lastName: string;
+ *       position: string;
+ *       role: string;
+ *       isHod: boolean;
+ *       departmentKey: string;
+ *       isPlatformOrgUser: boolean;
+ *       email: string;
+ *       password: string;
+ *       status: string;
+ *       joinedAt: string;
+ *     }>;
+ *   }>;
+ * }} Seed blueprint.
  */
-export const PHASE_TWO_FIXTURE_BLUEPRINT = Object.freeze({
-  organizations: [
-    {
-      key: "customer_org_alpha",
-      name: "Alpha Build Co",
-      email: toGmailFromName("Alpha Build Co"),
-      industry: "Construction",
-      size: "Medium",
-      isPlatformOrg: false,
-      isVerified: true,
-    },
-    {
-      key: "customer_org_beta",
-      name: "Beta Care Ltd",
-      email: toGmailFromName("Beta Care Ltd"),
-      industry: "Healthcare",
-      size: "Small",
-      isPlatformOrg: false,
-      isVerified: true,
-    },
-  ],
-  departments: [
-    {
-      key: "alpha_engineering",
-      organizationKey: "customer_org_alpha",
-      name: "Engineering",
-      status: DEPARTMENT_STATUS.ACTIVE,
-      description: "Engineering execution department",
-    },
-    {
-      key: "alpha_operations_inactive",
-      organizationKey: "customer_org_alpha",
-      name: "Operations",
-      status: DEPARTMENT_STATUS.INACTIVE,
-      description: "Inactive department used for create-block validation",
-    },
-  ],
-  users: [
-    {
-      key: "platform_superadmin",
-      firstName: "Platform",
-      email: toGmailFromName("Platform"),
-      password: MOCK_DEFAULTS.PASSWORD,
-      role: USER_ROLES.SUPER_ADMIN,
-      status: USER_STATUS.ACTIVE,
-      isPlatformOrgUser: true,
-      isHod: true,
-    },
-    {
-      key: "alpha_superadmin",
-      firstName: "Alpha",
-      email: toGmailFromName("Alpha"),
-      password: MOCK_DEFAULTS.PASSWORD,
-      role: USER_ROLES.SUPER_ADMIN,
-      status: USER_STATUS.ACTIVE,
-      isPlatformOrgUser: false,
-      isHod: true,
-    },
-    {
-      key: "alpha_admin",
-      firstName: "Admin",
-      email: toGmailFromName("Admin"),
-      password: MOCK_DEFAULTS.PASSWORD,
-      role: USER_ROLES.ADMIN,
-      status: USER_STATUS.ACTIVE,
-      isPlatformOrgUser: false,
-      isHod: false,
-    },
-    {
-      key: "alpha_manager",
-      firstName: "Manager",
-      email: toGmailFromName("Manager"),
-      password: MOCK_DEFAULTS.PASSWORD,
-      role: USER_ROLES.MANAGER,
-      status: USER_STATUS.ACTIVE,
-      isPlatformOrgUser: false,
-      isHod: false,
-    },
-    {
-      key: "alpha_user",
-      firstName: "User",
-      email: toGmailFromName("User"),
-      password: MOCK_DEFAULTS.PASSWORD,
-      role: USER_ROLES.USER,
-      status: USER_STATUS.ACTIVE,
-      isPlatformOrgUser: false,
-      isHod: false,
-    },
-  ],
-  tasks: [
-    {
-      key: "project_todo",
-      type: TASK_TYPE.PROJECT,
-      status: TASK_STATUS.TODO,
-      priority: TASK_PRIORITY.HIGH,
-      tags: ["project", "vendor"],
-      isDeleted: false,
-    },
-    {
-      key: "assigned_in_progress",
-      type: TASK_TYPE.ASSIGNED,
-      status: TASK_STATUS.IN_PROGRESS,
-      priority: TASK_PRIORITY.URGENT,
-      tags: ["assigned", "critical"],
-      isDeleted: false,
-    },
-    {
-      key: "routine_completed_deleted",
-      type: TASK_TYPE.ROUTINE,
-      status: TASK_STATUS.COMPLETED,
-      priority: TASK_PRIORITY.MEDIUM,
-      tags: ["routine", "daily"],
-      isDeleted: true,
-    },
-  ],
-  materials: [
-    {
-      key: "material_low_stock",
-      status: MATERIAL_STATUS.ACTIVE,
-      sku: "MT-LOW-0001",
-      stockOnHand: 2,
-      lowStockThreshold: 5,
-      isDeleted: false,
-    },
-    {
-      key: "material_associated_deleted",
-      status: MATERIAL_STATUS.ACTIVE,
-      sku: "MT-ASOC-0002",
-      stockOnHand: 20,
-      lowStockThreshold: 3,
-      isDeleted: true,
-    },
-  ],
-  vendors: [
-    {
-      key: "vendor_active_verified",
-      name: "Vendor Active",
-      email: toGmailFromName("Vendor Active"),
-      status: VENDOR_STATUS.ACTIVE,
-      isVerifiedPartner: true,
-      rating: 4.5,
-      isDeleted: false,
-    },
-    {
-      key: "vendor_inactive_associated",
-      name: "Vendor Inactive",
-      email: toGmailFromName("Vendor Inactive"),
-      status: VENDOR_STATUS.INACTIVE,
-      isVerifiedPartner: false,
-      rating: 3,
-      isDeleted: true,
-    },
-  ],
-  comments: [
-    {
-      key: "comment_depth_4",
-      depth: 4,
-      hasMentions: true,
-    },
-    {
-      key: "comment_depth_5_boundary",
-      depth: 5,
-      hasMentions: false,
-    },
-  ],
-  scenarios: {
-    lowStock: {
-      description: "Material stock would go below zero on routine or activity usage",
-      materialKey: "material_low_stock",
-      requestedQuantity: 5,
-      expectedErrorCode: "CONFLICT_ERROR",
-    },
-    vendorDeleteConflict: {
-      description: "Deleting a vendor that is associated with project tasks",
-      vendorKey: "vendor_inactive_associated",
-      expectedErrorCode: "CONFLICT_ERROR",
-    },
-    commentDepthLimit: {
-      description: "Attempting to create a comment reply beyond depth=5",
-      parentCommentKey: "comment_depth_5_boundary",
-      expectedErrorCode: "VALIDATION_ERROR",
-    },
-    inactiveDepartmentCreateBlock: {
-      description: "Attempting to create users/tasks/materials under an inactive department",
-      departmentKey: "alpha_operations_inactive",
-      expectedErrorCode: "CONFLICT_ERROR",
-    },
-  },
-});
+export const getPhaseThreeSeedBlueprint = (env = process.env) => {
+  const platformSeed = getPlatformSeedFromEnv(env);
+  const password = isDevelopmentEnv(env)
+    ? MOCK_DEFAULTS.PASSWORD
+    : env.PLATFORM_ADMIN_PASSWORD || MOCK_DEFAULTS.PASSWORD;
+  const joinedAt = toISODateTime();
+
+  return {
+    generatedAt: joinedAt,
+    organizations: [
+      {
+        key: "platform_task_manager",
+        payload: {
+          ...platformSeed.organization,
+          isPlatformOrg: true,
+          isVerified: true,
+        },
+        departments: [
+          {
+            key: "platform_administration",
+            name: platformSeed.department.name,
+            description: platformSeed.department.description,
+            status: DEPARTMENT_STATUS.ACTIVE,
+          },
+        ],
+        users: [
+          {
+            firstName: platformSeed.user.firstName,
+            lastName: platformSeed.user.lastName,
+            position: platformSeed.user.position,
+            role: platformSeed.user.role,
+            isHod: true,
+            departmentKey: "platform_administration",
+            isPlatformOrgUser: true,
+            email: toGmailAddress(platformSeed.user.firstName, MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password: platformSeed.user.password || password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Taskmanager",
+            lastName: "Manager",
+            position: "Assistant Platform Manager",
+            role: USER_ROLES.MANAGER,
+            isHod: false,
+            departmentKey: "platform_administration",
+            isPlatformOrgUser: true,
+            email: toGmailAddress("Taskmanager", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Platformuserone",
+            lastName: "Operator",
+            position: "Support Specialist",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "platform_administration",
+            isPlatformOrgUser: true,
+            email: toGmailAddress("Platformuserone", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Platformusertwo",
+            lastName: "Operator",
+            position: "Support Specialist",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "platform_administration",
+            isPlatformOrgUser: true,
+            email: toGmailAddress("Platformusertwo", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Platformuserthree",
+            lastName: "Operator",
+            position: "Support Specialist",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "platform_administration",
+            isPlatformOrgUser: true,
+            email: toGmailAddress("Platformuserthree", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+        ],
+      },
+      {
+        key: "customer_elilly",
+        payload: {
+          name: "Elilly International Hotel",
+          description: "5-star luxury hotel with 154 rooms and 5 restaurants",
+          email: toGmailAddress("elilly", MOCK_DEFAULTS.GMAIL_DOMAIN),
+          phone: "+251115587777",
+          address: "Addis Ababa, Kazanchis Area, Kirkos Subcity 17/18",
+          industry: "Hospitality",
+          size: "Large",
+          isPlatformOrg: false,
+          isVerified: true,
+        },
+        departments: [
+          {
+            key: "elilly_engineering",
+            name: "Engineering",
+            description: "Engineering operations department",
+            status: DEPARTMENT_STATUS.ACTIVE,
+          },
+          {
+            key: "elilly_housekeeping",
+            name: "Housekeeping",
+            description: "Housekeeping operations department",
+            status: DEPARTMENT_STATUS.ACTIVE,
+          },
+        ],
+        users: [
+          {
+            firstName: "Girmachew",
+            lastName: "Zewdie",
+            position: "Chief Engineer",
+            role: USER_ROLES.SUPER_ADMIN,
+            isHod: true,
+            departmentKey: "elilly_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Girmachew", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Ashenafi",
+            lastName: "Abeje",
+            position: "Assistant Chief Engineer",
+            role: USER_ROLES.MANAGER,
+            isHod: false,
+            departmentKey: "elilly_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Ashenafi", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Taye",
+            lastName: "Kebede",
+            position: "Plumber",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Taye", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Bisrat",
+            lastName: "Ayele",
+            position: "Electrician",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Bisrat", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Dawit",
+            lastName: "Getachew",
+            position: "HVAC Technician",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Dawit", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Seble",
+            lastName: "Tefera",
+            position: "Director of Housekeeping",
+            role: USER_ROLES.ADMIN,
+            isHod: true,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Seble", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Chala",
+            lastName: "Kebede",
+            position: "Assistant Director of Housekeeping",
+            role: USER_ROLES.MANAGER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Chala", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Beshenena",
+            lastName: "Beshu",
+            position: "Supervisor",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Beshenena", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Hiwot",
+            lastName: "Ayele",
+            position: "Housekeeper",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Hiwot", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Mebrat",
+            lastName: "Kassa",
+            position: "Housekeeper",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Mebrat", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Selamawit",
+            lastName: "Demissie",
+            position: "Housekeeper",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Selamawit", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Martha",
+            lastName: "Tsegaye",
+            position: "Laundry Attendant",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Martha", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Kidist",
+            lastName: "Abate",
+            position: "Housekeeper",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "elilly_housekeeping",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Kidist", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+        ],
+      },
+      {
+        key: "customer_capital",
+        payload: {
+          name: "Capital Hotel & Spa",
+          description: "Boutique hotel with wellness center and fine dining",
+          email: toGmailAddress("capital", MOCK_DEFAULTS.GMAIL_DOMAIN),
+          phone: "+251117890123",
+          address: "Addis Ababa, Megenagna, Near Friendship City Center",
+          industry: "Hospitality",
+          size: "Medium",
+          isPlatformOrg: false,
+          isVerified: true,
+        },
+        departments: [
+          {
+            key: "capital_engineering",
+            name: "Engineering",
+            description: "Engineering operations department",
+            status: DEPARTMENT_STATUS.ACTIVE,
+          },
+        ],
+        users: [
+          {
+            firstName: "Zewdu",
+            lastName: "Megeresa",
+            position: "Chief Engineer",
+            role: USER_ROLES.SUPER_ADMIN,
+            isHod: true,
+            departmentKey: "capital_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Zewdu", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Yemam",
+            lastName: "Ali",
+            position: "Assistant Chief Engineer",
+            role: USER_ROLES.MANAGER,
+            isHod: false,
+            departmentKey: "capital_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Yemam", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Abebe",
+            lastName: "Kebede",
+            position: "Electrician",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "capital_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Abebe", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Miky",
+            lastName: "Sheraton",
+            position: "Plumber",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "capital_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Miky", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+          {
+            firstName: "Hanan",
+            lastName: "Solomon",
+            position: "Mechanical Technician",
+            role: USER_ROLES.USER,
+            isHod: false,
+            departmentKey: "capital_engineering",
+            isPlatformOrgUser: false,
+            email: toGmailAddress("Hanan", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            password,
+            status: USER_STATUS.ACTIVE,
+            joinedAt,
+          },
+        ],
+      },
+    ],
+  };
+};
 
 /**
- * Returns fixture blueprint with explicit phase metadata.
+ * Compatibility descriptor used by existing seed tooling.
  *
- * @returns {{ phase: "PHASE_2"; fixtures: typeof PHASE_TWO_FIXTURE_BLUEPRINT }} Fixture descriptor.
- * @throws {never} This helper does not throw.
+ * @returns {{ phase: "PHASE_3"; runtime: string }} Descriptor payload.
  */
-export const getPhaseTwoFixtureDescriptor = () => {
+export const getPhaseThreeDescriptor = () => {
+  const runtime = String(process.env.NODE_ENV || NODE_ENVS.DEVELOPMENT).toLowerCase();
+
   return {
-    phase: "PHASE_2",
-    fixtures: PHASE_TWO_FIXTURE_BLUEPRINT,
+    phase: "PHASE_3",
+    runtime: Object.values(NODE_ENVS).includes(runtime) ? runtime : NODE_ENVS.DEVELOPMENT,
   };
 };

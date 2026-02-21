@@ -1,9 +1,7 @@
 /**
- * @file Frontend constants mirrored from backend source of truth plus
- * client-specific layout/navigation constants.
+ * @file Backend canonical constants (phase 2 source of truth).
  * @throws {never} Module initialization does not throw.
  */
-
 export const APP_NAME = "TaskManager";
 
 export const NODE_ENVS = {
@@ -18,11 +16,6 @@ export const USER_ROLES = {
   MANAGER: "Manager",
   USER: "User",
 };
-
-/**
- * Backward-compatible alias retained for existing frontend imports.
- */
-export const USER_ROLE = USER_ROLES;
 
 export const USER_STATUS = {
   ACTIVE: "ACTIVE",
@@ -299,6 +292,11 @@ export const SOFT_DELETE_TTL_SECONDS = {
 export const NOTIFICATION_EXPIRY_MS =
   SOFT_DELETE_TTL_DAYS.NOTIFICATION * TIME_UNITS.DAY_MS;
 
+export const MOCK_DEFAULTS = {
+  PASSWORD: "12345678",
+  GMAIL_DOMAIN: "gmail.com",
+};
+
 export const INDEX_DEFAULTS = {
   TTL_EXPIRE_AT_FIELD_SECONDS: 0,
 };
@@ -323,7 +321,6 @@ export const CLOUDINARY_FILE_URL_REGEX =
   /^https:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|video|raw)\/upload\/v\d+\/.+$/;
 
 export const API_DEFAULTS = {
-  SEARCH_DEBOUNCE_MS: 300,
   DEFAULT_SORT_ORDER: "desc",
 };
 
@@ -333,16 +330,7 @@ export const PAGINATION_DEFAULTS = {
   MAX_LIMIT: VALIDATION_LIMITS.PAGINATION.LIMIT_MAX,
   SORT_BY: "createdAt",
   SORT_ORDER: "desc",
-  SEARCH: "",
   INCLUDE_DELETED: false,
-};
-
-/**
- * Backward-compatible alias retained for existing frontend imports.
- */
-export const DEFAULT_PAGINATION = {
-  ...PAGINATION_DEFAULTS,
-  PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
 };
 
 export const COOKIE_DEFAULTS = {
@@ -485,11 +473,30 @@ export const DEFAULT_USER_SECURITY = {
   twoFactorEnabled: false,
 };
 
+/**
+ * Backward-compatible alias retained for existing frontend imports.
+ */
+export const USER_ROLE = USER_ROLES;
+
+/**
+ * Backward-compatible pagination alias retained for existing frontend imports.
+ */
+export const DEFAULT_PAGINATION = {
+  ...PAGINATION_DEFAULTS,
+  PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
+};
+
+/**
+ * Canonical view-mode constants for list/grid toggles.
+ */
 export const VIEW_MODE = {
   GRID: "grid",
   LIST: "list",
 };
 
+/**
+ * Shared layout dimensions used by dashboard/public shells.
+ */
 export const LAYOUT_DIMENSIONS = {
   APP_BAR_HEIGHT_REM: 4,
   APP_BAR_HEIGHT_PX: 64,
@@ -499,11 +506,33 @@ export const LAYOUT_DIMENSIONS = {
   MOBILE_FAB_SIZE_PX: 56,
 };
 
+/**
+ * Responsive UI breakpoints used for icon-only and mobile-dialog rules.
+ */
+export const RESPONSIVE_UI = {
+  ICON_ONLY_MAX_WIDTH_PX: 767,
+  DIALOG_FULL_HEIGHT_MAX_WIDTH_PX: 600,
+};
+
+/**
+ * Placeholder values for pre-final-phase UI scaffolds.
+ */
 export const UI_PLACEHOLDERS = {
   TASK_BADGE_COUNT: 12,
   NOTIFICATION_BADGE_COUNT: 3,
+  ORGANIZATION_SWITCHER_PAGE_SIZE: 5,
+  GLOBAL_SEARCH_GROUPS: [
+    "Departments",
+    "Users",
+    "Tasks",
+    "Materials",
+    "Vendors",
+  ],
 };
 
+/**
+ * Client-side storage keys.
+ */
 export const STORAGE_KEYS = {
   AUTH: "taskmanager-auth",
   THEME_MODE: "taskmanager-theme-mode",

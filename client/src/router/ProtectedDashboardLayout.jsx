@@ -1,23 +1,15 @@
 /**
  * @file Protected dashboard layout guard.
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Navigate, useLocation } from "react-router";
-import { DashboardLayout } from "../components/layouts";
+import { useDispatch } from "react-redux";
+import { DashboardLayout } from "../components/layout";
 import { MuiLoading } from "../components/reusable";
 import { useAuth } from "../hooks";
+import { setSessionChecked } from "../redux/features";
 import { STORAGE_KEYS } from "../utils/constants";
-
-/**
- * Builds a canonical route string from a location-like object.
- *
- * @param {{ pathname?: string; search?: string; hash?: string }} location - Router location.
- * @returns {string} Canonical app route with query/hash.
- * @throws {never} This helper does not throw.
- */
-const buildPathname = (location) => {
-  return `${location.pathname || ""}${location.search || ""}${location.hash || ""}`;
-};
+import { buildPathname } from "../utils/helpers";
 
 /**
  * Guards dashboard routes behind authenticated session state.
@@ -26,14 +18,27 @@ const buildPathname = (location) => {
  * @throws {never} This component does not throw.
  */
 const ProtectedDashboardLayout = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
-  const { isAuthenticated, isLoading, sessionChecked, refreshSession } = useAuth();
+  const { isAuthenticated, sessionChecked, refreshSession } = useAuth();
+  const refreshAttemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!sessionChecked) {
-      refreshSession().catch(() => undefined);
+    if (isAuthenticated) {
+      refreshAttemptedRef.current = false;
+      return;
     }
-  }, [refreshSession, sessionChecked]);
+
+    if (refreshAttemptedRef.current) {
+      return;
+    }
+
+    refreshAttemptedRef.current = true;
+    if (sessionChecked) {
+      dispatch(setSessionChecked(false));
+    }
+    refreshSession().catch(() => undefined);
+  }, [dispatch, isAuthenticated, refreshSession, sessionChecked]);
 
   useEffect(() => {
     if (!sessionChecked || !isAuthenticated) {
@@ -50,7 +55,7 @@ const ProtectedDashboardLayout = () => {
     }
   }, [isAuthenticated, location, sessionChecked]);
 
-  if (!sessionChecked || isLoading) {
+  if (!sessionChecked) {
     return <MuiLoading fullScreen message="Checking session..." />;
   }
 

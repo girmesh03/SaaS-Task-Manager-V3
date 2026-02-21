@@ -49,7 +49,7 @@ Request
 
 Frontend structure:
 
-- Components grouped by domain: common, layout, task, user, department, vendor, material, attachment, notification, dashboard.
+- Components grouped by domain: auth, columns, common, layout, task, user, department, vendor, material, attachment, notification, dashboard.
 - Pages: Home, Login, Register, ForgotPassword, ResetPassword, Dashboard, Departments, Users, Tasks, Materials, Vendors, NotFound.
 - State management: Redux store and feature slices using RTK Query.
 - Hooks: useAuth, useSocket, useAuthorization, useTimezone, useResponsive.
@@ -2497,6 +2497,19 @@ Layout references:
 Public:
 
 - `landing-page`
+- `login_screen_screen`
+- `registration_step_1_screen`
+- `registration_step_2_screen`
+- `registration_step_3_screen`
+- `registration_step_4_screen`
+- `forgot_password_screen`
+- `resend_verification_screen`
+- `reset_link_sent_success_screen`
+- `reset_password_error_state_screen`
+- `reset_password_screen`
+- `verification_error_state_screen`
+- `verification_loading_state_screen`
+- `verification_success_state_screen`.
 
 Dashboard:
 
@@ -3133,7 +3146,6 @@ Data dependencies:
 - `GET /api/vendors/:vendorId` returns vendor overview + aggregates required for metrics and badges.
 - Projects list may be derived via `GET /api/tasks?type=ProjectTask&vendorId=<vendorId>` (paginated)
 - `POST /api/vendors/:vendorId/contact` sends an email via Nodemailer (used by the in-app "Contact Vendor" dialog).
-
 
 ### 10.4 UI Coverage Traceability Requirements (Normative)
 
@@ -4548,7 +4560,6 @@ Testing scope:
 - Tests must be written for validators, controllers, authorization logic, multi-tenant isolation, soft delete, restore, and cascade behavior.
 - Tests must not be written for UI, styling, framework internals, or third-party libraries.
 
-
 ### 19.1 Canonical Test Case Corpus (Normative, Exhaustive)
 
 In addition to the testing constraints above, the complete canonical test catalog is incorporated here as a **normative and mandatory** requirement set.
@@ -4767,8 +4778,6 @@ Cascade delete details:
 - Vendor cascade:
   - ProjectTasks where vendor = Vendor set vendor to null or cascade depending on business logic.
 
-
-
 ### 20.1 Development Rules Consolidation (Normative)
 
 This PRD fully incorporates the development rules as mandatory engineering policy.
@@ -4869,6 +4878,7 @@ Testing MUST simulate real backend behavior exactly as exercised via Postman, bu
    - `isDeleted`
 3. Controllers MUST NOT read input data from `req.body`, `req.params`, or `req.query`.
 4. Controllers MUST ONLY consume validated input from:
+
    ```js
    req.validated = {
      body: matchedData(req, { locations: ["body"] }),
@@ -5187,7 +5197,6 @@ Vendor (soft delete)
 - Route-level: Catch route-specific errors, display RouteError
 - Component-level: Catch component errors, display fallback UI
 - API errors: 401 → refresh token on frontend → 401 → logout user; 403 → show error toast (no logout); 4xx/5xx → show error message
-
 
 ## 21. Task Execution Protocol (Mandatory 7 Steps)
 
@@ -5681,7 +5690,6 @@ Minimal checklist per phase:
 
 - Backend: exact filenames to implement, API contract (paths, methods, request/response), tests/stubs, socket event signatures.
 - Frontend: RTK endpoints to add, pages and components to implement, hooks to wire, acceptance tests (login + one resource CRUD + real-time event).
-
 
 ### 22.1 Synchronous Development (Verbatim Canonical Copy)
 
@@ -6309,7 +6317,6 @@ This plan satisfies:
 - Each side’s Phase N only requires dependencies that were completed by Phase N−1 for that side and the other side.
 - Strict adherence to the provided project structure, without introducing new layers beyond what exists in the doc.
 
-
 ## 23. Acceptance Criteria and Traceability Checklist
 
 This checklist is mandatory for “done”. All items MUST be true with no exceptions.
@@ -6355,6 +6362,7 @@ Each screen name below MUST appear in the implemented app, and MUST match the UI
 
 - [ ] `public_layout_screen`
 - [ ] `landing-page`
+
 - [ ] `desktop-dashboard-layout`
 - [ ] `mobile-dashboard-layout`
 - [ ] `desktop_dashboard_overview_screen`
@@ -6431,7 +6439,6 @@ Each screen name below MUST appear in the implemented app, and MUST match the UI
 - [ ] Starting Phase 1, backend and frontend dev servers run concurrently to surface integration issues early.
 - [ ] At every phase/sub-task, previously built components are updated for integration and correctness (no stale mismatches).
 
-
 ### 23.8 Exhaustive Source-Document Reconciliation Gate
 
 - [ ] Development rules are reflected without contradiction in Sections 20-21 and enforced in implementation/test review.
@@ -6444,4 +6451,3 @@ Each screen name below MUST appear in the implemented app, and MUST match the UI
 - [ ] Canonical test cases are fully incorporated by Section 19.1 and used as mandatory QA acceptance input.
 - [ ] FR-UI mappings and per-screen checkpoints are fully represented in Sections 10.4 and 23.2/23.3.
 - [ ] All `docs/ui/*.png` reference screens listed in Section 23.2 have matching implementation coverage and responsive behavior parity.
-

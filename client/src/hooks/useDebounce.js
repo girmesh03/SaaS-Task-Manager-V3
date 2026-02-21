@@ -1,22 +1,18 @@
 /**
- * @file Debounce hook for search/filter commit behavior.
+ * @file Debounce hook for delayed value commits.
  */
 import { useEffect, useState } from "react";
-import { API_DEFAULTS } from "../utils/constants";
 
 /**
  * Debounces a value by waiting for inactivity before publishing updates.
  *
  * @template TValue
  * @param {TValue} value - Input value.
- * @param {number} [delayMs=API_DEFAULTS.SEARCH_DEBOUNCE_MS] - Debounce delay in milliseconds.
+ * @param {number} [delayMs=300] - Debounce delay in milliseconds.
  * @returns {TValue} Debounced value.
  * @throws {never} This hook does not throw.
  */
-export const useDebounce = (
-  value,
-  delayMs = API_DEFAULTS.SEARCH_DEBOUNCE_MS
-) => {
+export const useDebounce = (value, delayMs = 300) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
