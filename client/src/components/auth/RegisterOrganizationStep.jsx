@@ -22,7 +22,7 @@ const RegisterOrganizationStep = ({ register, errors }) => {
     <Stack spacing={1.25}>
       <Grid container spacing={1.25}>
         <Grid size={12}>
-          <MuiTextField
+	          <MuiTextField
             {...register("organization.name", {
               required: "Organization name is required",
               minLength: {
@@ -34,35 +34,33 @@ const RegisterOrganizationStep = ({ register, errors }) => {
                 message: "Maximum 100 characters",
               },
               validate: (value) =>
-                validators.organizationName(value) ||
-                "Organization name format is invalid",
-            })}
-            label="Organization Name"
-            placeholder="e.g. Acme Corp"
-            error={errors.organization?.name}
-            reserveHelperTextSpace={false}
-          />
+	                validators.organizationName(value) ||
+	                "Organization name format is invalid",
+	            })}
+	            placeholder="e.g. Acme Corp"
+	            error={errors.organization?.name}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("organization.email", {
               required: "Organization email is required",
               maxLength: {
                 value: VALIDATION_LIMITS.ORGANIZATION.EMAIL_MAX,
                 message: "Maximum 100 characters",
               },
-              validate: (value) =>
-                validators.email(value) || "Organization email format is invalid",
-            })}
-            label="Organization Email"
-            type="email"
-            placeholder="admin@company.com"
-            error={errors.organization?.email}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.email(value) || "Organization email format is invalid",
+	            })}
+	            type="email"
+	            placeholder="admin@company.com"
+	            error={errors.organization?.email}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("organization.phone", {
               required: "Organization phone is required",
               minLength: {
@@ -73,17 +71,16 @@ const RegisterOrganizationStep = ({ register, errors }) => {
                 value: VALIDATION_LIMITS.ORGANIZATION.PHONE_MAX,
                 message: "Maximum 15 characters",
               },
-              validate: (value) =>
-                validators.phone(value) || "Organization phone format is invalid",
-            })}
-            label="Phone Number"
-            placeholder="+251913050675"
-            error={errors.organization?.phone}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.phone(value) || "Organization phone format is invalid",
+	            })}
+	            placeholder="+251913050675"
+	            error={errors.organization?.phone}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={12}>
-          <MuiTextField
+	          <MuiTextField
             {...register("organization.address", {
               required: "Organization address is required",
               minLength: {
@@ -93,13 +90,12 @@ const RegisterOrganizationStep = ({ register, errors }) => {
               maxLength: {
                 value: VALIDATION_LIMITS.ORGANIZATION.ADDRESS_MAX,
                 message: "Maximum 500 characters",
-              },
-            })}
-            label="Address"
-            placeholder="123 Business Rd, Suite 100"
-            error={errors.organization?.address}
-            reserveHelperTextSpace={false}
-          />
+	              },
+	            })}
+	            placeholder="123 Business Rd, Suite 100"
+	            error={errors.organization?.address}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
       </Grid>
     </Stack>

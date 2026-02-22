@@ -6,7 +6,7 @@ import { Navigate, useLocation } from "react-router";
 import { useDispatch } from "react-redux";
 import { DashboardLayout } from "../components/layout";
 import { MuiLoading } from "../components/reusable";
-import { useAuth } from "../hooks";
+import { useAuth, useSocket } from "../hooks";
 import { setSessionChecked } from "../redux/features";
 import { STORAGE_KEYS } from "../utils/constants";
 import { buildPathname } from "../utils/helpers";
@@ -22,6 +22,8 @@ const ProtectedDashboardLayout = () => {
   const location = useLocation();
   const { isAuthenticated, sessionChecked, refreshSession } = useAuth();
   const refreshAttemptedRef = useRef(false);
+
+  useSocket({ enabled: isAuthenticated && sessionChecked });
 
   useEffect(() => {
     if (isAuthenticated) {

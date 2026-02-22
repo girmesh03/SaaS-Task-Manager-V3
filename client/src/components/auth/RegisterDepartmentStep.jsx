@@ -20,7 +20,7 @@ import { validators } from "../../utils/validators";
 const RegisterDepartmentStep = ({ register, errors }) => {
   return (
     <Stack spacing={1.25}>
-      <MuiTextField
+	      <MuiTextField
         {...register("department.name", {
           required: "Department name is required",
           minLength: {
@@ -31,17 +31,16 @@ const RegisterDepartmentStep = ({ register, errors }) => {
             value: VALIDATION_LIMITS.DEPARTMENT.NAME_MAX,
             message: "Maximum 100 characters",
           },
-          validate: (value) =>
-            validators.organizationName(value) ||
-            "Department name format is invalid",
-        })}
-        label="Department Name"
-        placeholder="e.g. Engineering, Marketing HQ"
-        error={errors.department?.name}
-        reserveHelperTextSpace={false}
-      />
+	          validate: (value) =>
+	            validators.organizationName(value) ||
+	            "Department name format is invalid",
+	        })}
+	        placeholder="e.g. Engineering, Marketing HQ"
+	        error={errors.department?.name}
+	        reserveHelperTextSpace={false}
+	      />
 
-      <MuiTextField
+	      <MuiTextField
         {...register("department.description", {
           required: "Department description is required",
           minLength: {
@@ -51,13 +50,12 @@ const RegisterDepartmentStep = ({ register, errors }) => {
           maxLength: {
             value: VALIDATION_LIMITS.DEPARTMENT.DESCRIPTION_MAX,
             message: "Maximum 500 characters",
-          },
-        })}
-        label="Department Description"
-        placeholder="Briefly describe the purpose of this department..."
-        multiline
-        minRows={3}
-        maxRows={5}
+	          },
+	        })}
+	        placeholder="Briefly describe the purpose of this department..."
+	        multiline
+	        minRows={3}
+	        maxRows={5}
         error={errors.department?.description}
         reserveHelperTextSpace={false}
       />

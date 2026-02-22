@@ -8,6 +8,8 @@ export { default as themeReducer } from "./themeSlice";
 export * from "./themeSlice";
 export { default as resourceViewReducer } from "./resourceViewSlice";
 export * from "./resourceViewSlice";
+export { default as notificationBadgeReducer } from "./notificationBadgeSlice";
+export * from "./notificationBadgeSlice";
 
 /**
  * Current Redux feature implementation phase marker.

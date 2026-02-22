@@ -22,12 +22,13 @@ const parentModelMap = {
   TaskComment,
 };
 
-const ensureAttachmentExists = async (value) => {
+const ensureAttachmentExists = async (value, { req }) => {
   const attachment = await Attachment.findById(value).withDeleted();
   if (!attachment) {
     throw new Error("Attachment not found");
   }
 
+  req.authorizationTarget = attachment;
   return true;
 };
 
@@ -45,6 +46,7 @@ const ensureParentExists = async (_value, { req }) => {
     throw new Error("Attachment parent not found");
   }
 
+  req.authorizationTarget = record;
   return true;
 };
 

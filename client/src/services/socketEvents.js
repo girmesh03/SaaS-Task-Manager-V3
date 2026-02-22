@@ -1,12 +1,15 @@
 /**
- * @file Socket event-map placeholder for Phase 1.
+ * @file Socket event registry (Phase 4).
  * @throws {never} Module initialization does not throw.
  */
 
+import { SOCKET_EVENTS } from "../utils/constants";
+
 /**
- * Phase 1 socket event registry placeholder.
+ * Socket event registry (mirrors backend `SOCKET_EVENTS`).
+ *
  * @type {Record<string, string>}
  */
-export const socketEvents = {};
+export const socketEvents = SOCKET_EVENTS;
 
 export default socketEvents;

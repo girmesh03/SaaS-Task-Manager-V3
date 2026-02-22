@@ -21,6 +21,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
 import FormHelperText from "@mui/material/FormHelperText";
+import InputAdornment from "@mui/material/InputAdornment";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
@@ -85,6 +86,7 @@ const MuiMultiSelect = forwardRef(
       },
       filterOptions,
       groupBy,
+      startAdornment,
       placeholder = "Select one or more options",
       disabled = false,
       required = false,
@@ -176,11 +178,15 @@ const MuiMultiSelect = forwardRef(
       }
     };
 
-    // Generate label with count
-    const labelWithCount =
-      showCount && selectedCount > 0
+    const labelWithCount = useMemo(() => {
+      if (!label) {
+        return undefined;
+      }
+
+      return showCount && selectedCount > 0
         ? `${label} (${selectedCount}${maxItems ? `/${maxItems}` : ""})`
         : label;
+    }, [label, maxItems, selectedCount, showCount]);
 
     return (
       <>
@@ -240,7 +246,7 @@ const MuiMultiSelect = forwardRef(
           renderInput={(params) => (
             <TextField
               {...params}
-              label={labelWithCount}
+              label={labelWithCount || undefined}
               placeholder={placeholder}
               required={required}
               error={!!error}
@@ -250,6 +256,16 @@ const MuiMultiSelect = forwardRef(
               slotProps={{
                 input: {
                   ...params.InputProps,
+                  startAdornment: startAdornment ? (
+                    <>
+                      <InputAdornment position="start">
+                        {startAdornment}
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ) : (
+                    params.InputProps.startAdornment
+                  ),
                   endAdornment: (
                     <>
                       {isLoading ? (

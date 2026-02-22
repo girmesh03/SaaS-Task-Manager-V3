@@ -3,7 +3,6 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -81,73 +80,68 @@ const UserFormDialog = ({
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
             1. Personal Info
           </Typography>
-          <Grid container spacing={1.25}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MuiTextField
-                label="First Name"
-                placeholder="e.g. Sarah"
-                {...userForm.register("firstName", {
-                  required: "First name is required",
-                })}
+	          <Grid container spacing={1.25}>
+	            <Grid size={{ xs: 12, sm: 6 }}>
+	              <MuiTextField
+	                placeholder="e.g. Sarah"
+	                {...userForm.register("firstName", {
+	                  required: "First name is required",
+	                })}
                 startAdornment={<BadgeOutlinedIcon fontSize="small" />}
                 error={userForm.formState.errors.firstName}
                 reserveHelperTextSpace={false}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MuiTextField
-                label="Last Name"
-                placeholder="e.g. Connor"
-                {...userForm.register("lastName", {
-                  required: "Last name is required",
-                })}
+	            </Grid>
+	            <Grid size={{ xs: 12, sm: 6 }}>
+	              <MuiTextField
+	                placeholder="e.g. Connor"
+	                {...userForm.register("lastName", {
+	                  required: "Last name is required",
+	                })}
                 startAdornment={<BadgeOutlinedIcon fontSize="small" />}
                 error={userForm.formState.errors.lastName}
                 reserveHelperTextSpace={false}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MuiTextField
-                label="Email Address"
-                type="email"
-                placeholder="sarah@company.com"
-                {...userForm.register("email", { required: "Email is required" })}
-                startAdornment={<EmailOutlinedIcon fontSize="small" />}
+	            </Grid>
+	            <Grid size={{ xs: 12, sm: 6 }}>
+	              <MuiTextField
+	                type="email"
+	                placeholder="sarah@company.com"
+	                {...userForm.register("email", { required: "Email is required" })}
+	                startAdornment={<EmailOutlinedIcon fontSize="small" />}
                 error={userForm.formState.errors.email}
                 reserveHelperTextSpace={false}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MuiTextField
-                label="Phone Number"
-                placeholder="+1 (555) 000-0000"
-                {...userForm.register("phone")}
-                startAdornment={<PhoneOutlinedIcon fontSize="small" />}
+	            </Grid>
+	            <Grid size={{ xs: 12, sm: 6 }}>
+	              <MuiTextField
+	                placeholder="+1 (555) 000-0000"
+	                {...userForm.register("phone")}
+	                startAdornment={<PhoneOutlinedIcon fontSize="small" />}
                 error={userForm.formState.errors.phone}
                 reserveHelperTextSpace={false}
               />
-            </Grid>
-            <Grid size={12}>
-              <MuiTextField
-                label="Position"
-                placeholder="Position / Job Title"
-                {...userForm.register("position", {
-                  required: "Position is required",
-                })}
+	            </Grid>
+	            <Grid size={12}>
+	              <MuiTextField
+	                placeholder="Position / Job Title"
+	                {...userForm.register("position", {
+	                  required: "Position is required",
+	                })}
                 startAdornment={<WorkOutlineOutlinedIcon fontSize="small" />}
                 error={userForm.formState.errors.position}
                 reserveHelperTextSpace={false}
               />
             </Grid>
-            {!editingUser ? (
-              <Grid size={12}>
-                <MuiTextField
-                  label="Password"
-                  type="password"
-                  {...userForm.register("password", {
-                    required: "Password is required",
-                  })}
-                  startAdornment={<LockOutlinedIcon fontSize="small" />}
+	            {!editingUser ? (
+	              <Grid size={12}>
+	                <MuiTextField
+	                  type="password"
+	                  placeholder="Create password"
+	                  {...userForm.register("password", {
+	                    required: "Password is required",
+	                  })}
+	                  startAdornment={<LockOutlinedIcon fontSize="small" />}
                   error={userForm.formState.errors.password}
                   reserveHelperTextSpace={false}
                 />
@@ -168,16 +162,15 @@ const UserFormDialog = ({
                 name="departmentId"
                 control={userForm.control}
                 rules={{ required: "Department is required" }}
-                render={({ field }) => (
-                  <MuiSelectAutocomplete
-                    value={field.value || ""}
-                    onChange={(_event, value) => field.onChange(value || "")}
-                    options={departmentOptions}
-                    valueMode="id"
-                    label="Department"
-                    placeholder="Select department"
-                    disabled={editingUser ? immutableTarget : false}
-                    error={userForm.formState.errors.departmentId}
+	                render={({ field }) => (
+	                  <MuiSelectAutocomplete
+	                    value={field.value || ""}
+	                    onChange={(_event, value) => field.onChange(value || "")}
+	                    options={departmentOptions}
+	                    valueMode="id"
+	                    placeholder="Select department"
+	                    disabled={editingUser ? immutableTarget : false}
+	                    error={userForm.formState.errors.departmentId}
                     helperText={userForm.formState.errors.departmentId?.message}
                   />
                 )}
@@ -188,16 +181,15 @@ const UserFormDialog = ({
                 name="role"
                 control={userForm.control}
                 rules={{ required: "Role is required" }}
-                render={({ field }) => (
-                  <MuiSelectAutocomplete
-                    value={field.value || USER_ROLES.USER}
-                    onChange={(_event, value) => field.onChange(value || "")}
-                    options={roleOptions}
-                    valueMode="id"
-                    label="Role"
-                    placeholder="Select role"
-                    disabled={editingUser ? immutableTarget : false}
-                    error={userForm.formState.errors.role}
+	                render={({ field }) => (
+	                  <MuiSelectAutocomplete
+	                    value={field.value || USER_ROLES.USER}
+	                    onChange={(_event, value) => field.onChange(value || "")}
+	                    options={roleOptions}
+	                    valueMode="id"
+	                    placeholder="Select role"
+	                    disabled={editingUser ? immutableTarget : false}
+	                    error={userForm.formState.errors.role}
                     helperText={userForm.formState.errors.role?.message}
                   />
                 )}
@@ -207,38 +199,43 @@ const UserFormDialog = ({
               <Controller
                 name="status"
                 control={userForm.control}
-                render={({ field }) => (
-                  <MuiSelectAutocomplete
-                    value={field.value || USER_STATUS.ACTIVE}
-                    onChange={(_event, value) => field.onChange(value || "")}
-                    options={statusOptions}
-                    valueMode="id"
-                    label="Status"
-                    placeholder="Select status"
-                    error={userForm.formState.errors.status}
-                    helperText={userForm.formState.errors.status?.message}
+	                render={({ field }) => (
+	                  <MuiSelectAutocomplete
+	                    value={field.value || USER_STATUS.ACTIVE}
+	                    onChange={(_event, value) => field.onChange(value || "")}
+	                    options={statusOptions}
+	                    valueMode="id"
+	                    placeholder="Select status"
+	                    error={userForm.formState.errors.status}
+	                    helperText={userForm.formState.errors.status?.message}
                   />
                 )}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Controller
-                name="isHod"
-                control={userForm.control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={Boolean(field.value)}
-                        onChange={(event) => field.onChange(event.target.checked)}
-                        disabled={editingUser ? immutableTarget : false}
-                      />
-                    }
-                    label="Head of Department"
-                  />
-                )}
-              />
-            </Grid>
+	                name="isHod"
+	                control={userForm.control}
+	                render={({ field }) => (
+	                  <Stack
+	                    direction="row"
+	                    justifyContent="space-between"
+	                    alignItems="center"
+	                    sx={{ height: "100%" }}
+	                  >
+	                    <Typography variant="body2" color="text.secondary">
+	                      Head of Department
+	                    </Typography>
+	                    <Switch
+	                      checked={Boolean(field.value)}
+	                      onChange={(event) => field.onChange(event.target.checked)}
+	                      disabled={editingUser ? immutableTarget : false}
+	                      inputProps={{ "aria-label": "Head of Department" }}
+	                    />
+	                  </Stack>
+	                )}
+	              />
+	            </Grid>
           </Grid>
         </Stack>
 
@@ -257,13 +254,12 @@ const UserFormDialog = ({
                 onDelete={() => onSkillRemove(skill)}
               />
             ))}
-          </Stack>
-          <MuiTextField
-            label="Skills"
-            placeholder="Type a skill and press Enter"
-            value={skillInput}
-            onChange={(event) => onSkillInputChange(event.target.value)}
-            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
+	          </Stack>
+	          <MuiTextField
+	            placeholder="Type a skill and press Enter"
+	            value={skillInput}
+	            onChange={(event) => onSkillInputChange(event.target.value)}
+	            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
             onKeyDown={(event) => {
               if (event.key !== "Enter") return;
               event.preventDefault();

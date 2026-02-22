@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { UserDetailsPageContent } from "../../components/user";
+import Stack from "@mui/material/Stack";
+import {
+  UserActivityTab,
+  UserDetailsHeader,
+  UserOverviewTab,
+  UserPerformanceTab,
+  UserTasksTab,
+} from "../../components/user";
 import { MuiEmptyState, MuiLoading } from "../../components/reusable";
-import { useTimezone } from "../../hooks";
+import { useAuthorization, useTimezone } from "../../hooks";
 import {
   useGetTasksQuery,
   useGetUserActivityQuery,
@@ -43,6 +50,7 @@ const toActivityEntityModel = (filter) => {
  */
 const UserDetailsPage = () => {
   const { userId } = useParams();
+  const { can } = useAuthorization();
   const { formatDateTime } = useTimezone();
   const [tab, setTab] = useState(USER_DETAILS_TABS[0]);
   const [taskScope, setTaskScope] = useState(USER_TASK_SCOPES[0]);
@@ -105,6 +113,17 @@ const UserDetailsPage = () => {
   const payload = userResponse?.data || {};
   const user = payload.user || null;
   const overview = payload.overviewAggregates || {};
+  const canUpdateUser = Boolean(
+    user &&
+      can("User", "update", {
+        target: {
+          id: user.id,
+          organization: user.organization?.id,
+          department: user.department?.id,
+        },
+        params: { userId: user.id },
+      }),
+  );
   const performance = performanceResponse?.data || {};
   const tasks = tasksResponse?.data?.tasks || [];
   const timelineItems = useMemo(
@@ -157,24 +176,50 @@ const UserDetailsPage = () => {
   }
 
   return (
-    <UserDetailsPageContent
-      user={user}
-      overview={overview}
-      performance={performance}
-      tasks={tasks}
-      timelineItems={timelineItems}
-      isActivityFetching={isActivityFetching}
-      isTasksFetching={isTasksFetching}
-      isPerformanceFetching={isPerformanceFetching}
-      tab={tab}
-      onTabChange={setTab}
-      taskScope={taskScope}
-      onTaskScopeChange={setTaskScope}
-      activityFilter={activityFilter}
-      onActivityFilterChange={setActivityFilter}
-      performanceRange={performanceRange}
-      onPerformanceRangeChange={setPerformanceRange}
-    />
+    <Stack spacing={2}>
+      <UserDetailsHeader
+        user={user}
+        tab={tab}
+        onTabChange={setTab}
+        canUpdateUser={canUpdateUser}
+      />
+
+      {tab === "Overview" ? (
+        <UserOverviewTab
+          user={user}
+          overview={overview}
+          timelineItems={timelineItems}
+          canUpdateUser={canUpdateUser}
+        />
+      ) : null}
+
+      {tab === "Tasks" ? (
+        <UserTasksTab
+          tasks={tasks}
+          isTasksFetching={isTasksFetching}
+          taskScope={taskScope}
+          onTaskScopeChange={setTaskScope}
+        />
+      ) : null}
+
+      {tab === "Activity" ? (
+        <UserActivityTab
+          isActivityFetching={isActivityFetching}
+          activityFilter={activityFilter}
+          onActivityFilterChange={setActivityFilter}
+          timelineItems={timelineItems}
+        />
+      ) : null}
+
+      {tab === "Performance" ? (
+        <UserPerformanceTab
+          performance={performance}
+          isPerformanceFetching={isPerformanceFetching}
+          performanceRange={performanceRange}
+          onPerformanceRangeChange={setPerformanceRange}
+        />
+      ) : null}
+    </Stack>
   );
 };
 

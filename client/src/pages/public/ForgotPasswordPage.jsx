@@ -112,22 +112,22 @@ const ForgotPasswordPage = () => {
               </Typography>
             </Stack>
 
-            <MuiTextField
-              {...register("email", {
+	            <MuiTextField
+	              {...register("email", {
                 required: "Email is required",
                 maxLength: {
                   value: VALIDATION_LIMITS.USER.EMAIL_MAX,
                   message: "Maximum 100 characters",
                 },
-                validate: (value) =>
-                  validators.email(value) || "Please enter a valid email address",
-              })}
-              label="Email"
-              type="email"
-              startAdornment={<EmailOutlinedIcon fontSize="small" />}
-              error={errors.email}
-              reserveHelperTextSpace={false}
-            />
+	                validate: (value) =>
+	                  validators.email(value) || "Please enter a valid email address",
+	              })}
+	              type="email"
+	              placeholder="name@company.com"
+	              startAdornment={<EmailOutlinedIcon fontSize="small" />}
+	              error={errors.email}
+	              reserveHelperTextSpace={false}
+	            />
 
             {forgotState.isLoading || isSubmitting ? (
               <MuiLoading message="Submitting reset request..." />

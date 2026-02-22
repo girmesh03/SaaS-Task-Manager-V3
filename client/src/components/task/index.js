@@ -1,5 +1,19 @@
-/**
- * @file task domain component barrel.
- */
-
-export const TASK_COMPONENTS_PHASE = "PHASE_3_PLACEHOLDER";
+export { default as TasksToolbar } from "./TasksToolbar";
+export { default as TasksListView } from "./TasksListView";
+export { default as TasksGridView } from "./TasksGridView";
+export { default as TaskListCard } from "./TaskListCard";
+export { default as TaskFilterDialog } from "./TaskFilterDialog";
+export { default as TaskFormDialog } from "./TaskFormDialog";
+export { default as TaskDetailsHeader } from "./TaskDetailsHeader";
+export { default as TaskDetailsTabs } from "./TaskDetailsTabs";
+export { default as TaskOverviewTab } from "./TaskOverviewTab";
+export { default as TaskActivitiesTab } from "./TaskActivitiesTab";
+export { default as TaskCommentsTab } from "./TaskCommentsTab";
+export { default as TaskFilesTab } from "./TaskFilesTab";
+export { default as TaskAddActivityDialog } from "./TaskAddActivityDialog";
+export { default as TaskCommentComposer } from "./TaskCommentComposer";
+export { default as TaskCommentThread } from "./TaskCommentThread";
+export { default as TaskFileDropzone } from "./TaskFileDropzone";
+export { default as TaskFileGallery } from "./TaskFileGallery";
+export { default as useTaskRealtime } from "./useTaskRealtime";
+export * from "./useTaskRealtime";

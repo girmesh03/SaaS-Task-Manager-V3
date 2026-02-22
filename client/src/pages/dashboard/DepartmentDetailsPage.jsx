@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { DepartmentDetailsPageContent } from "../../components/department";
+import Stack from "@mui/material/Stack";
+import {
+  DepartmentDetailsHeader,
+  DepartmentMembersTab,
+  DepartmentOverviewTab,
+  DepartmentTasksTab,
+} from "../../components/department";
 import { MuiEmptyState, MuiLoading } from "../../components/reusable";
 import { useTimezone } from "../../hooks";
 import {
@@ -112,6 +118,22 @@ const DepartmentDetailsPage = () => {
   const dashboard = dashboardResponse?.data || {};
   const members = membersResponse?.data?.users || [];
   const tasks = tasksResponse?.data?.tasks || [];
+  const totalTasks =
+    dashboard.totalTasks ?? aggregates.totalTasks ?? department?.taskCount ?? 0;
+  const overdueTasks =
+    dashboard.overdueTasks ??
+    dashboard.overdueTask ??
+    aggregates.overdueTasks ??
+    0;
+  const completedTasks =
+    dashboard.completedTasks ?? aggregates.completedTasks ?? 0;
+  const activeTasks =
+    dashboard.activeTasks ??
+    aggregates.activeTasks ??
+    department?.activeTaskCount ??
+    0;
+  const totalUsers =
+    dashboard.totalUsers ?? aggregates.totalUsers ?? department?.memberCount ?? 0;
   const timelineItems = useMemo(
     () =>
       (activityResponse?.data?.activities || []).map((item) => ({
@@ -168,22 +190,47 @@ const DepartmentDetailsPage = () => {
   }
 
   return (
-    <DepartmentDetailsPageContent
-      department={department}
-      aggregates={aggregates}
-      dashboard={dashboard}
-      members={members}
-      tasks={tasks}
-      timelineItems={timelineItems}
-      isDashboardFetching={isDashboardFetching}
-      isMembersFetching={isMembersFetching}
-      isTasksFetching={isTasksFetching}
-      isActivityFetching={isActivityFetching}
-      tab={tab}
-      onTabChange={setTab}
-      tasksSubTab={tasksSubTab}
-      onTasksSubTabChange={setTasksSubTab}
-    />
+    <Stack spacing={2}>
+      <DepartmentDetailsHeader
+        department={department}
+        tab={tab}
+        onTabChange={setTab}
+        totalUsers={totalUsers}
+        activeTasks={activeTasks}
+      />
+
+      {tab === "Overview" ? (
+        <DepartmentOverviewTab
+          isDashboardFetching={isDashboardFetching}
+          dashboard={dashboard}
+          members={members}
+          activeTasks={activeTasks}
+          overdueTasks={overdueTasks}
+          completedTasks={completedTasks}
+        />
+      ) : null}
+
+      {tab === "Members" ? (
+        <DepartmentMembersTab
+          members={members}
+          isMembersFetching={isMembersFetching}
+        />
+      ) : null}
+
+      {tab === "Tasks" ? (
+        <DepartmentTasksTab
+          tasksSubTab={tasksSubTab}
+          onTasksSubTabChange={setTasksSubTab}
+          isTasksFetching={isTasksFetching}
+          isActivityFetching={isActivityFetching}
+          tasks={tasks}
+          timelineItems={timelineItems}
+          totalTasks={totalTasks}
+          overdueTasks={overdueTasks}
+          completedTasks={completedTasks}
+        />
+      ) : null}
+    </Stack>
   );
 };
 

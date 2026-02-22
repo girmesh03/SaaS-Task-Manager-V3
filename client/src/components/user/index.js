@@ -1,4 +1,11 @@
-export { default as UsersPageContent } from "./UsersPageContent";
-export { default as UserDetailsPageContent } from "./UserDetailsPageContent";
 export { default as UserFilter } from "./UserFilter";
 export { default as UserFormDialog } from "./UserFormDialog";
+export { default as UsersToolbar } from "./UsersToolbar";
+export { default as UsersListView } from "./UsersListView";
+export { default as UsersGridView } from "./UsersGridView";
+export { default as UserListCard } from "./UserListCard";
+export { default as UserDetailsHeader } from "./UserDetailsHeader";
+export { default as UserOverviewTab } from "./UserOverviewTab";
+export { default as UserTasksTab } from "./UserTasksTab";
+export { default as UserActivityTab } from "./UserActivityTab";
+export { default as UserPerformanceTab } from "./UserPerformanceTab";

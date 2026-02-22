@@ -1,13 +1,15 @@
 import PropTypes from "prop-types";
+import { memo } from "react";
+import { useFormState } from "react-hook-form";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import { Controller } from "react-hook-form";
-import { MuiDialog, MuiSelectAutocomplete, MuiTextField } from "../reusable";
+import { MuiDialog, MuiTextField } from "../reusable";
 import { VALIDATION_LIMITS } from "../../utils/constants";
+import DepartmentManagerField from "./DepartmentManagerField";
 
 /**
  * Department create/update dialog.
@@ -25,6 +27,9 @@ const DepartmentFormDialog = ({
   onSubmit,
   isMutating,
 }) => {
+  // Use useFormState to isolate error subscriptions and prevent unnecessary re-renders
+  const { errors } = useFormState({ control: departmentForm.control });
+
   return (
     <MuiDialog
       open={open}
@@ -55,35 +60,23 @@ const DepartmentFormDialog = ({
         <Grid container spacing={1.25}>
           <Grid size={{ xs: 12, md: 7 }}>
             <MuiTextField
-              label="Department Name"
               {...departmentForm.register("name", {
                 required: "Department name is required",
               })}
               placeholder="e.g. Engineering"
               startAdornment={<ApartmentOutlinedIcon fontSize="small" />}
-              error={departmentForm.formState.errors.name}
+              error={errors.name}
               reserveHelperTextSpace={false}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <Controller
-              name="managerId"
+            <DepartmentManagerField
               control={departmentForm.control}
-              render={({ field }) => (
-                <MuiSelectAutocomplete
-                  value={field.value || ""}
-                  onChange={(_event, value) => field.onChange(value || "")}
-                  options={managerOptions}
-                  valueMode="id"
-                  label="Manager (HOD)"
-                  placeholder="Select manager"
-                />
-              )}
+              managerOptions={managerOptions}
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
             <MuiTextField
-              label="Description"
               multiline
               minRows={3}
               {...departmentForm.register("description", {
@@ -95,7 +88,7 @@ const DepartmentFormDialog = ({
               })}
               placeholder="Briefly describe the responsibilities of this department..."
               startAdornment={<DescriptionOutlinedIcon fontSize="small" />}
-              error={departmentForm.formState.errors.description}
+              error={errors.description}
               reserveHelperTextSpace={false}
             />
           </Grid>
@@ -127,4 +120,5 @@ DepartmentFormDialog.propTypes = {
   isMutating: PropTypes.bool.isRequired,
 };
 
-export default DepartmentFormDialog;
+// Memoize to prevent unnecessary re-renders when parent state changes
+export default memo(DepartmentFormDialog);

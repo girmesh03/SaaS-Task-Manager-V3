@@ -103,21 +103,20 @@ const LoginPage = () => {
             </Typography>
           </Stack>
 
-          <MuiTextField
-            {...register("email", {
+	          <MuiTextField
+	            {...register("email", {
               required: "Email is required",
               maxLength: {
                 value: VALIDATION_LIMITS.USER.EMAIL_MAX,
                 message: "Maximum 100 characters",
               },
-              validate: (value) =>
-                validators.email(value) || "Please enter a valid email address",
-            })}
-            label="Email Address"
-            type="email"
-            placeholder="name@company.com"
-            startAdornment={<EmailOutlinedIcon fontSize="small" />}
-            error={errors.email}
+	              validate: (value) =>
+	                validators.email(value) || "Please enter a valid email address",
+	            })}
+	            type="email"
+	            placeholder="name@company.com"
+	            startAdornment={<EmailOutlinedIcon fontSize="small" />}
+	            error={errors.email}
             autoComplete="email"
             reserveHelperTextSpace={false}
           />
@@ -133,8 +132,8 @@ const LoginPage = () => {
             </Button>
           </Box>
 
-          <MuiTextField
-            {...register("password", {
+	          <MuiTextField
+	            {...register("password", {
               required: "Password is required",
               minLength: {
                 value: VALIDATION_LIMITS.USER.PASSWORD_MIN,
@@ -142,14 +141,14 @@ const LoginPage = () => {
               },
               maxLength: {
                 value: VALIDATION_LIMITS.USER.PASSWORD_MAX,
-                message: "Password cannot exceed 128 characters",
-              },
-            })}
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            startAdornment={<LockOutlinedIcon fontSize="small" />}
-            endAdornment={
-              <IconButton
+	                message: "Password cannot exceed 128 characters",
+	              },
+	            })}
+	            type={showPassword ? "text" : "password"}
+	            placeholder="Enter password"
+	            startAdornment={<LockOutlinedIcon fontSize="small" />}
+	            endAdornment={
+	              <IconButton
                 size="small"
                 onClick={() => setShowPassword((previous) => !previous)}
                 aria-label={showPassword ? "Hide password" : "Show password"}

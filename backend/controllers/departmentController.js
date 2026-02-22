@@ -43,8 +43,8 @@ const normalizeId = (value) =>
   !value
     ? null
     : typeof value === "object" && typeof value.toString === "function"
-      ? value.toString()
-      : String(value);
+    ? value.toString()
+    : String(value);
 
 const isPlatformSuperAdmin = (user) =>
   user?.role === USER_ROLES.SUPER_ADMIN && Boolean(user?.isPlatformOrgUser);
@@ -68,7 +68,12 @@ const enforceReadScope = (reqUser, department) => {
     return;
   }
 
-  if (normalizeId(reqUser.organization) !== normalizeId(department.organization)) {
+  const reqOrgId = normalizeId(reqUser.organization);
+  const deptOrgId = normalizeId(
+    department.organization?._id || department.organization
+  );
+
+  if (reqOrgId !== deptOrgId) {
     throw new UnauthorizedError("Cross-organization access is not allowed");
   }
 
@@ -133,7 +138,9 @@ const enrichDepartment = async (department) => {
           id: normalizeId(department.manager._id || department.manager),
           firstName: department.manager.firstName || "",
           lastName: department.manager.lastName || "",
-          fullName: `${department.manager.firstName || ""} ${department.manager.lastName || ""}`.trim(),
+          fullName: `${department.manager.firstName || ""} ${
+            department.manager.lastName || ""
+          }`.trim(),
           email: department.manager.email || "",
         }
       : null,
@@ -206,7 +213,10 @@ const loadManager = async ({ managerId, organizationId, session = null }) => {
     throw new NotFoundError("Manager user not found");
   }
 
-  if (normalizeId(manager.organization) !== normalizeId(organizationId)) {
+  if (
+    normalizeId(manager.organization?._id || manager.organization) !==
+    normalizeId(organizationId)
+  ) {
     throw new ValidationError("managerId must belong to the same organization");
   }
 
@@ -215,7 +225,9 @@ const loadManager = async ({ managerId, organizationId, session = null }) => {
       manager.role
     )
   ) {
-    throw new ValidationError("Manager must have SuperAdmin, Admin, or Manager role");
+    throw new ValidationError(
+      "Manager must have SuperAdmin, Admin, or Manager role"
+    );
   }
 
   if (!manager.isHod) {
@@ -256,16 +268,24 @@ export const listDepartments = asyncHandler(async (req, res, next) => {
       filter._id = req.user.department;
     }
 
-    const createdAtRange = buildDateRangeFilter(query.createdFrom, query.createdTo);
+    const createdAtRange = buildDateRangeFilter(
+      query.createdFrom,
+      query.createdTo
+    );
     if (createdAtRange) {
       filter.createdAt = createdAtRange;
     }
 
     const minMemberCount =
-      query.memberCountMin === undefined ? null : Number.parseInt(query.memberCountMin, 10);
+      query.memberCountMin === undefined
+        ? null
+        : Number.parseInt(query.memberCountMin, 10);
     const maxMemberCount =
-      query.memberCountMax === undefined ? null : Number.parseInt(query.memberCountMax, 10);
-    const requiresMemberFiltering = minMemberCount !== null || maxMemberCount !== null;
+      query.memberCountMax === undefined
+        ? null
+        : Number.parseInt(query.memberCountMax, 10);
+    const requiresMemberFiltering =
+      minMemberCount !== null || maxMemberCount !== null;
 
     if (requiresMemberFiltering) {
       const baseQuery = pagination.includeDeleted
@@ -278,7 +298,9 @@ export const listDepartments = asyncHandler(async (req, res, next) => {
         .sort(pagination.sort)
         .exec();
 
-      const enriched = await Promise.all(departments.map((item) => enrichDepartment(item)));
+      const enriched = await Promise.all(
+        departments.map((item) => enrichDepartment(item))
+      );
       const filtered = enriched.filter((item) => {
         if (minMemberCount !== null && item.memberCount < minMemberCount) {
           return false;
@@ -290,7 +312,10 @@ export const listDepartments = asyncHandler(async (req, res, next) => {
       });
 
       const totalDocs = filtered.length;
-      const docs = filtered.slice(pagination.skip, pagination.skip + pagination.limit);
+      const docs = filtered.slice(
+        pagination.skip,
+        pagination.skip + pagination.limit
+      );
       const totalPages = Math.max(Math.ceil(totalDocs / pagination.limit), 1);
 
       res.status(HTTP_STATUS.OK).json({
@@ -352,62 +377,66 @@ export const createDepartment = asyncHandler(async (req, res, next) => {
 
   try {
     const organizationId = normalizeId(req.user.organization);
-    const { data, departmentId } = await withMongoTransaction(async (session) => {
-      const existing = await Department.findOne({
-        organization: organizationId,
-        name: body.name,
-      })
-        .withDeleted()
-        .collation({ locale: "en", strength: 2 })
-        .session(session);
+    const { data, departmentId } = await withMongoTransaction(
+      async (session) => {
+        const existing = await Department.findOne({
+          organization: organizationId,
+          name: body.name,
+        })
+          .withDeleted()
+          .collation({ locale: "en", strength: 2 })
+          .session(session);
 
-      if (existing) {
-        throw new ConflictError("Department name already exists in this organization");
-      }
+        if (existing) {
+          throw new ConflictError(
+            "Department name already exists in this organization"
+          );
+        }
 
-      const manager = await loadManager({
-        managerId: body.managerId,
-        organizationId,
-        session,
-      });
-
-      const [department] = await Department.create(
-        [
-          {
-            name: body.name,
-            description: body.description,
-            status: body.status || DEPARTMENT_STATUS.ACTIVE,
-            manager: manager?._id || null,
-            organization: organizationId,
-            createdBy: req.user.id,
-          },
-        ],
-        { session },
-      );
-
-      if (manager) {
-        await createDepartmentNotification({
-          userId: manager._id,
+        const manager = await loadManager({
+          managerId: body.managerId,
           organizationId,
-          departmentId: department._id,
-          title: "Department assignment",
-          message: `You were assigned as manager for ${department.name}.`,
-          entity: department._id,
           session,
         });
+
+        const [department] = await Department.create(
+          [
+            {
+              name: body.name,
+              description: body.description,
+              status: body.status || DEPARTMENT_STATUS.ACTIVE,
+              manager: manager?._id || null,
+              organization: organizationId,
+              createdBy: req.user.id,
+            },
+          ],
+          { session }
+        );
+
+        if (manager) {
+          await createDepartmentNotification({
+            userId: manager._id,
+            organizationId,
+            departmentId: department._id,
+            title: "Department assignment",
+            message: `You were assigned as manager for ${department.name}.`,
+            entity: department._id,
+            session,
+          });
+        }
+
+        const populated = await Department.findById(department._id)
+          .withDeleted()
+          .populate("manager", "firstName lastName email")
+          .populate("organization", "name")
+          .session(session);
+
+        return {
+          departmentId: normalizeId(department._id),
+          data: await enrichDepartment(populated),
+        };
       }
-
-      const populated = await Department.findById(department._id)
-        .withDeleted()
-        .populate("manager", "firstName lastName email")
-        .populate("organization", "name")
-        .session(session);
-
-      return {
-        departmentId: normalizeId(department._id),
-        data: await enrichDepartment(populated),
-      };
-    });
+    );
 
     emitToOrganization({
       organizationId,
@@ -449,38 +478,44 @@ export const getDepartment = asyncHandler(async (req, res, next) => {
 
     enforceReadScope(req.user, department);
 
-    const [departmentData, totalUsers, totalTasks, completedTasks, overdueTasks, materialCount] =
-      await Promise.all([
-        enrichDepartment(department),
-        User.countDocuments({
-          organization: department.organization?._id || department.organization,
-          department: department._id,
-          isDeleted: false,
-        }),
-        Task.countDocuments({
-          organization: department.organization?._id || department.organization,
-          department: department._id,
-          isDeleted: false,
-        }),
-        Task.countDocuments({
-          organization: department.organization?._id || department.organization,
-          department: department._id,
-          status: TASK_STATUS.COMPLETED,
-          isDeleted: false,
-        }),
-        Task.countDocuments({
-          organization: department.organization?._id || department.organization,
-          department: department._id,
-          status: { $ne: TASK_STATUS.COMPLETED },
-          dueDate: { $lt: new Date() },
-          isDeleted: false,
-        }),
-        Material.countDocuments({
-          organization: department.organization?._id || department.organization,
-          department: department._id,
-          isDeleted: false,
-        }),
-      ]);
+    const [
+      departmentData,
+      totalUsers,
+      totalTasks,
+      completedTasks,
+      overdueTasks,
+      materialCount,
+    ] = await Promise.all([
+      enrichDepartment(department),
+      User.countDocuments({
+        organization: department.organization?._id || department.organization,
+        department: department._id,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: department.organization?._id || department.organization,
+        department: department._id,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: department.organization?._id || department.organization,
+        department: department._id,
+        status: TASK_STATUS.COMPLETED,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: department.organization?._id || department.organization,
+        department: department._id,
+        status: { $ne: TASK_STATUS.COMPLETED },
+        dueDate: { $lt: new Date() },
+        isDeleted: false,
+      }),
+      Material.countDocuments({
+        organization: department.organization?._id || department.organization,
+        department: department._id,
+        isDeleted: false,
+      }),
+    ]);
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -519,44 +554,63 @@ export const getDepartmentDashboard = asyncHandler(async (req, res, next) => {
     const now = Date.now();
     const sevenDays = new Date(now + 7 * 24 * 60 * 60 * 1000);
 
-    const [totalUsers, totalTasks, completedTasks, overdueTask, upcomingDeadlines, byStatus, byPriority] =
-      await Promise.all([
-        User.countDocuments({ organization: orgId, department: deptId, isDeleted: false }),
-        Task.countDocuments({ organization: orgId, department: deptId, isDeleted: false }),
-        Task.countDocuments({
-          organization: orgId,
-          department: deptId,
-          status: TASK_STATUS.COMPLETED,
-          isDeleted: false,
-        }),
-        Task.countDocuments({
-          organization: orgId,
-          department: deptId,
-          status: { $ne: TASK_STATUS.COMPLETED },
-          dueDate: { $lt: new Date() },
-          isDeleted: false,
-        }),
-        Task.find({
-          organization: orgId,
-          department: deptId,
-          status: { $ne: TASK_STATUS.COMPLETED },
-          dueDate: { $gte: new Date(), $lte: sevenDays },
-          isDeleted: false,
-        })
-          .sort({ dueDate: 1 })
-          .limit(10)
-          .select("title dueDate priority status type"),
-        Task.aggregate([
-          { $match: { organization: orgId, department: deptId, isDeleted: false } },
-          { $group: { _id: "$status", count: { $sum: 1 } } },
-          { $project: { _id: 0, status: "$_id", count: 1 } },
-        ]).option({ withDeleted: true }),
-        Task.aggregate([
-          { $match: { organization: orgId, department: deptId, isDeleted: false } },
-          { $group: { _id: "$priority", count: { $sum: 1 } } },
-          { $project: { _id: 0, priority: "$_id", count: 1 } },
-        ]).option({ withDeleted: true }),
-      ]);
+    const [
+      totalUsers,
+      totalTasks,
+      completedTasks,
+      overdueTask,
+      upcomingDeadlines,
+      byStatus,
+      byPriority,
+    ] = await Promise.all([
+      User.countDocuments({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: orgId,
+        department: deptId,
+        status: TASK_STATUS.COMPLETED,
+        isDeleted: false,
+      }),
+      Task.countDocuments({
+        organization: orgId,
+        department: deptId,
+        status: { $ne: TASK_STATUS.COMPLETED },
+        dueDate: { $lt: new Date() },
+        isDeleted: false,
+      }),
+      Task.find({
+        organization: orgId,
+        department: deptId,
+        status: { $ne: TASK_STATUS.COMPLETED },
+        dueDate: { $gte: new Date(), $lte: sevenDays },
+        isDeleted: false,
+      })
+        .sort({ dueDate: 1 })
+        .limit(10)
+        .select("title dueDate priority status type"),
+      Task.aggregate([
+        {
+          $match: { organization: orgId, department: deptId, isDeleted: false },
+        },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+        { $project: { _id: 0, status: "$_id", count: 1 } },
+      ]).option({ withDeleted: true }),
+      Task.aggregate([
+        {
+          $match: { organization: orgId, department: deptId, isDeleted: false },
+        },
+        { $group: { _id: "$priority", count: { $sum: 1 } } },
+        { $project: { _id: 0, priority: "$_id", count: 1 } },
+      ]).option({ withDeleted: true }),
+    ]);
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -607,19 +661,39 @@ export const getDepartmentActivity = asyncHandler(async (req, res, next) => {
     const deptId = department._id;
 
     const [tasks, activities, comments, files] = await Promise.all([
-      Task.find({ organization: orgId, department: deptId, isDeleted: false, ...base })
+      Task.find({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+        ...base,
+      })
         .sort({ createdAt: -1 })
         .limit(120)
         .select("title type status createdAt"),
-      TaskActivity.find({ organization: orgId, department: deptId, isDeleted: false, ...base })
+      TaskActivity.find({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+        ...base,
+      })
         .sort({ createdAt: -1 })
         .limit(120)
         .select("activity parent parentModel createdAt"),
-      TaskComment.find({ organization: orgId, department: deptId, isDeleted: false, ...base })
+      TaskComment.find({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+        ...base,
+      })
         .sort({ createdAt: -1 })
         .limit(120)
         .select("comment parent parentModel createdAt"),
-      Attachment.find({ organization: orgId, department: deptId, isDeleted: false, ...base })
+      Attachment.find({
+        organization: orgId,
+        department: deptId,
+        isDeleted: false,
+        ...base,
+      })
         .sort({ createdAt: -1 })
         .limit(120)
         .select("filename parent parentModel createdAt"),
@@ -668,10 +742,14 @@ export const getDepartmentActivity = asyncHandler(async (req, res, next) => {
       ? stream.filter((item) => item.entityModel === requestedEntityModel)
       : stream;
     const sorted = filtered.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     const totalDocs = sorted.length;
-    const entries = sorted.slice(pagination.skip, pagination.skip + pagination.limit);
+    const entries = sorted.slice(
+      pagination.skip,
+      pagination.skip + pagination.limit
+    );
     const totalPages = Math.max(Math.ceil(totalDocs / pagination.limit), 1);
 
     res.status(HTTP_STATUS.OK).json({
@@ -702,98 +780,102 @@ export const updateDepartment = asyncHandler(async (req, res, next) => {
 
   try {
     const departmentId = req.validated.params.departmentId;
-    const { data, organizationId } = await withMongoTransaction(async (session) => {
-      const department = await Department.findById(departmentId)
-        .withDeleted()
-        .session(session);
-      if (!department) {
-        throw new NotFoundError("Department not found");
-      }
-
-      enforceReadScope(req.user, department);
-      const previousManagerId = normalizeId(department.manager);
-      const previousStatus = department.status;
-
-      if (body.name && body.name !== department.name) {
-        const duplicate = await Department.findOne({
-          organization: department.organization,
-          name: body.name,
-          _id: { $ne: department._id },
-        })
+    const { data, organizationId } = await withMongoTransaction(
+      async (session) => {
+        const department = await Department.findById(departmentId)
           .withDeleted()
-          .collation({ locale: "en", strength: 2 })
+          .session(session);
+        if (!department) {
+          throw new NotFoundError("Department not found");
+        }
+
+        enforceReadScope(req.user, department);
+        const previousManagerId = normalizeId(department.manager);
+        const previousStatus = department.status;
+
+        if (body.name && body.name !== department.name) {
+          const duplicate = await Department.findOne({
+            organization: department.organization,
+            name: body.name,
+            _id: { $ne: department._id },
+          })
+            .withDeleted()
+            .collation({ locale: "en", strength: 2 })
+            .session(session);
+
+          if (duplicate) {
+            throw new ConflictError(
+              "Department name already exists in this organization"
+            );
+          }
+        }
+
+        const manager = await loadManager({
+          managerId: body.managerId,
+          organizationId: department.organization,
+          session,
+        });
+
+        if (body.name !== undefined) department.name = body.name;
+        if (body.description !== undefined)
+          department.description = body.description;
+        if (body.status !== undefined) department.status = body.status;
+        if (body.managerId !== undefined)
+          department.manager = manager?._id || null;
+
+        await department.save({ session });
+
+        const populated = await Department.findById(department._id)
+          .withDeleted()
+          .populate("manager", "firstName lastName email")
+          .populate("organization", "name")
           .session(session);
 
-        if (duplicate) {
-          throw new ConflictError(
-            "Department name already exists in this organization"
-          );
+        const data = await enrichDepartment(populated);
+        const currentManagerId = normalizeId(department.manager);
+
+        if (previousManagerId !== currentManagerId) {
+          await Promise.all([
+            notifyDepartmentManager({
+              managerId: previousManagerId,
+              organizationId: normalizeId(department.organization),
+              departmentId: normalizeId(department._id),
+              title: "Department manager reassigned",
+              message: `You are no longer assigned as manager for ${department.name}.`,
+              entity: department._id,
+              session,
+            }),
+            notifyDepartmentManager({
+              managerId: currentManagerId,
+              organizationId: normalizeId(department.organization),
+              departmentId: normalizeId(department._id),
+              title: "Department assignment",
+              message: `You were assigned as manager for ${department.name}.`,
+              entity: department._id,
+              session,
+            }),
+          ]);
         }
-      }
 
-      const manager = await loadManager({
-        managerId: body.managerId,
-        organizationId: department.organization,
-        session,
-      });
-
-      if (body.name !== undefined) department.name = body.name;
-      if (body.description !== undefined) department.description = body.description;
-      if (body.status !== undefined) department.status = body.status;
-      if (body.managerId !== undefined) department.manager = manager?._id || null;
-
-      await department.save({ session });
-
-      const populated = await Department.findById(department._id)
-        .withDeleted()
-        .populate("manager", "firstName lastName email")
-        .populate("organization", "name")
-        .session(session);
-
-      const data = await enrichDepartment(populated);
-      const currentManagerId = normalizeId(department.manager);
-
-      if (previousManagerId !== currentManagerId) {
-        await Promise.all([
-          notifyDepartmentManager({
-            managerId: previousManagerId,
-            organizationId: normalizeId(department.organization),
-            departmentId: normalizeId(department._id),
-            title: "Department manager reassigned",
-            message: `You are no longer assigned as manager for ${department.name}.`,
-            entity: department._id,
-            session,
-          }),
-          notifyDepartmentManager({
+        if (body.status !== undefined && previousStatus !== department.status) {
+          await notifyDepartmentManager({
             managerId: currentManagerId,
             organizationId: normalizeId(department.organization),
             departmentId: normalizeId(department._id),
-            title: "Department assignment",
-            message: `You were assigned as manager for ${department.name}.`,
+            title: "Department status updated",
+            message: `${department.name} status changed to ${department.status}.`,
             entity: department._id,
             session,
-          }),
-        ]);
-      }
+          });
+        }
 
-      if (body.status !== undefined && previousStatus !== department.status) {
-        await notifyDepartmentManager({
-          managerId: currentManagerId,
+        return {
+          data,
           organizationId: normalizeId(department.organization),
           departmentId: normalizeId(department._id),
-          title: "Department status updated",
-          message: `${department.name} status changed to ${department.status}.`,
-          entity: department._id,
-          session,
-        });
+        };
       }
-
-      return {
-        data,
-        organizationId: normalizeId(department.organization),
-        departmentId: normalizeId(department._id),
-      };
-    });
+    );
 
     emitToOrganization({
       organizationId,
@@ -852,37 +934,37 @@ export const deleteDepartment = asyncHandler(async (req, res, next) => {
         User.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Task.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         TaskActivity.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         TaskComment.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Attachment.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Material.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Notification.updateMany(
           { organization: orgId, department: deptId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
       ]);
 
@@ -959,37 +1041,37 @@ export const restoreDepartment = asyncHandler(async (req, res, next) => {
         User.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Task.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         TaskActivity.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         TaskComment.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Attachment.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Material.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Notification.updateMany(
           { organization: orgId, department: deptId, isDeleted: true },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
       ]);
 

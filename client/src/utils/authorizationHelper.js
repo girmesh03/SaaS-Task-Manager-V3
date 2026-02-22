@@ -8,8 +8,22 @@ const normalizeId = (value) => {
     return null;
   }
 
-  if (typeof value === "object" && typeof value.toString === "function") {
-    return value.toString();
+  if (typeof value === "object") {
+    const candidate = value?.id ?? value?._id ?? value?.value;
+    if (
+      candidate !== undefined &&
+      candidate !== null &&
+      (typeof candidate === "string" || typeof candidate === "number")
+    ) {
+      return String(candidate);
+    }
+
+    if (
+      typeof value.toString === "function" &&
+      value.toString !== Object.prototype.toString
+    ) {
+      return value.toString();
+    }
   }
 
   return String(value);

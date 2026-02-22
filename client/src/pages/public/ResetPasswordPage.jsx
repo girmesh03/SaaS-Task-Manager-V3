@@ -201,8 +201,8 @@ const ResetPasswordPage = () => {
               </Typography>
             </Stack>
 
-            <MuiTextField
-              {...register("password", {
+	            <MuiTextField
+	              {...register("password", {
                 required: "Password is required",
                 minLength: {
                   value: VALIDATION_LIMITS.USER.PASSWORD_MIN,
@@ -222,14 +222,14 @@ const ResetPasswordPage = () => {
                   const score =
                     (lengthScore * 0.55 + (hasLower + hasUpper + hasNumber + hasSymbol) * 0.1125) *
                     100;
-                  setPasswordStrengthValue(Math.min(Math.round(score), 100));
-                },
-              })}
-              label="New Password"
-              type={showPassword ? "text" : "password"}
-              startAdornment={<LockOutlinedIcon fontSize="small" />}
-              endAdornment={
-                <IconButton
+	                  setPasswordStrengthValue(Math.min(Math.round(score), 100));
+	                },
+	              })}
+	              type={showPassword ? "text" : "password"}
+	              placeholder="New password"
+	              startAdornment={<LockOutlinedIcon fontSize="small" />}
+	              endAdornment={
+	                <IconButton
                   size="small"
                   onClick={() => setShowPassword((previous) => !previous)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
@@ -264,17 +264,17 @@ const ResetPasswordPage = () => {
               </Stack>
             </Stack>
 
-            <MuiTextField
-              {...register("confirmPassword", {
+	            <MuiTextField
+	              {...register("confirmPassword", {
                 required: "Confirm password is required",
-                validate: (value) =>
-                  value === getValues("password") || "Password confirmation does not match",
-              })}
-              label="Confirm New Password"
-              type={showConfirmPassword ? "text" : "password"}
-              startAdornment={<LockOutlinedIcon fontSize="small" />}
-              endAdornment={
-                <IconButton
+	                validate: (value) =>
+	                  value === getValues("password") || "Password confirmation does not match",
+	              })}
+	              type={showConfirmPassword ? "text" : "password"}
+	              placeholder="Confirm new password"
+	              startAdornment={<LockOutlinedIcon fontSize="small" />}
+	              endAdornment={
+	                <IconButton
                   size="small"
                   onClick={() =>
                     setShowConfirmPassword((previous) => !previous)

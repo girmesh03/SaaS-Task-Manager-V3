@@ -5,6 +5,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import {
   authReducer,
+  notificationBadgeReducer,
   resourceViewReducer,
   themeReducer,
 } from "../features";
@@ -21,6 +22,7 @@ export const createAppStore = () => {
     reducer: {
       auth: authReducer,
       theme: themeReducer,
+      notificationBadge: notificationBadgeReducer,
       resourceView: resourceViewReducer,
       [api.reducerPath]: api.reducer,
     },

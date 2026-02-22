@@ -7,21 +7,23 @@ import TaskActivity from "../../models/TaskActivity.js";
 import { TASK_PARENT_MODELS, VALIDATION_LIMITS } from "../../utils/constants.js";
 import { objectIdParam } from "./shared.js";
 
-const ensureTaskExists = async (value) => {
+const ensureTaskExists = async (value, { req }) => {
   const task = await Task.findById(value).withDeleted();
   if (!task) {
     throw new Error("Task not found");
   }
 
+  req.authorizationTarget = task;
   return true;
 };
 
-const ensureActivityExists = async (value) => {
+const ensureActivityExists = async (value, { req }) => {
   const activity = await TaskActivity.findById(value).withDeleted();
   if (!activity) {
     throw new Error("Task activity not found");
   }
 
+  req.authorizationTarget = activity;
   return true;
 };
 

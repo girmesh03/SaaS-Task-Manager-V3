@@ -10,7 +10,11 @@ import {
   USER_ROLES,
   USER_STATUS,
 } from "../utils/constants.js";
-import { isDevelopmentEnv, toGmailAddress, toISODateTime } from "../utils/helpers.js";
+import {
+  isDevelopmentEnv,
+  toGmailAddress,
+  toISODateTime,
+} from "../utils/helpers.js";
 
 /**
  * Environment variable keys used for platform seed inputs.
@@ -83,7 +87,10 @@ export const getPlatformSeedFromEnv = (env = process.env) => {
         "Task Manager is a multi-tenant SaaS application specifically designed for an industry structured as organizations, departments, and users.",
       email:
         env.PLATFORM_ORGANIZATION_EMAIL ||
-        toGmailAddress(organizationName.split(" ")[0], MOCK_DEFAULTS.GMAIL_DOMAIN),
+        toGmailAddress(
+          organizationName.split(" ")[0],
+          MOCK_DEFAULTS.GMAIL_DOMAIN
+        ),
       phone: env.PLATFORM_ORGANIZATION_PHONE || "+251913050675",
       address: env.PLATFORM_ORGANIZATION_ADDRESS || "Head Office, Addis Ababa",
       industry:
@@ -191,7 +198,10 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             isHod: true,
             departmentKey: "platform_administration",
             isPlatformOrgUser: true,
-            email: toGmailAddress(platformSeed.user.firstName, MOCK_DEFAULTS.GMAIL_DOMAIN),
+            email: toGmailAddress(
+              platformSeed.user.firstName,
+              MOCK_DEFAULTS.GMAIL_DOMAIN
+            ),
             password: platformSeed.user.password || password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -217,7 +227,10 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             isHod: false,
             departmentKey: "platform_administration",
             isPlatformOrgUser: true,
-            email: toGmailAddress("Platformuserone", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            email: toGmailAddress(
+              "Platformuserone",
+              MOCK_DEFAULTS.GMAIL_DOMAIN
+            ),
             password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -230,7 +243,10 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             isHod: false,
             departmentKey: "platform_administration",
             isPlatformOrgUser: true,
-            email: toGmailAddress("Platformusertwo", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            email: toGmailAddress(
+              "Platformusertwo",
+              MOCK_DEFAULTS.GMAIL_DOMAIN
+            ),
             password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -243,7 +259,10 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             isHod: false,
             departmentKey: "platform_administration",
             isPlatformOrgUser: true,
-            email: toGmailAddress("Platformuserthree", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            email: toGmailAddress(
+              "Platformuserthree",
+              MOCK_DEFAULTS.GMAIL_DOMAIN
+            ),
             password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -286,7 +305,7 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             isHod: true,
             departmentKey: "elilly_engineering",
             isPlatformOrgUser: false,
-            email: toGmailAddress("Girmachew", MOCK_DEFAULTS.GMAIL_DOMAIN),
+            email: toGmailAddress("girmazewdei38", MOCK_DEFAULTS.GMAIL_DOMAIN),
             password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -396,32 +415,6 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             joinedAt,
           },
           {
-            firstName: "Mebrat",
-            lastName: "Kassa",
-            position: "Housekeeper",
-            role: USER_ROLES.USER,
-            isHod: false,
-            departmentKey: "elilly_housekeeping",
-            isPlatformOrgUser: false,
-            email: toGmailAddress("Mebrat", MOCK_DEFAULTS.GMAIL_DOMAIN),
-            password,
-            status: USER_STATUS.ACTIVE,
-            joinedAt,
-          },
-          {
-            firstName: "Selamawit",
-            lastName: "Demissie",
-            position: "Housekeeper",
-            role: USER_ROLES.USER,
-            isHod: false,
-            departmentKey: "elilly_housekeeping",
-            isPlatformOrgUser: false,
-            email: toGmailAddress("Selamawit", MOCK_DEFAULTS.GMAIL_DOMAIN),
-            password,
-            status: USER_STATUS.ACTIVE,
-            joinedAt,
-          },
-          {
             firstName: "Martha",
             lastName: "Tsegaye",
             position: "Laundry Attendant",
@@ -430,19 +423,6 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
             departmentKey: "elilly_housekeeping",
             isPlatformOrgUser: false,
             email: toGmailAddress("Martha", MOCK_DEFAULTS.GMAIL_DOMAIN),
-            password,
-            status: USER_STATUS.ACTIVE,
-            joinedAt,
-          },
-          {
-            firstName: "Kidist",
-            lastName: "Abate",
-            position: "Housekeeper",
-            role: USER_ROLES.USER,
-            isHod: false,
-            departmentKey: "elilly_housekeeping",
-            isPlatformOrgUser: false,
-            email: toGmailAddress("Kidist", MOCK_DEFAULTS.GMAIL_DOMAIN),
             password,
             status: USER_STATUS.ACTIVE,
             joinedAt,
@@ -548,10 +528,14 @@ export const getPhaseThreeSeedBlueprint = (env = process.env) => {
  * @returns {{ phase: "PHASE_3"; runtime: string }} Descriptor payload.
  */
 export const getPhaseThreeDescriptor = () => {
-  const runtime = String(process.env.NODE_ENV || NODE_ENVS.DEVELOPMENT).toLowerCase();
+  const runtime = String(
+    process.env.NODE_ENV || NODE_ENVS.DEVELOPMENT
+  ).toLowerCase();
 
   return {
     phase: "PHASE_3",
-    runtime: Object.values(NODE_ENVS).includes(runtime) ? runtime : NODE_ENVS.DEVELOPMENT,
+    runtime: Object.values(NODE_ENVS).includes(runtime)
+      ? runtime
+      : NODE_ENVS.DEVELOPMENT,
   };
 };

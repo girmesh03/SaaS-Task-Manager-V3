@@ -15,10 +15,11 @@
  *
  */
 
-import { forwardRef, useMemo } from "react";
+import { forwardRef, memo, useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 
 /**
@@ -78,7 +79,10 @@ const MuiSelectAutocomplete = forwardRef(
       },
       filterOptions,
       groupBy,
-      placeholder = multiple ? "Select one or more options" : "Select an option",
+      startAdornment,
+      placeholder = multiple
+        ? "Select one or more options"
+        : "Select an option",
       disabled = false,
       required = false,
       fullWidth = true,
@@ -95,6 +99,16 @@ const MuiSelectAutocomplete = forwardRef(
     },
     ref
   ) => {
+    // Create a stable options map for O(1) lookups instead of O(n) find operations
+    const optionsMap = useMemo(() => {
+      const map = new Map();
+      options.forEach((option) => {
+        const key = String(getOptionValue(option));
+        map.set(key, option);
+      });
+      return map;
+    }, [options, getOptionValue]);
+
     const resolveOptionFromValue = useMemo(() => {
       return (rawValue) => {
         if (rawValue === undefined || rawValue === null || rawValue === "") {
@@ -105,14 +119,9 @@ const MuiSelectAutocomplete = forwardRef(
           return rawValue;
         }
 
-        return (
-          options.find(
-            (option) =>
-              String(getOptionValue(option)) === String(rawValue)
-          ) || null
-        );
+        return optionsMap.get(String(rawValue)) || null;
       };
-    }, [getOptionValue, options]);
+    }, [optionsMap]);
 
     const normalizedValue = useMemo(() => {
       if (multiple) {
@@ -194,7 +203,7 @@ const MuiSelectAutocomplete = forwardRef(
         renderInput={(params) => (
           <TextField
             {...params}
-            label={label}
+            label={label || undefined}
             placeholder={placeholder}
             required={required}
             error={!!error}
@@ -204,6 +213,16 @@ const MuiSelectAutocomplete = forwardRef(
             slotProps={{
               input: {
                 ...params.InputProps,
+                startAdornment: startAdornment ? (
+                  <>
+                    <InputAdornment position="start">
+                      {startAdornment}
+                    </InputAdornment>
+                    {params.InputProps.startAdornment}
+                  </>
+                ) : (
+                  params.InputProps.startAdornment
+                ),
                 endAdornment: (
                   <>
                     {isLoading ? (
@@ -224,4 +243,5 @@ const MuiSelectAutocomplete = forwardRef(
 
 MuiSelectAutocomplete.displayName = "MuiSelectAutocomplete";
 
-export default MuiSelectAutocomplete;
+// Memoize to prevent unnecessary re-renders when parent re-renders
+export default memo(MuiSelectAutocomplete);

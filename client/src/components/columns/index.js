@@ -4,3 +4,4 @@
 
 export * from "./userColumns";
 export * from "./departmentColumns";
+export * from "./taskColumns";

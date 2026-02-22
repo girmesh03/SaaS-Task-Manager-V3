@@ -4,6 +4,12 @@ import react from "@vitejs/plugin-react-swc";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    dedupe: ["react", "react-dom", "@emotion/react", "@emotion/styled"],
+  },
+  optimizeDeps: {
+    include: ["@emotion/react", "@emotion/styled"],
+  },
   server: {
     port: 3000,
   },

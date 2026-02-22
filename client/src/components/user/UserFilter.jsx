@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import Typography from "@mui/material/Typography";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import { Controller } from "react-hook-form";
 import { MuiDialog, MuiMultiSelect, MuiSelectAutocomplete, MuiTextField } from "../reusable";
@@ -51,41 +51,39 @@ const UserFilter = ({
           <Controller
             name="role"
             control={listForm.control}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || ""}
-                onChange={(_event, value) => field.onChange(value || "")}
-                options={roleOptions}
-                valueMode="id"
-                label="Role"
-                placeholder="Select role"
-              />
-            )}
-          />
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || ""}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                options={roleOptions}
+	                valueMode="id"
+	                placeholder="Select role"
+	              />
+	            )}
+	          />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="status"
             control={listForm.control}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || ""}
-                onChange={(_event, value) => field.onChange(value || "")}
-                options={statusOptions}
-                valueMode="id"
-                label="Status"
-                placeholder="Select status"
-              />
-            )}
-          />
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || ""}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                options={statusOptions}
+	                valueMode="id"
+	                placeholder="Select status"
+	              />
+	            )}
+	          />
         </Grid>
         <Grid size={{ xs: 12 }}>
           <Controller
             name="departmentIds"
             control={listForm.control}
-            render={({ field }) => (
-              <MuiMultiSelect
-                value={field.value || []}
+	            render={({ field }) => (
+	              <MuiMultiSelect
+	                value={field.value || []}
                 onChange={(_event, value) =>
                   field.onChange(
                     (value || []).map((item) =>
@@ -96,70 +94,69 @@ const UserFilter = ({
                 options={departmentOptions}
                 getOptionValue={(option) => option.value}
                 getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) =>
-                  option.value ===
-                  (typeof value === "object" ? value.value : value)
-                }
-                label="Departments"
-                placeholder="Select one or more departments"
-              />
-            )}
-          />
+	                isOptionEqualToValue={(option, value) =>
+	                  option.value ===
+	                  (typeof value === "object" ? value.value : value)
+	                }
+	                placeholder="Select one or more departments"
+	              />
+	            )}
+	          />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MuiTextField
-            label="Joined From"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...listForm.register("joinedFrom")}
-            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MuiTextField
-            label="Joined To"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...listForm.register("joinedTo")}
-            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
+	        <Grid size={{ xs: 12, md: 6 }}>
+	          <MuiTextField
+	            type="date"
+	            {...listForm.register("joinedFrom")}
+	            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
+	            helperText="Joined from"
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
+	        <Grid size={{ xs: 12, md: 6 }}>
+	          <MuiTextField
+	            type="date"
+	            {...listForm.register("joinedTo")}
+	            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
+	            helperText="Joined to"
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <Controller
-            name="includeInactive"
-            control={listForm.control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(field.value)}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                  />
-                }
-                label="Include Inactive Users"
-              />
-            )}
-          />
-        </Grid>
+	            name="includeInactive"
+	            control={listForm.control}
+	            render={({ field }) => (
+	              <Stack direction="row" justifyContent="space-between" alignItems="center">
+	                <Typography variant="body2" color="text.secondary">
+	                  Include inactive users
+	                </Typography>
+	                <Switch
+	                  checked={Boolean(field.value)}
+	                  onChange={(event) => field.onChange(event.target.checked)}
+	                  inputProps={{ "aria-label": "Include inactive users" }}
+	                />
+	              </Stack>
+	            )}
+	          />
+	        </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <Controller
-            name="includeDeleted"
-            control={listForm.control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(field.value)}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                  />
-                }
-                label="Include Deleted Users"
-              />
-            )}
-          />
-        </Grid>
+	            name="includeDeleted"
+	            control={listForm.control}
+	            render={({ field }) => (
+	              <Stack direction="row" justifyContent="space-between" alignItems="center">
+	                <Typography variant="body2" color="text.secondary">
+	                  Include deleted users
+	                </Typography>
+	                <Switch
+	                  checked={Boolean(field.value)}
+	                  onChange={(event) => field.onChange(event.target.checked)}
+	                  inputProps={{ "aria-label": "Include deleted users" }}
+	                />
+	              </Stack>
+	            )}
+	          />
+	        </Grid>
       </Grid>
     </MuiDialog>
   );

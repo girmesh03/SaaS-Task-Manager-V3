@@ -373,6 +373,16 @@ export const HTTP_STATUS = {
   NOT_IMPLEMENTED: 501,
 };
 
+export const SOCKET_EVENTS = {
+  TASK_CREATED: "task:created",
+  TASK_UPDATED: "task:updated",
+  TASK_DELETED: "task:deleted",
+  TASK_ACTIVITY_ADDED: "task:activity:added",
+  TASK_COMMENT_ADDED: "task:comment:added",
+  TASK_FILE_ADDED: "task:file:added",
+  NOTIFICATION_CREATED: "notification:created",
+};
+
 export const ENV_KEYS = {
   REQUIRED: [
     "NODE_ENV",

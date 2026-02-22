@@ -1,21 +1,90 @@
 /**
- * @file Socket service scaffold for phase 2.
+ * @file Socket service with cookie-based auth (Phase 4).
  */
 import { Server } from "socket.io";
+import cookie from "cookie";
 import jwt from "jsonwebtoken";
+import Task from "../models/Task.js";
+import User from "../models/User.js";
+import { COOKIE_DEFAULTS, USER_ROLES, USER_STATUS } from "../utils/constants.js";
+import { UnauthenticatedError, UnauthorizedError } from "../utils/errors.js";
+import { normalizeId } from "../utils/helpers.js";
+import { resolveEnvironment } from "../utils/env.js";
 import logger from "../utils/logger.js";
 
 let io = null;
 
-const normalizeSocketUser = (payload = {}) => {
+const isPlatformSuperAdmin = (user) =>
+  user?.role === USER_ROLES.SUPER_ADMIN && Boolean(user?.isPlatformOrgUser);
+
+const normalizeTokenPayload = (payload = {}) => {
   return {
-    id: payload.sub || payload.userId || payload.id || null,
-    organization: payload.organization || payload.orgId || null,
-    department: payload.department || payload.departmentId || null,
+    id: normalizeId(payload.sub || payload.userId || payload.id),
     role: payload.role || null,
+    organization: normalizeId(payload.organization || payload.orgId || null),
+    department: normalizeId(payload.department || payload.departmentId || null),
     isPlatformOrgUser: Boolean(payload.isPlatformOrgUser),
     isHod: Boolean(payload.isHod),
   };
+};
+
+const normalizeUserFromRecord = (record, fallbackPayload = {}) => {
+  return {
+    id: normalizeId(record?._id || fallbackPayload.id),
+    role: record?.role || fallbackPayload.role || null,
+    organization: normalizeId(record?.organization || fallbackPayload.organization),
+    department: normalizeId(record?.department || fallbackPayload.department),
+    isPlatformOrgUser:
+      typeof record?.isPlatformOrgUser === "boolean"
+        ? record.isPlatformOrgUser
+        : Boolean(fallbackPayload.isPlatformOrgUser),
+    isHod:
+      typeof record?.isHod === "boolean" ? record.isHod : Boolean(fallbackPayload.isHod),
+    status: record?.status || null,
+    isVerified:
+      typeof record?.isVerified === "boolean" ? record.isVerified : undefined,
+  };
+};
+
+const fetchUserContext = async (userId) => {
+  if (!userId) {
+    return null;
+  }
+
+  const user = await User.findById(userId)
+    .withDeleted()
+    .select("_id role organization department isPlatformOrgUser isHod status isVerified isDeleted");
+
+  if (!user || user.isDeleted) {
+    return null;
+  }
+
+  return user;
+};
+
+const assertUserAuthState = (user) => {
+  if (!user) {
+    throw new UnauthenticatedError("Authenticated user was not found");
+  }
+
+  if (user.status === USER_STATUS.INACTIVE) {
+    throw new UnauthorizedError("Account is inactive");
+  }
+
+  if (user.isVerified === false) {
+    throw new UnauthorizedError("Account is not verified");
+  }
+};
+
+const getTokenFromHandshake = (socket) => {
+  const env = resolveEnvironment(process.env);
+  const cookieName = env.COOKIE_NAME_ACCESS || COOKIE_DEFAULTS.ACCESS_TOKEN_NAME;
+
+  const cookieHeader = socket.handshake?.headers?.cookie || "";
+  const parsedCookies = cookieHeader ? cookie.parse(cookieHeader) : {};
+  const cookieToken = parsedCookies?.[cookieName];
+
+  return cookieToken || socket.handshake?.auth?.token || null;
 };
 
 /**
@@ -47,25 +116,31 @@ export const initializeSocketService = (server, { jwtSecret, corsOrigin = "*" })
   });
 
   io.use((socket, next) => {
-    try {
-      const token = socket.handshake?.auth?.token || null;
-      if (!token) {
-        next(new Error("Socket authentication token is missing"));
-        return;
+    (async () => {
+      try {
+        const token = getTokenFromHandshake(socket);
+        if (!token) {
+          throw new UnauthenticatedError("Socket authentication token is missing");
+        }
+
+        const payload = jwt.verify(token, jwtSecret);
+        const normalizedPayload = normalizeTokenPayload(payload);
+
+        const record = await fetchUserContext(normalizedPayload.id);
+        const normalizedUser = normalizeUserFromRecord(record, normalizedPayload);
+
+        assertUserAuthState(normalizedUser);
+
+        if (!normalizedUser.id || !normalizedUser.organization || !normalizedUser.department) {
+          throw new UnauthenticatedError("Socket authentication payload is incomplete");
+        }
+
+        socket.user = normalizedUser;
+        next();
+      } catch (error) {
+        next(new Error(`Socket authentication failed: ${error.message}`));
       }
-
-      const payload = jwt.verify(token, jwtSecret);
-      socket.user = normalizeSocketUser(payload);
-
-      if (!socket.user.id || !socket.user.organization || !socket.user.department) {
-        next(new Error("Socket authentication payload is incomplete"));
-        return;
-      }
-
-      next();
-    } catch (error) {
-      next(new Error(`Socket authentication failed: ${error.message}`));
-    }
+    })();
   });
 
   io.on("connection", (socket) => {
@@ -75,12 +150,36 @@ export const initializeSocketService = (server, { jwtSecret, corsOrigin = "*" })
     socket.join(`org:${user.organization}`);
     socket.join(`dept:${user.department}`);
 
-    socket.on("join:task", ({ taskId }) => {
-      if (!taskId) {
-        return;
-      }
+    socket.on("join:task", async ({ taskId }) => {
+      try {
+        if (!taskId) {
+          return;
+        }
 
-      socket.join(`task:${taskId}`);
+        if (isPlatformSuperAdmin(user)) {
+          socket.join(`task:${taskId}`);
+          return;
+        }
+
+        const task = await Task.findById(taskId)
+          .withDeleted()
+          .select("organization department");
+
+        if (!task) {
+          return;
+        }
+
+        const sameOrg = normalizeId(task.organization) === normalizeId(user.organization);
+        const sameDept = normalizeId(task.department) === normalizeId(user.department);
+
+        if (!sameOrg || !sameDept) {
+          return;
+        }
+
+        socket.join(`task:${taskId}`);
+      } catch (_error) {
+        // swallow join guard failures
+      }
     });
 
     socket.on("leave:task", ({ taskId }) => {

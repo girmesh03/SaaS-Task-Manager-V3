@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import Typography from "@mui/material/Typography";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
@@ -56,116 +56,112 @@ const DepartmentFilter = ({
             <Controller
               name="departmentId"
               control={listForm.control}
-              render={({ field }) => (
-                <MuiSelectAutocomplete
-                  value={field.value || ""}
-                  onChange={(_event, value) => field.onChange(value || "")}
-                  options={departmentOptions}
-                  valueMode="id"
-                  label="Department Name"
-                  placeholder="Select department"
-                />
-              )}
-            />
-          </Grid>
-        ) : null}
+	              render={({ field }) => (
+	                <MuiSelectAutocomplete
+	                  value={field.value || ""}
+	                  onChange={(_event, value) => field.onChange(value || "")}
+	                  options={departmentOptions}
+	                  valueMode="id"
+	                  placeholder="Select department"
+	                />
+	              )}
+	            />
+	          </Grid>
+	        ) : null}
         <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="status"
             control={listForm.control}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || ""}
-                onChange={(_event, value) => field.onChange(value || "")}
-                options={statusOptions}
-                valueMode="id"
-                label="Status"
-                placeholder="Select status"
-              />
-            )}
-          />
-        </Grid>
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || ""}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                options={statusOptions}
+	                valueMode="id"
+	                placeholder="Select status"
+	              />
+	            )}
+	          />
+	        </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="managerId"
             control={listForm.control}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || ""}
-                onChange={(_event, value) => field.onChange(value || "")}
-                options={managerOptions}
-                valueMode="id"
-                label="Manager"
-                placeholder="Select manager"
-              />
-            )}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MuiTextField
-            label="Min Members"
-            type="number"
-            {...listForm.register("memberCountMin")}
-            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MuiTextField
-            label="Max Members"
-            type="number"
-            {...listForm.register("memberCountMax")}
-            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MuiTextField
-            label="Created From"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...listForm.register("createdFrom")}
-            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MuiTextField
-            label="Created To"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...listForm.register("createdTo")}
-            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
-            reserveHelperTextSpace={false}
-          />
-        </Grid>
-        {canFilterByOrganization ? (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <MuiTextField
-              label="Organization ID"
-              {...listForm.register("organizationId")}
-              startAdornment={<BusinessOutlinedIcon fontSize="small" />}
-              reserveHelperTextSpace={false}
-            />
-          </Grid>
-        ) : null}
-        <Grid size={{ xs: 12 }}>
-          <Controller
-            name="includeDeleted"
-            control={listForm.control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(field.value)}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                  />
-                }
-                label="Include Deleted Departments"
-              />
-            )}
-          />
-        </Grid>
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || ""}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                options={managerOptions}
+	                valueMode="id"
+	                placeholder="Select manager"
+	              />
+	            )}
+	          />
+	        </Grid>
+	        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+	          <MuiTextField
+	            type="number"
+	            placeholder="Min members"
+	            {...listForm.register("memberCountMin")}
+	            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
+	        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+	          <MuiTextField
+	            type="number"
+	            placeholder="Max members"
+	            {...listForm.register("memberCountMax")}
+	            startAdornment={<GroupsOutlinedIcon fontSize="small" />}
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
+	        <Grid size={{ xs: 12, md: 6 }}>
+	          <MuiTextField
+	            type="date"
+	            {...listForm.register("createdFrom")}
+	            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
+	            helperText="Created from"
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
+	        <Grid size={{ xs: 12, md: 6 }}>
+	          <MuiTextField
+	            type="date"
+	            {...listForm.register("createdTo")}
+	            startAdornment={<CalendarMonthOutlinedIcon fontSize="small" />}
+	            helperText="Created to"
+	            reserveHelperTextSpace={false}
+	          />
+	        </Grid>
+	        {canFilterByOrganization ? (
+	          <Grid size={{ xs: 12, md: 6 }}>
+	            <MuiTextField
+	              placeholder="Organization ID"
+	              {...listForm.register("organizationId")}
+	              startAdornment={<BusinessOutlinedIcon fontSize="small" />}
+	              reserveHelperTextSpace={false}
+	            />
+	          </Grid>
+	        ) : null}
+	        <Grid size={{ xs: 12 }}>
+	          <Controller
+	            name="includeDeleted"
+	            control={listForm.control}
+	            render={({ field }) => (
+	              <Stack direction="row" justifyContent="space-between" alignItems="center">
+	                <Typography variant="body2" color="text.secondary">
+	                  Include deleted departments
+	                </Typography>
+	                <Switch
+	                  checked={Boolean(field.value)}
+	                  onChange={(event) => field.onChange(event.target.checked)}
+	                  inputProps={{ "aria-label": "Include deleted departments" }}
+	                />
+	              </Stack>
+	            )}
+	          />
+	        </Grid>
       </Grid>
     </MuiDialog>
   );

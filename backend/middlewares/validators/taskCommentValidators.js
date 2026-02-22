@@ -7,21 +7,23 @@ import TaskComment from "../../models/TaskComment.js";
 import { TASK_PARENT_MODELS, VALIDATION_LIMITS } from "../../utils/constants.js";
 import { objectIdParam } from "./shared.js";
 
-const ensureTaskExists = async (value) => {
+const ensureTaskExists = async (value, { req }) => {
   const task = await Task.findById(value).withDeleted();
   if (!task) {
     throw new Error("Task not found");
   }
 
+  req.authorizationTarget = task;
   return true;
 };
 
-const ensureCommentExists = async (value) => {
+const ensureCommentExists = async (value, { req }) => {
   const comment = await TaskComment.findById(value).withDeleted();
   if (!comment) {
     throw new Error("Task comment not found");
   }
 
+  req.authorizationTarget = comment;
   return true;
 };
 
@@ -62,21 +64,6 @@ export const createTaskCommentValidators = [
     .optional({ values: "falsy" })
     .isMongoId()
     .withMessage("parentId must be a valid object id"),
-  body("depth")
-    .optional({ values: "falsy" })
-    .isInt({
-      min: VALIDATION_LIMITS.TASK_COMMENT.DEPTH_MIN,
-      max: VALIDATION_LIMITS.TASK_COMMENT.DEPTH_MAX,
-    })
-    .withMessage("Comment depth must be between 0 and 5"),
-  body("mentions")
-    .optional()
-    .isArray({ max: VALIDATION_LIMITS.TASK_COMMENT.MENTIONS_MAX })
-    .withMessage("mentions cannot exceed 20 users"),
-  body("mentions.*")
-    .optional({ values: "falsy" })
-    .isMongoId()
-    .withMessage("mention ids must be valid object ids"),
 ];
 
 /**

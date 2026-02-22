@@ -43,13 +43,16 @@ const parseCsv = (value) =>
         .map((item) => item.trim())
         .filter(Boolean);
 
-const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+const normalizeEmail = (value = "") =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 const normalizeId = (value) =>
   !value
     ? null
     : typeof value === "object" && typeof value.toString === "function"
-      ? value.toString()
-      : String(value);
+    ? value.toString()
+    : String(value);
 
 const isPlatformSuperAdmin = (user) =>
   user?.role === USER_ROLES.SUPER_ADMIN && Boolean(user?.isPlatformOrgUser);
@@ -94,18 +97,34 @@ const ensureOrgScopeQuery = (reqUser, organizationId) => {
 };
 
 const enforceReadScope = (reqUser, targetUser) => {
+  // Platform SuperAdmins can read any user across all organizations
   if (isPlatformSuperAdmin(reqUser)) {
     return;
   }
 
-  if (normalizeId(reqUser.organization) !== normalizeId(targetUser.organization)) {
+  // Enforce same organization for all non-platform users
+  const reqOrgId = normalizeId(reqUser.organization);
+  const targetOrgId = normalizeId(
+    targetUser.organization?._id || targetUser.organization
+  );
+
+  if (reqOrgId !== targetOrgId) {
     throw new UnauthorizedError("Cross-organization access is not allowed");
   }
 
+  // SuperAdmins and Admins can read users across departments in their own organization
+  if ([USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN].includes(reqUser.role)) {
+    return;
+  }
+
+  // Managers and Users can only read users in their own department (or themselves)
+  const targetDeptId = normalizeId(
+    targetUser.department?._id || targetUser.department
+  );
+
   if (
-    [USER_ROLES.MANAGER, USER_ROLES.USER].includes(reqUser.role) &&
     normalizeId(reqUser.id) !== normalizeId(targetUser._id) &&
-    normalizeId(reqUser.department) !== normalizeId(targetUser.department)
+    normalizeId(reqUser.department) !== targetDeptId
   ) {
     throw new UnauthorizedError("Cross-department access is not allowed");
   }
@@ -188,7 +207,9 @@ const loadDepartmentForWrite = async ({
   }
 
   if (normalizeId(department.organization) !== normalizeId(organizationId)) {
-    throw new ValidationError("departmentId must belong to the active organization scope");
+    throw new ValidationError(
+      "departmentId must belong to the active organization scope"
+    );
   }
 
   if (department.status !== DEPARTMENT_STATUS.ACTIVE) {
@@ -242,7 +263,8 @@ export const listUsers = asyncHandler(async (req, res, next) => {
     const query = req.validated.query;
     const pagination = parsePagination(query);
     const organizationId = ensureOrgScopeQuery(req.user, query.organizationId);
-    const includeInactive = String(query.includeInactive || "false").toLowerCase() === "true";
+    const includeInactive =
+      String(query.includeInactive || "false").toLowerCase() === "true";
 
     const filter = {
       organization: organizationId,
@@ -273,7 +295,10 @@ export const listUsers = asyncHandler(async (req, res, next) => {
       filter.employeeId = String(query.employeeId).trim();
     }
 
-    const joinedAtRange = buildDateRangeFilter(query.joinedFrom, query.joinedTo);
+    const joinedAtRange = buildDateRangeFilter(
+      query.joinedFrom,
+      query.joinedTo
+    );
     if (joinedAtRange) {
       filter.joinedAt = joinedAtRange;
     }
@@ -323,7 +348,10 @@ export const createUser = asyncHandler(async (req, res, next) => {
         });
 
         const email = normalizeEmail(body.email);
-        const existingUser = await User.findOne({ organization: organizationId, email })
+        const existingUser = await User.findOne({
+          organization: organizationId,
+          email,
+        })
           .withDeleted()
           .session(session);
         if (existingUser) {
@@ -366,7 +394,7 @@ export const createUser = asyncHandler(async (req, res, next) => {
               createdBy: req.user.id,
             },
           ],
-          { session },
+          { session }
         );
 
         await createLifecycleNotification({
@@ -374,7 +402,8 @@ export const createUser = asyncHandler(async (req, res, next) => {
           organizationId: user.organization,
           departmentId: user.department,
           title: "Welcome to TaskManager",
-          message: "Your account has been created by your organization administrator.",
+          message:
+            "Your account has been created by your organization administrator.",
           entity: user._id,
           session,
         });
@@ -395,14 +424,16 @@ export const createUser = asyncHandler(async (req, res, next) => {
 
     await sendWelcomeEmail({
       to: populated.email,
-      fullName: `${populated.firstName || ""} ${populated.lastName || ""}`.trim(),
+      fullName: `${populated.firstName || ""} ${
+        populated.lastName || ""
+      }`.trim(),
     });
 
     await withMongoTransaction(async (session) => {
       await User.findByIdAndUpdate(
         createdUserId,
         { welcomeEmailSentAt: new Date() },
-        { session },
+        { session }
       );
     });
 
@@ -464,19 +495,20 @@ export const getUser = asyncHandler(async (req, res, next) => {
       isDeleted: false,
     };
 
-    const [assignedTasks, createdTasks, completedTasks, overdueTasks] = await Promise.all([
-      Task.countDocuments(assignedFilter),
-      Task.countDocuments(createdFilter),
-      Task.countDocuments({
-        ...assignedFilter,
-        status: TASK_STATUS.COMPLETED,
-      }),
-      Task.countDocuments({
-        ...assignedFilter,
-        status: { $ne: TASK_STATUS.COMPLETED },
-        dueDate: { $lt: new Date() },
-      }),
-    ]);
+    const [assignedTasks, createdTasks, completedTasks, overdueTasks] =
+      await Promise.all([
+        Task.countDocuments(assignedFilter),
+        Task.countDocuments(createdFilter),
+        Task.countDocuments({
+          ...assignedFilter,
+          status: TASK_STATUS.COMPLETED,
+        }),
+        Task.countDocuments({
+          ...assignedFilter,
+          status: { $ne: TASK_STATUS.COMPLETED },
+          dueDate: { $lt: new Date() },
+        }),
+      ]);
 
     const totalTasks = assignedTasks + createdTasks;
     const activeTasks = Math.max(totalTasks - completedTasks, 0);
@@ -594,10 +626,14 @@ export const getUserActivity = asyncHandler(async (req, res, next) => {
       : items;
 
     const sorted = filtered.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     const totalDocs = sorted.length;
-    const pageItems = sorted.slice(pagination.skip, pagination.skip + pagination.limit);
+    const pageItems = sorted.slice(
+      pagination.skip,
+      pagination.skip + pagination.limit
+    );
     const totalPages = Math.max(Math.ceil(totalDocs / pagination.limit), 1);
 
     res.status(HTTP_STATUS.OK).json({
@@ -647,17 +683,18 @@ export const getUserPerformance = asyncHandler(async (req, res, next) => {
       isDeleted: false,
     };
 
-    const [assignedTotal, assignedCompleted, completedTasks] = await Promise.all([
-      Task.countDocuments(assignedFilter),
-      Task.countDocuments({
-        ...assignedFilter,
-        status: TASK_STATUS.COMPLETED,
-      }),
-      Task.find({
-        ...assignedFilter,
-        status: TASK_STATUS.COMPLETED,
-      }).select("createdAt updatedAt"),
-    ]);
+    const [assignedTotal, assignedCompleted, completedTasks] =
+      await Promise.all([
+        Task.countDocuments(assignedFilter),
+        Task.countDocuments({
+          ...assignedFilter,
+          status: TASK_STATUS.COMPLETED,
+        }),
+        Task.find({
+          ...assignedFilter,
+          status: TASK_STATUS.COMPLETED,
+        }).select("createdAt updatedAt"),
+      ]);
 
     const completionRate = assignedTotal
       ? Number(((assignedCompleted / assignedTotal) * 100).toFixed(2))
@@ -668,7 +705,9 @@ export const getUserPerformance = asyncHandler(async (req, res, next) => {
           (
             completedTasks.reduce((total, item) => {
               const createdAt = new Date(item.createdAt).getTime();
-              const updatedAt = new Date(item.updatedAt || item.createdAt).getTime();
+              const updatedAt = new Date(
+                item.updatedAt || item.createdAt
+              ).getTime();
               return total + Math.max(updatedAt - createdAt, 0);
             }, 0) /
             completedTasks.length /
@@ -748,7 +787,9 @@ export const getUserPerformance = asyncHandler(async (req, res, next) => {
         completionRate,
         avgTaskTimeHours,
         throughput: assignedCompleted,
-        comparisonToDeptAvg: Number((completionRate - deptCompletionRate).toFixed(2)),
+        comparisonToDeptAvg: Number(
+          (completionRate - deptCompletionRate).toFixed(2)
+        ),
         series,
       },
     });
@@ -765,106 +806,120 @@ export const updateUser = asyncHandler(async (req, res, next) => {
 
   try {
     const userId = req.validated.params.userId;
-    const { populated, previousStatus } = await withMongoTransaction(async (session) => {
-      const target = await User.findById(userId).withDeleted().session(session);
-      if (!target) {
-        throw new NotFoundError("User not found");
-      }
+    const { populated, previousStatus } = await withMongoTransaction(
+      async (session) => {
+        const target = await User.findById(userId)
+          .withDeleted()
+          .session(session);
+        if (!target) {
+          throw new NotFoundError("User not found");
+        }
 
-      enforceReadScope(req.user, target);
-      const previousStatus = target.status;
+        enforceReadScope(req.user, target);
+        const previousStatus = target.status;
 
-      const immutableAttempt = USER_IMMUTABLE_FIELDS.filter((field) =>
-        Object.prototype.hasOwnProperty.call(body, field)
-      );
-      if (
-        immutableAttempt.length &&
-        [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.USER].includes(target.role)
-      ) {
-        throw new ConflictError(
-          `Immutable field update is not allowed for target role ${target.role}: ${immutableAttempt.join(", ")}`
+        const immutableAttempt = USER_IMMUTABLE_FIELDS.filter((field) =>
+          Object.prototype.hasOwnProperty.call(body, field)
         );
-      }
-
-      if (body.email) {
-        const email = normalizeEmail(body.email);
-        const existing = await User.findOne({
-          organization: target.organization,
-          email,
-          _id: { $ne: target._id },
-        })
-          .withDeleted()
-          .session(session);
-        if (existing) {
-          throw new ConflictError("User email already exists");
-        }
-        target.email = email;
-      }
-
-      if (body.departmentId) {
-        const department = await Department.findById(body.departmentId)
-          .withDeleted()
-          .session(session);
-        if (!department || department.isDeleted) {
-          throw new NotFoundError("Department not found");
+        if (
+          immutableAttempt.length &&
+          [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.USER].includes(
+            target.role
+          )
+        ) {
+          throw new ConflictError(
+            `Immutable field update is not allowed for target role ${
+              target.role
+            }: ${immutableAttempt.join(", ")}`
+          );
         }
 
-        if (normalizeId(department.organization) !== normalizeId(target.organization)) {
-          throw new ValidationError("departmentId must belong to the same organization");
+        if (body.email) {
+          const email = normalizeEmail(body.email);
+          const existing = await User.findOne({
+            organization: target.organization,
+            email,
+            _id: { $ne: target._id },
+          })
+            .withDeleted()
+            .session(session);
+          if (existing) {
+            throw new ConflictError("User email already exists");
+          }
+          target.email = email;
         }
 
-        target.department = department._id;
-      }
+        if (body.departmentId) {
+          const department = await Department.findById(body.departmentId)
+            .withDeleted()
+            .session(session);
+          if (!department || department.isDeleted) {
+            throw new NotFoundError("Department not found");
+          }
 
-      if (body.firstName !== undefined) target.firstName = body.firstName;
-      if (body.lastName !== undefined) target.lastName = body.lastName;
-      if (body.position !== undefined) target.position = body.position;
-      if (body.phone !== undefined) target.phone = body.phone;
-      if (body.status !== undefined) target.status = body.status;
-      if (body.skills !== undefined) {
-        target.skills = Array.isArray(body.skills) ? body.skills : [];
-      }
-      if (body.profilePicture !== undefined) target.profilePicture = body.profilePicture;
+          if (
+            normalizeId(department.organization) !==
+            normalizeId(target.organization)
+          ) {
+            throw new ValidationError(
+              "departmentId must belong to the same organization"
+            );
+          }
 
-      if (target.role === USER_ROLES.SUPER_ADMIN && body.role !== undefined) {
-        target.role = body.role;
-      }
+          target.department = department._id;
+        }
 
-      await target.save({ session });
+        if (body.firstName !== undefined) target.firstName = body.firstName;
+        if (body.lastName !== undefined) target.lastName = body.lastName;
+        if (body.position !== undefined) target.position = body.position;
+        if (body.phone !== undefined) target.phone = body.phone;
+        if (body.status !== undefined) target.status = body.status;
+        if (body.skills !== undefined) {
+          target.skills = Array.isArray(body.skills) ? body.skills : [];
+        }
+        if (body.profilePicture !== undefined)
+          target.profilePicture = body.profilePicture;
 
-      await createLifecycleNotification({
-        userId: target._id,
-        organizationId: target.organization,
-        departmentId: target.department,
-        title: "Profile updated",
-        message: "Your user profile has been updated.",
-        entity: target._id,
-        session,
-      });
+        if (target.role === USER_ROLES.SUPER_ADMIN && body.role !== undefined) {
+          target.role = body.role;
+        }
 
-      if (body.status !== undefined && previousStatus !== target.status) {
+        await target.save({ session });
+
         await createLifecycleNotification({
           userId: target._id,
           organizationId: target.organization,
           departmentId: target.department,
-          title: "Account status updated",
-          message: `Your account status is now ${target.status}.`,
+          title: "Profile updated",
+          message: "Your user profile has been updated.",
           entity: target._id,
           session,
         });
+
+        if (body.status !== undefined && previousStatus !== target.status) {
+          await createLifecycleNotification({
+            userId: target._id,
+            organizationId: target.organization,
+            departmentId: target.department,
+            title: "Account status updated",
+            message: `Your account status is now ${target.status}.`,
+            entity: target._id,
+            session,
+          });
+        }
+
+        const populated = await User.findById(target._id)
+          .withDeleted()
+          .populate("department", "name status")
+          .populate("organization", "name")
+          .session(session);
+
+        return {
+          populated,
+          previousStatus,
+        };
       }
-
-      const populated = await User.findById(target._id)
-        .withDeleted()
-        .populate("department", "name status")
-        .populate("organization", "name")
-        .session(session);
-
-      return {
-        populated,
-        previousStatus,
-      };
-    });
+    );
 
     emitToUser({
       userId: normalizeId(populated._id),
@@ -879,12 +934,16 @@ export const updateUser = asyncHandler(async (req, res, next) => {
       });
     }
     emitToDepartment({
-      departmentId: normalizeId(populated.department?._id || populated.department),
+      departmentId: normalizeId(
+        populated.department?._id || populated.department
+      ),
       event: "user:updated",
       payload: { user: toUserSummary(populated) },
     });
     emitToOrganization({
-      organizationId: normalizeId(populated.organization?._id || populated.organization),
+      organizationId: normalizeId(
+        populated.organization?._id || populated.organization
+      ),
       event: "user:updated",
       payload: { user: toUserSummary(populated) },
     });
@@ -958,7 +1017,9 @@ export const updateUserSecurity = asyncHandler(async (req, res, next) => {
   try {
     const userId = req.validated.params.userId;
     if (normalizeId(req.user.id) !== normalizeId(userId)) {
-      throw new UnauthorizedError("You can only update your own security settings");
+      throw new UnauthorizedError(
+        "You can only update your own security settings"
+      );
     }
 
     const security = await withMongoTransaction(async (session) => {
@@ -1020,44 +1081,60 @@ export const deleteUser = asyncHandler(async (req, res, next) => {
 
       await Promise.all([
         Task.updateMany(
-          { createdBy: targetId, organization: organizationId, isDeleted: false },
+          {
+            createdBy: targetId,
+            organization: organizationId,
+            isDeleted: false,
+          },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         TaskActivity.updateMany(
-          { createdBy: targetId, organization: organizationId, isDeleted: false },
+          {
+            createdBy: targetId,
+            organization: organizationId,
+            isDeleted: false,
+          },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         TaskComment.updateMany(
-          { createdBy: targetId, organization: organizationId, isDeleted: false },
+          {
+            createdBy: targetId,
+            organization: organizationId,
+            isDeleted: false,
+          },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Attachment.updateMany(
-          { uploadedBy: targetId, organization: organizationId, isDeleted: false },
+          {
+            uploadedBy: targetId,
+            organization: organizationId,
+            isDeleted: false,
+          },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Notification.updateMany(
           { user: targetId, organization: organizationId, isDeleted: false },
           { $set: { isDeleted: true, deletedAt, deletedBy: actorId } },
-          { session },
+          { session }
         ),
         Task.updateMany(
           { watchers: targetId },
           { $pull: { watchers: targetId } },
-          { session },
+          { session }
         ),
         Task.updateMany(
           { assignees: targetId },
           { $pull: { assignees: targetId } },
-          { session },
+          { session }
         ),
         TaskComment.updateMany(
           { mentions: targetId },
           { $pull: { mentions: targetId } },
-          { session },
+          { session }
         ),
       ]);
 
@@ -1124,29 +1201,49 @@ export const restoreUser = asyncHandler(async (req, res, next) => {
 
       await Promise.all([
         Task.updateMany(
-          { createdBy: target._id, organization: target.organization, isDeleted: true },
+          {
+            createdBy: target._id,
+            organization: target.organization,
+            isDeleted: true,
+          },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         TaskActivity.updateMany(
-          { createdBy: target._id, organization: target.organization, isDeleted: true },
+          {
+            createdBy: target._id,
+            organization: target.organization,
+            isDeleted: true,
+          },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         TaskComment.updateMany(
-          { createdBy: target._id, organization: target.organization, isDeleted: true },
+          {
+            createdBy: target._id,
+            organization: target.organization,
+            isDeleted: true,
+          },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Attachment.updateMany(
-          { uploadedBy: target._id, organization: target.organization, isDeleted: true },
+          {
+            uploadedBy: target._id,
+            organization: target.organization,
+            isDeleted: true,
+          },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
         Notification.updateMany(
-          { user: target._id, organization: target.organization, isDeleted: true },
+          {
+            user: target._id,
+            organization: target.organization,
+            isDeleted: true,
+          },
           { $set: { isDeleted: false, deletedAt: null, deletedBy: null } },
-          { session },
+          { session }
         ),
       ]);
 

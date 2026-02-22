@@ -42,7 +42,7 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
     <Stack spacing={1.25}>
       <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.firstName", {
               required: "First name is required",
               minLength: {
@@ -53,17 +53,16 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
                 value: VALIDATION_LIMITS.USER.FIRST_NAME_MAX,
                 message: "Maximum 50 characters",
               },
-              validate: (value) =>
-                validators.personName(value) || "First name format is invalid",
-            })}
-            label="First Name"
-            placeholder="First name"
-            error={errors.user?.firstName}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.personName(value) || "First name format is invalid",
+	            })}
+	            placeholder="First name"
+	            error={errors.user?.firstName}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.lastName", {
               required: "Last name is required",
               minLength: {
@@ -74,17 +73,16 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
                 value: VALIDATION_LIMITS.USER.LAST_NAME_MAX,
                 message: "Maximum 50 characters",
               },
-              validate: (value) =>
-                validators.personName(value) || "Last name format is invalid",
-            })}
-            label="Last Name"
-            placeholder="Last name"
-            error={errors.user?.lastName}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.personName(value) || "Last name format is invalid",
+	            })}
+	            placeholder="Last name"
+	            error={errors.user?.lastName}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={12}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.position", {
               required: "Position is required",
               minLength: {
@@ -95,37 +93,35 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
                 value: VALIDATION_LIMITS.USER.POSITION_MAX,
                 message: "Maximum 100 characters",
               },
-              validate: (value) =>
-                validators.personName(value) || "Position format is invalid",
-            })}
-            label="Position / Job Title"
-            placeholder="Position / Job Title"
-            startAdornment={<WorkOutlineOutlinedIcon fontSize="small" />}
-            error={errors.user?.position}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.personName(value) || "Position format is invalid",
+	            })}
+	            placeholder="Position / Job Title"
+	            startAdornment={<WorkOutlineOutlinedIcon fontSize="small" />}
+	            error={errors.user?.position}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={12}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.email", {
               required: "User email is required",
               maxLength: {
                 value: VALIDATION_LIMITS.USER.EMAIL_MAX,
                 message: "Maximum 100 characters",
               },
-              validate: (value) =>
-                validators.email(value) || "User email format is invalid",
-            })}
-            label="Email Address"
-            type="email"
-            placeholder="Email Address"
-            startAdornment={<EmailOutlinedIcon fontSize="small" />}
-            error={errors.user?.email}
-            reserveHelperTextSpace={false}
-          />
+	              validate: (value) =>
+	                validators.email(value) || "User email format is invalid",
+	            })}
+	            type="email"
+	            placeholder="name@company.com"
+	            startAdornment={<EmailOutlinedIcon fontSize="small" />}
+	            error={errors.user?.email}
+	            reserveHelperTextSpace={false}
+	          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.password", {
               required: "Password is required",
               minLength: {
@@ -146,14 +142,13 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
                 const score =
                   (lengthScore * 0.55 + (hasLower + hasUpper + hasNumber + hasSymbol) * 0.1125) *
                   100;
-                setPasswordStrengthValue(Math.min(Math.round(score), 100));
-              },
-            })}
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            startAdornment={<LockOutlinedIcon fontSize="small" />}
-            endAdornment={
+	                setPasswordStrengthValue(Math.min(Math.round(score), 100));
+	              },
+	            })}
+	            type={showPassword ? "text" : "password"}
+	            placeholder="Password"
+	            startAdornment={<LockOutlinedIcon fontSize="small" />}
+	            endAdornment={
               <IconButton
                 size="small"
                 onClick={() => setShowPassword((previous) => !previous)}
@@ -171,18 +166,17 @@ const RegisterAdminUserStep = ({ register, errors, getValues }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MuiTextField
+	          <MuiTextField
             {...register("user.confirmPassword", {
               required: "Password confirmation is required",
-              validate: (value) =>
-                value === getValues("user.password") ||
-                "Password confirmation does not match",
-            })}
-            label="Confirm Password"
-            type={showConfirmPassword ? "text" : "password"}
-            placeholder="Confirm Password"
-            startAdornment={<LockOutlinedIcon fontSize="small" />}
-            endAdornment={
+	              validate: (value) =>
+	                value === getValues("user.password") ||
+	                "Password confirmation does not match",
+	            })}
+	            type={showConfirmPassword ? "text" : "password"}
+	            placeholder="Confirm Password"
+	            startAdornment={<LockOutlinedIcon fontSize="small" />}
+	            endAdornment={
               <IconButton
                 size="small"
                 onClick={() =>

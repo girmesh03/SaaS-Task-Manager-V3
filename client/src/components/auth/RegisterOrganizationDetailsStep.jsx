@@ -34,15 +34,15 @@ const RegisterOrganizationDetailsStep = ({ control, register, errors }) => {
             name="organization.industry"
             control={control}
             rules={{ required: "Industry is required" }}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || null}
-                onChange={(_event, value) => field.onChange(value || "")}
-                label="Industry"
-                options={ORGANIZATION_INDUSTRIES}
-                error={errors.organization?.industry}
-                helperText={errors.organization?.industry?.message}
-              />
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || null}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                placeholder="Select industry"
+	                options={ORGANIZATION_INDUSTRIES}
+	                error={errors.organization?.industry}
+	                helperText={errors.organization?.industry?.message}
+	              />
             )}
           />
         </Grid>
@@ -51,31 +51,30 @@ const RegisterOrganizationDetailsStep = ({ control, register, errors }) => {
             name="organization.size"
             control={control}
             rules={{ required: "Organization size is required" }}
-            render={({ field }) => (
-              <MuiSelectAutocomplete
-                value={field.value || null}
-                onChange={(_event, value) => field.onChange(value || "")}
-                label="Company Size"
-                options={ORGANIZATION_SIZES}
-                error={errors.organization?.size}
-                helperText={errors.organization?.size?.message}
-              />
+	            render={({ field }) => (
+	              <MuiSelectAutocomplete
+	                value={field.value || null}
+	                onChange={(_event, value) => field.onChange(value || "")}
+	                placeholder="Select company size"
+	                options={ORGANIZATION_SIZES}
+	                error={errors.organization?.size}
+	                helperText={errors.organization?.size?.message}
+	              />
             )}
           />
         </Grid>
-        <Grid size={12}>
-          <MuiTextField
+	        <Grid size={12}>
+	          <MuiTextField
             {...register("organization.description", {
               maxLength: {
                 value: VALIDATION_LIMITS.ORGANIZATION.DESCRIPTION_MAX,
                 message: "Maximum 1000 characters",
-              },
-            })}
-            label="Description"
-            placeholder="Briefly describe what your organization does..."
-            multiline
-            minRows={3}
-            maxRows={5}
+	              },
+	            })}
+	            placeholder="Briefly describe what your organization does..."
+	            multiline
+	            minRows={3}
+	            maxRows={5}
             error={errors.organization?.description}
             reserveHelperTextSpace={false}
           />

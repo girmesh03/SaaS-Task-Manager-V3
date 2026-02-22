@@ -1,5 +1,10 @@
-export { default as DepartmentsPageContent } from "./DepartmentsPageContent";
-export { default as DepartmentDetailsPageContent } from "./DepartmentDetailsPageContent";
 export { default as DepartmentListCard } from "./DepartmentListCard";
 export { default as DepartmentFilter } from "./DepartmentFilter";
 export { default as DepartmentFormDialog } from "./DepartmentFormDialog";
+export { default as DepartmentsToolbar } from "./DepartmentsToolbar";
+export { default as DepartmentsListView } from "./DepartmentsListView";
+export { default as DepartmentsGridView } from "./DepartmentsGridView";
+export { default as DepartmentDetailsHeader } from "./DepartmentDetailsHeader";
+export { default as DepartmentOverviewTab } from "./DepartmentOverviewTab";
+export { default as DepartmentMembersTab } from "./DepartmentMembersTab";
+export { default as DepartmentTasksTab } from "./DepartmentTasksTab";

@@ -3,7 +3,14 @@
  */
 
 import { useMemo, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useNavigation,
+} from "react-router";
+import { useSelector } from "react-redux";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Badge from "@mui/material/Badge";
@@ -44,6 +51,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
   MuiAppIconLogo,
+  MuiBackdrop,
   MuiBottomNavigation,
   MuiDialog,
   MuiFAB,
@@ -55,6 +63,7 @@ import {
 import useResponsive from "../../hooks/useResponsive";
 import useAuth from "../../hooks/useAuth";
 import useAuthorization from "../../hooks/useAuthorization";
+import { selectNotificationUnreadCount } from "../../redux/features";
 import { LAYOUT_DIMENSIONS, UI_PLACEHOLDERS } from "../../utils/constants";
 import { useGetOrganizationsQuery } from "../../services/api";
 import { capitalizeFirstCharacter } from "../../utils/helpers";
@@ -168,10 +177,14 @@ const getBottomNavValue = (pathname) => {
 const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const navigation = useNavigation();
+  const isNavigating = navigation.state !== "idle";
+
   const { user } = useAuth();
   const { can } = useAuthorization();
   const { isXs, isDesktop } = useResponsive();
   const isBelow768 = useMediaQuery("(max-width:767.95px)");
+  const unreadCount = useSelector(selectNotificationUnreadCount);
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -544,7 +557,9 @@ const DashboardLayout = () => {
           <IconButton aria-label="Notifications">
             <Badge
               color="error"
-              badgeContent={UI_PLACEHOLDERS.NOTIFICATION_BADGE_COUNT}
+              badgeContent={unreadCount}
+              invisible={!unreadCount}
+              max={99}
             >
               <NotificationsNoneOutlinedIcon />
             </Badge>
@@ -618,6 +633,7 @@ const DashboardLayout = () => {
             },
           }}
         >
+          {isNavigating && <MuiBackdrop open={isNavigating} />}
           <Outlet />
         </Box>
       </Box>

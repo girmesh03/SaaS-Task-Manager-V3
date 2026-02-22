@@ -1,29 +1,18 @@
 /**
- * @file Development seed script for Phase 3 mock organizations/departments/users.
+ * @file Development seed script for Phase 4 mock data (org/dept/users + tasks vertical slice).
  */
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { connectDB, disconnectDB } from "../config/db.js";
 import { Department, Organization, User } from "../models/index.js";
 import { DEPARTMENT_STATUS, USER_STATUS } from "../utils/constants.js";
-import { isDevelopmentEnv } from "../utils/helpers.js";
+import { withMongoTransaction } from "../utils/helpers.js";
 import logger from "../utils/logger.js";
 import { getPhaseThreeSeedBlueprint } from "./data.js";
+import { assertDevelopmentRuntime, wipeDatabase } from "./dbUtils.js";
+import { seedPhaseFourForOrganization } from "./phase4Seed.js";
 
 dotenv.config();
-
-/**
- * Throws when runtime is not development.
- *
- * @param {NodeJS.ProcessEnv} [env=process.env] - Environment object.
- * @returns {void}
- * @throws {Error} Throws for non-development environments.
- */
-const assertDevelopmentRuntime = (env = process.env) => {
-  if (!isDevelopmentEnv(env)) {
-    throw new Error("Seed script is allowed only in development mode");
-  }
-};
 
 /**
  * Restores a soft-deleted document in-place.
@@ -79,6 +68,7 @@ const toEmployeeId = (value) => {
  */
 const upsertOrganizationBlueprint = async (organizationBlueprint, session) => {
   const { payload, departments, users } = organizationBlueprint;
+  const seedActorId = new mongoose.Types.ObjectId();
 
   let organization = await Organization.findOne({ name: payload.name })
     .withDeleted()
@@ -122,12 +112,13 @@ const upsertOrganizationBlueprint = async (organizationBlueprint, session) => {
         description: departmentBlueprint.description,
         status: departmentBlueprint.status || DEPARTMENT_STATUS.ACTIVE,
         manager: null,
-        createdBy: null,
+        createdBy: seedActorId,
       });
     } else {
       await restoreSoftDeleted(department, session);
       department.description = departmentBlueprint.description;
       department.status = departmentBlueprint.status || DEPARTMENT_STATUS.ACTIVE;
+      department.createdBy = department.createdBy || seedActorId;
     }
 
     await department.save({ session });
@@ -154,7 +145,8 @@ const upsertOrganizationBlueprint = async (organizationBlueprint, session) => {
       .select("+password")
       .session(session);
 
-    const resolvedUserId = user?._id || new mongoose.Types.ObjectId();
+    const resolvedUserId =
+      user?._id || (userDocuments.length === 0 ? seedActorId : new mongoose.Types.ObjectId());
     const nextEmployeeId = toEmployeeId(employeeSequence);
     employeeSequence += 1;
 
@@ -189,6 +181,7 @@ const upsertOrganizationBlueprint = async (organizationBlueprint, session) => {
       user.organization = organization._id;
       user.department = targetDepartment._id;
       user.isHod = Boolean(userBlueprint.isHod);
+      user.isPlatformOrgUser = Boolean(userBlueprint.isPlatformOrgUser);
       user.isVerified = true;
       user.emailVerifiedAt = user.emailVerifiedAt || new Date();
       user.joinedAt = new Date(userBlueprint.joinedAt);
@@ -238,29 +231,66 @@ const upsertOrganizationBlueprint = async (organizationBlueprint, session) => {
 };
 
 /**
- * Executes full Phase 3 seed in one transaction.
+ * Executes full Phase 4 seed (wipe + orgs + phase4 fixtures).
  *
  * @returns {Promise<void>}
  */
 const runSeed = async () => {
   assertDevelopmentRuntime(process.env);
   await connectDB();
-  const session = await mongoose.startSession();
 
   try {
+    const wipeResult = await wipeDatabase();
+    logger.info("Development wipe completed (seed pre-step)", wipeResult);
+
     const blueprint = getPhaseThreeSeedBlueprint(process.env);
 
-    await session.withTransaction(async () => {
-      for (const organizationBlueprint of blueprint.organizations) {
-        await upsertOrganizationBlueprint(organizationBlueprint, session);
-      }
-    });
+    const totals = {
+      organizations: 0,
+      vendors: 0,
+      materials: 0,
+      tasks: 0,
+      activities: 0,
+      comments: 0,
+      attachments: 0,
+      notifications: 0,
+    };
 
-    logger.info("Phase 3 development seed completed", {
-      organizations: getPhaseThreeSeedBlueprint(process.env).organizations.length,
-    });
+    for (const organizationBlueprint of blueprint.organizations) {
+      // Keep each organization seed within its own transaction to avoid long-running transactions.
+      // eslint-disable-next-line no-await-in-loop
+      const seededResult = await withMongoTransaction(async (session) => {
+        const seeded = await upsertOrganizationBlueprint(organizationBlueprint, session);
+
+        if (!seeded.organization?.isPlatformOrg) {
+          const phaseFourSummary = await seedPhaseFourForOrganization({
+            organization: seeded.organization,
+            departments: Array.from(seeded.departmentMap.values()),
+            users: seeded.users,
+            session,
+          });
+
+          return { seeded, phaseFourSummary };
+        }
+
+        return { seeded, phaseFourSummary: null };
+      });
+
+      totals.organizations += 1;
+
+      if (seededResult.phaseFourSummary) {
+        totals.vendors += seededResult.phaseFourSummary.vendors;
+        totals.materials += seededResult.phaseFourSummary.materials;
+        totals.tasks += seededResult.phaseFourSummary.tasks;
+        totals.activities += seededResult.phaseFourSummary.activities;
+        totals.comments += seededResult.phaseFourSummary.comments;
+        totals.attachments += seededResult.phaseFourSummary.attachments;
+        totals.notifications += seededResult.phaseFourSummary.notifications;
+      }
+    }
+
+    logger.info("Phase 4 development seed completed", totals);
   } finally {
-    await session.endSession();
     await disconnectDB();
   }
 };
@@ -276,4 +306,3 @@ runSeed()
     });
     process.exit(1);
   });
-

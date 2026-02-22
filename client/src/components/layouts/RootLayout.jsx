@@ -15,7 +15,6 @@ import "react-toastify/dist/ReactToastify.css";
  */
 const RootLayout = () => {
   const theme = useTheme();
-
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <Outlet />

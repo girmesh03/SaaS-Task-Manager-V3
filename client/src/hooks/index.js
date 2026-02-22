@@ -7,3 +7,4 @@ export { default as useAuthorization } from "./useAuthorization";
 export { default as useTimezone } from "./useTimezone";
 export { default as useResponsive } from "./useResponsive";
 export { default as useDebounce } from "./useDebounce";
+export { default as useSocket } from "./useSocket";

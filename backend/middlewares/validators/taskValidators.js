@@ -19,12 +19,13 @@ import {
   paginationValidators,
 } from "./shared.js";
 
-const ensureTaskExists = async (value) => {
+const ensureTaskExists = async (value, { req }) => {
   const task = await Task.findById(value).withDeleted();
   if (!task) {
     throw new Error("Task not found");
   }
 
+  req.authorizationTarget = task;
   return true;
 };
 
@@ -251,6 +252,54 @@ export const updateTaskValidators = [
     .optional({ values: "falsy" })
     .isIn(Object.values(TASK_PRIORITY))
     .withMessage("Task priority is invalid"),
+  body("tags")
+    .optional()
+    .isArray({ max: VALIDATION_LIMITS.TASK.TAGS_MAX })
+    .withMessage("Task tags cannot exceed 5 entries")
+    .custom(uniqueTags)
+    .withMessage("Task tags must be unique"),
+  body("tags.*")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ max: VALIDATION_LIMITS.TASK.TAG_MAX_LENGTH })
+    .withMessage("Each task tag must be 50 characters or less"),
+  body("watchers")
+    .optional()
+    .isArray()
+    .withMessage("watchers must be an array")
+    .custom(uniqueObjectIds)
+    .withMessage("watchers must be unique"),
+  body("watchers.*")
+    .optional({ values: "falsy" })
+    .isMongoId()
+    .withMessage("watcher ids must be valid object ids"),
+  body("vendorId")
+    .optional({ values: "falsy" })
+    .isMongoId()
+    .withMessage("vendorId must be a valid object id")
+    .bail()
+    .custom(async (value) => {
+      const vendor = await Vendor.findById(value).withDeleted();
+      if (!vendor) {
+        throw new Error("Vendor not found");
+      }
+
+      return true;
+    }),
+  body("assigneeIds")
+    .optional()
+    .isArray({
+      min: VALIDATION_LIMITS.TASK.ASSIGNEES_MIN,
+      max: VALIDATION_LIMITS.TASK.ASSIGNEES_MAX,
+    })
+    .withMessage("assigneeIds must contain between 1 and 50 users")
+    .custom(uniqueObjectIds)
+    .withMessage("assigneeIds must be unique"),
+  body("assigneeIds.*")
+    .optional({ values: "falsy" })
+    .isMongoId()
+    .withMessage("assignee ids must be valid object ids"),
   body("type").not().exists().withMessage("Task type cannot be changed"),
   body("startDate")
     .optional({ values: "falsy" })
@@ -264,6 +313,18 @@ export const updateTaskValidators = [
     .optional({ values: "falsy" })
     .isISO8601()
     .withMessage("date must be an ISO-8601 date"),
+  body("materials")
+    .optional()
+    .isArray({ max: VALIDATION_LIMITS.TASK.MATERIALS_MAX })
+    .withMessage("materials cannot exceed 20 entries"),
+  body("materials.*.materialId")
+    .optional({ values: "falsy" })
+    .isMongoId()
+    .withMessage("materials.materialId must be a valid object id"),
+  body("materials.*.quantity")
+    .optional({ values: "falsy" })
+    .isFloat({ min: VALIDATION_LIMITS.MATERIAL.UNIT_MIN })
+    .withMessage("materials.quantity must be greater than 0"),
   body().custom((_, { req }) => {
     if (req.body?.startDate && req.body?.dueDate) {
       if (new Date(req.body.dueDate).getTime() <= new Date(req.body.startDate).getTime()) {
